@@ -15,5 +15,5 @@ MyStickerDiary/
 └── data/
     ├── fonts/                  // 사용할 폰트 파일(ttf)
     ├── images/                 // 사용할 이미지 파일(processing 상에서 그리기 어렵거나 디자인 상 활용할 이미지)
-    └── stickers/              // 그린 스티커들 로드하여 저장
+    └── stickers/               // 그린 스티커들 로드하여 저장
 ```
