@@ -1,6 +1,5 @@
 // MakingSticker.pde
 
-
 PGraphics stickerCanvas; // 캔버스 
 int canvasSize = 680; // 정사각형 캔버스 크기
 int canvasX, canvasY; // 캔버스가 그려질 화면상의 위치
@@ -156,8 +155,10 @@ void handleCreatorMouse() {
   if (mouseHober(width - 175, 25, 150, 50)) {
     PImage newStickerImg = stickerCanvas.get(); // 캔버스를 PImage로 변환
     cursor(ARROW);
+    String sticker_name = "name";/*= new UiBooster().showTextInputDialog("Sticker name?");*/
     Sticker newSticker = new Sticker(0, 0, newStickerImg);  // 스티커 객체 생성
     stickerLibrary.add(newSticker); // 라이브러리 ArrayList에 추가
+    newStickerImg.save(sticker_name+".png");
     currentScreen = sticker_library; // 라이브러리 화면으로
   }
   // 도구 선택
