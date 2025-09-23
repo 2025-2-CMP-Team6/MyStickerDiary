@@ -1,3 +1,8 @@
+import processing.pdf.*;
+import grab.*;
+Grab grab = new Grab(this);
+
+
 // 화면 통제 변수 선언
 final int start_screen = 0;
 final int menu_screen = 1;
@@ -6,6 +11,8 @@ final int making_sticker = 3;
 final int sticker_library = 4;
 final int drawing_diary = 5;
 final int diary_library = 6;
+
+
 
 // 현재 보이는 화면 저장하는 변수 선언
 // 초기화면은 시작화면 (StartScreen)
