@@ -68,3 +68,7 @@ public void drawClickAnywhere() {
     textSize(26);
     text("Click Anywhere to Start!", messageX, messageY);
 }
+
+public void handleStartRelease() {
+    currentScreen = menu_screen;
+}

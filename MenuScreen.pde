@@ -6,3 +6,6 @@ public void drawMenuScreen() {
         textSize(48);
         text("Menu Screen", width/2, height/2);
 }
+public void handleMenuRelease() {
+    currentScreen = sticker_library;
+}
