@@ -26,8 +26,8 @@ public void drawMeow() {
     }
 
     // 캐릭터 이미지 위치 변수 선언
-    float imageX = 50;
-    float imageY = height - 250;
+    float imageX = 100;
+    float imageY = height - 150;
 
     // 캐릭터 사이즈 변수 선언
     float imageSizeX = 200;
