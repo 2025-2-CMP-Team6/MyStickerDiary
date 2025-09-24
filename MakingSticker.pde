@@ -19,7 +19,9 @@ PImage eraserCursor; // 지우개 커서
 color selectedColor = color(0); // 현재 선택된 그리기 색상
 // 브러쉬
 float brushSize = 20; // 브러시 크기
+boolean isBrushSizeChange = false; // 브러쉬 크기 변경 여부
 int brushPos[] = {160,600};  // 브러쉬 사이즈 스크롤 좌표
+PGraphics sizeCursor; // 브러쉬 크기 커서
 
 // 도형
 boolean isDrawingShape = false; // 도형을 그리고 있는지 여부
@@ -63,8 +65,9 @@ void setupCreator() {
  eraserCursor = loadImage("data/images/eraser.png");
  lineCursor = createGraphics(32,32);
  lineCursor.beginDraw();
+ lineCursor.noSmooth();
  lineCursor.stroke(0);
- lineCursor.strokeWeight(0.5);
+ lineCursor.strokeWeight(1);
  lineCursor.line(0,2,4,2);
  lineCursor.line(2,0,2,4);
  lineCursor.line(14,3,3,14);
@@ -72,8 +75,9 @@ void setupCreator() {
 
  rectCursor = createGraphics(32,32);
  rectCursor.beginDraw();
+ rectCursor.noSmooth();
  rectCursor.stroke(0);
- rectCursor.strokeWeight(0.5);
+ rectCursor.strokeWeight(1);
  rectCursor.line(0,2,4,2);
  rectCursor.line(2,0,2,4);
  rectCursor.rect(4,4,12,12);
@@ -81,13 +85,22 @@ void setupCreator() {
  
  circleCursor = createGraphics(32,32);
  circleCursor.beginDraw();
+ circleCursor.noSmooth();
  circleCursor.stroke(0);
- circleCursor.strokeWeight(0.5);
+ circleCursor.strokeWeight(1);
  circleCursor.line(0,2,4,2);
  circleCursor.line(2,0,2,4);
  circleCursor.circle(8,8,10);
  circleCursor.endDraw();
 
+ sizeCursor = createGraphics(8,8);
+ sizeCursor.beginDraw();
+ sizeCursor.noSmooth(); 
+ sizeCursor.noStroke(); 
+ sizeCursor.fill(0);
+ sizeCursor.triangle(3,0, 0,3, 3,7);
+ sizeCursor.triangle(4,0, 7,3, 4,7);
+ sizeCursor.endDraw();
 }
 
 void drawCreator() {
@@ -114,11 +127,13 @@ void drawCreator() {
   rect(toolPos[0]+32, toolPos[1]+toolGab*4+32, 48, 48); // 사각형
   circle(toolPos[0]+32, toolPos[1]+toolGab*5+32, 48); // 원
  // 브러쉬 크기 조절
-  fill(0,0);
+  noFill();
+  stroke(0);
+  strokeWeight(1);
   float d = dist(brushPos[0],brushPos[1],mouseX,mouseY);
   if (d < 66) {circle(brushPos[0], brushPos[1], 132);}
   else {circle(brushPos[0], brushPos[1], 128);}
-  fill(0);
+  fill(selectedColor);
   circle(brushPos[0], brushPos[1], brushSize);
     // 도형 그리기 미리보기
     pushStyle();
@@ -250,7 +265,8 @@ void handleCreatorDrag() {
   float d = dist(brushPos[0],brushPos[1],mouseX,mouseY);
   if (d<132) {
     brushSize += mouseX - pmouseX;
-
+    cursor(sizeCursor.get());
+    isBrushSizeChange = true;
     if (brushSize > 128) {
       brushSize = 128;
     }
@@ -283,6 +299,10 @@ void handleCreatorRelease() {
       stickerCanvas.ellipse(startX, startY, endX, endY);
     }
     stickerCanvas.endDraw();
+  }
+  else if (isBrushSizeChange) {
+    cursor(ARROW);
+    isBrushSizeChange = false;
   }
   isDrawingShape = false; // 그리기 상태 초기화
 }
