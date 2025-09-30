@@ -1,3 +1,5 @@
+import interfascia.*;
+import uibooster.*;
 
 // 화면 통제 변수 선언
 final int start_screen = 0;

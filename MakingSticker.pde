@@ -4,8 +4,6 @@ PGraphics stickerCanvas; // 캔버스
 int canvasSize = 680; // 정사각형 캔버스 크기
 int canvasX, canvasY; // 캔버스가 그려질 화면상의 위치
 // 기능 아이콘
-
-
 PImage saveImg;  // 저장 이미지
 PImage backImg;  // 뒤로가기 이미지
 
@@ -60,7 +58,7 @@ void setupCreator() {
   stickerCanvas.clear();
   stickerCanvas.endDraw();
   // 버튼 아이콘
-saveImg = loadImage("data/images/saveIcon.png");
+saveImg = loadImage("data/images/SaveIcon.png");
 backImg = loadImage("data/images/backIcon.png");
 
   // 도구 아이콘
@@ -167,22 +165,36 @@ void drawCreator() {
     for (int i = 0; i < palleteColor.length; i++) {
       fill(palleteColor[i]);
       stroke(0,1);
-      circle(colorPos[0], colorPos[1]+i*colorGab, colorSize);
+      int j = 0;
+      int k = 0;
+      if (i>5) {
+        j = i-6;
+        k = 1;
+      }
+      else {
+        j = i;
+        k = 0;
+      }
+      circle(colorPos[0]+k*72, colorPos[1]+j*colorGab, colorSize);
     }
   }
   // 저장
-  fill(0); textSize(25); text("저장", width - 100, 50);
+  image(saveImg, width - 128, height-128);
+  // 뒤로
+  image(backImg, 24, 24);
 }
 
 void handleCreatorMouse() {
-  // 저장
-  if (mouseHober(width - 175, 25, 150, 50)) {
+  if (mouseHober(width - 128, height-128, 64, 64)) { // 저장
     PImage newStickerImg = stickerCanvas.get(); // 캔버스를 PImage로 변환
     cursor(ARROW);
-    String sticker_name = "name";/*= new UiBooster().showTextInputDialog("Sticker name?");*/
+    String sticker_name = year() + month() + day() + "_" + hour() + minute() + second();
     Sticker newSticker = new Sticker(0, 0, newStickerImg);  // 스티커 객체 생성
     stickerLibrary.add(newSticker); // 라이브러리 ArrayList에 추가
-    newStickerImg.save(sticker_name+".png");
+    newStickerImg.save("data/sticker/"+sticker_name +".png");
+    currentScreen = sticker_library; // 라이브러리 화면으로
+  }
+  if (mouseHober(24,24, 64, 64)) { // 뒤로가기
     currentScreen = sticker_library; // 라이브러리 화면으로
   }
   // 도구 선택

@@ -4,12 +4,12 @@
 ```
 MyStickerDiary/
 ├── MyStickerDiary.pde          // 메인 컨트롤 파일 (setup, draw 선언, 화면 전환 통제)
-├── StartScreen.pde             // 시작 화면
+├── StartScreen.pde             // 시작 화면 -> 끝남
 ├── MenuScreen.pde              // 메뉴 화면
-├── NameScreen.pde              // 메뉴 화면에서 이름 입력할 수 있는 화면
-├── MakingSticker.pde           // 스티커 만들기 화면
-├── StickerLibrary.pde          // 스티커 라이브러리 화면
-├── DrawingDiary.pde            // 일기 그리기 화면
+├── NameScreen.pde              // 메뉴 화면에서 이름 입력할 수 있는 화면 -> (삭제) 없애고 UIBooster로 팝업창 따로 구현하면 될듯?
+├── MakingSticker.pde           // 스티커 만들기 화면 -> 거의 끝남
+├── StickerLibrary.pde          // 스티커 라이브러리 화면 -> 거의 끝남
+├── DrawingDiary.pde            // 일기 그리기 화면 -> 감정 분석 api, 날씨 api로 시각화하기
 ├── DiaryLibrary.pde            // 일기 라이브러리 화면
 ├── Utils.pde                   // 공통 유틸리티 함수들 (모든 파일에서 같이 사용 가능한 함수들 / drawButton, draw 같은 거)
 └── data/
