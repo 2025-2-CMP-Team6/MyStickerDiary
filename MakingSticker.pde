@@ -3,6 +3,12 @@
 PGraphics stickerCanvas; // 캔버스 
 int canvasSize = 680; // 정사각형 캔버스 크기
 int canvasX, canvasY; // 캔버스가 그려질 화면상의 위치
+// 기능 아이콘
+
+
+PImage saveImg;  // 저장 이미지
+PImage backImg;  // 뒤로가기 이미지
+
 // 그리기 도구
 String tool = "brush"; // 현재 선택된 도구
 float toolGab = 72; // 도구 간격
@@ -53,6 +59,9 @@ void setupCreator() {
   stickerCanvas.beginDraw();
   stickerCanvas.clear();
   stickerCanvas.endDraw();
+  // 버튼 아이콘
+saveImg = loadImage("data/images/saveIcon.png");
+backImg = loadImage("data/images/backIcon.png");
 
   // 도구 아이콘
  brushImg = loadImage("data/images/brush.png");

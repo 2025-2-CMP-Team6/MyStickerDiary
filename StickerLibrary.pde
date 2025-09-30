@@ -59,7 +59,8 @@ void drawLibrary() {
       image(s.img, s.x, s.y, newW, newH);
       
       // 마우스 영역 확인
-      if (s.isMouseOver(newW, newH)) {
+      if (mouseHober(s.x-newW/2, s.y-newH/2, newW, newH)) {
+        text("호버링",mouseX,mouseY);
         fill(255,255,255,1);
         rect(s.x, s.y, newW, newH);
         fill(0);
@@ -93,15 +94,16 @@ void drawLibrary() {
       if (w > h) {
         newW = boxSize;
         newH = h * (boxSize / w);
-      } else {
+      }
+      else {
         newH = boxSize;
         newW = w * (boxSize / h);
       }
   
-      if (s.isMouseOver(newW, newH)) {
+      if (mouseHober(s.x-newW/2, s.y-newH/2, newW, newH)) {
         Sticker newSticker = new Sticker(width/2, height/2, s.img);
         placedStickers.add(newSticker);
-        currentScreen = diary_library;
+        //currentScreen = diary_library;
         break; 
       }
     }

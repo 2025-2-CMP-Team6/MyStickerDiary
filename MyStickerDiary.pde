@@ -2,11 +2,10 @@
 // 화면 통제 변수 선언
 final int start_screen = 0;
 final int menu_screen = 1;
-final int name_screen = 2;
-final int making_sticker = 3;
-final int sticker_library = 4;
-final int drawing_diary = 5;
-final int diary_library = 6;
+final int making_sticker = 2;
+final int sticker_library = 3;
+final int drawing_diary = 4;
+final int diary_library = 5;
 
 
 
@@ -65,14 +64,17 @@ void draw() {
       case menu_screen:
         drawMenuScreen();
         break;
+      case making_sticker:
+        drawCreator();
+        break;
+      case sticker_library:
+          drawLibrary();
+          break;
       case drawing_diary:
         drawDiary();
         break;
-      case sticker_library:
-        drawLibrary();
-        break;
-        case making_sticker:
-        drawCreator();
+      case diary_library:
+        drawDiaryLibrary();
         break;
       default :
       break;
