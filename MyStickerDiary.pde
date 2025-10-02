@@ -91,7 +91,7 @@ void mousePressed() {
         //handleStartMouse();
         break;
       case menu_screen:
-        //handleMenuMouse();
+        handleMenuMouse();
         break;
       case drawing_diary:
         handleDiaryMouse();

@@ -5,11 +5,15 @@ boolean mouseHober(float x, float y, float w, float h) {
 public class rectButton {
   int position_x;
   int position_y;
+  int width;
+  int height;
   color cl;
 
   rectButton(int x, int y, int w, int h, color c) {
     position_x = x;
     position_y = y;
+    width = w;
+    height = h;
     cl = c;
     fill(c);
     noStroke();
@@ -24,6 +28,6 @@ public class rectButton {
     fill(0);
     textAlign(CENTER, CENTER);
     textSize(textSize);
-    text(message, position_x + 150, position_y + 250);
+    text(message, position_x + 80, position_y + 120);
   }
 }
