@@ -5,6 +5,8 @@ boolean mouseHober(float x, float y, float w, float h) {
 public class rectButton {
 
   int position_x, position_y, width, height;
+  int px;
+  int py;
   color cl;
 
   String textLabel = "";
@@ -19,6 +21,8 @@ public class rectButton {
     width = w;
     height = h;
     cl = c;
+    px = position_x;
+    py = position_y;
 
   }
 
@@ -30,6 +34,12 @@ public class rectButton {
   }
 
   public void render() {
+
+    int shadow = 16;
+
+    fill(0);
+    noStroke();
+    rect(position_x + shadow, position_y + shadow, width, height);
 
     fill(cl);
     noStroke();

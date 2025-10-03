@@ -16,57 +16,102 @@ public void drawMenuScreen() {
     textSize(50);
     text("Main Menu", 120, 40);
 
+    if (!isMenuDragging) {
+
+        menuScrollX += (menuTargetScrollX - menuScrollX) * 0.20; 
+
+        if (abs(menuTargetScrollX - menuScrollX) < 0.5) {
+            menuScrollX = menuTargetScrollX;
+        }
+        
+  }
+
+    pushMatrix();
+    
+    translate(-menuScrollX, 0);
+
     dsButton.render();
     slButton.render();
     ddButton.render();
     dlButton.render();
 
+    popMatrix();
+
 }
 
-public void handleMenuMouse() {
+public void handleMenuMousePressed() {
 
-    if(dsButton.isMouseOverButton()) {
-        dsButton.isButtonPressing = true;
-    } else { 
-        dsButton.isButtonPressing = false; 
-    }
+  isMenuDragging = true;
+  dragStartX = mouseX;
+  dragStartScroll = menuScrollX;
+  totalDragDist = 0;
 
-    if(slButton.isMouseOverButton()) {
-        slButton.isButtonPressing = true;
-    } else {
-        slButton.isButtonPressing = false;
-    }
+}
 
-    if(ddButton.isMouseOverButton()) {
-        ddButton.isButtonPressing = true;
-    } else {
-        ddButton.isButtonPressing = false;
-    }
+
+public void handleMenuDragged() {
+
+  if (!isMenuDragging) return;
+  float dx = mouseX - dragStartX;            
+  totalDragDist = max(totalDragDist, abs(dx));
+  menuScrollX = constrain(dragStartScroll - dx, 0, PAGE_WIDTH);
+
+}
+
+public void handleMenuReleased() {
+
+  if (!isMenuDragging) return;
+  isMenuDragging = false;
+
+  if (totalDragDist < 10) {
+
+    handleMenuTap();
+    return;
+
+  }
+
+  menuTargetScrollX = (menuScrollX > PAGE_WIDTH * 0.5f) ? PAGE_WIDTH : 0;
+
+}
+
+
+private void handleMenuTap() {
+
+  float wx = worldMouseX();
+  float wy = worldMouseY();
+
+  if (hit(dsButton, wx, wy)) {
+
+    currentScreen = making_sticker;
+    return;
     
-    if(dlButton.isMouseOverButton()) {
-        dlButton.isButtonPressing = true;
-    } else {
-        dlButton.isButtonPressing = false;
-    }
+  }
 
+  if (hit(slButton, wx, wy)) {
+
+    currentScreen = sticker_library;
+    return;
+
+  }
+
+  if (hit(ddButton, wx, wy)) {
+
+    currentScreen = drawing_diary;
+    return;
+
+  }
+
+  if (hit(dlButton, wx, wy)) {
+
+    currentScreen = diary_library;
+    return;
+
+  }
 }
 
-public void handleMenuRelease() {
+private boolean hit(rectButton b, float wx, float wy) {
 
-    if(dsButton.isMouseOverButton() && dsButton.isButtonPressing) {
-        currentScreen = making_sticker;
-    }
-
-    if(slButton.isMouseOverButton()&& slButton.isButtonPressing) {
-        currentScreen = sticker_library;
-    }
-
-    if(ddButton.isMouseOverButton() && ddButton.isButtonPressing) {
-        currentScreen = drawing_diary;
-    }
-
-    if(dlButton.isMouseOverButton()&& dlButton.isButtonPressing) {
-        currentScreen = diary_library;
-    }
-
+  return (wx > b.position_x && wx < b.position_x + b.width &&
+          wy > b.position_y && wy < b.position_y + b.height);
+          
 }

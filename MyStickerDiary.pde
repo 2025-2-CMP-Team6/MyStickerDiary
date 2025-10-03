@@ -32,19 +32,42 @@ PFont font;
 // 메뉴 버튼 오브젝트를 한번씩만 만들어줘야 하는 이슈가 발생해서 center control 파일에 선언합니다.
 rectButton dsButton, slButton, ddButton, dlButton;
 
+// 메뉴 스와이프 기능 관련 전역 변수입니다.
+final int PAGE_WIDTH = 1280;        
+float menuScrollX = 0;              
+float menuTargetScrollX = 0;        
+boolean isMenuDragging = false;
+float dragStartX = 0;
+float dragStartScroll = 0;
+float totalDragDist = 0;
+
+final int MENU_TOP = 120;        
+final int PAGE_PADDING_X = 120;   
+final int MENU_GUTTER_X = 80;     
+
+final int BTN_W = (PAGE_WIDTH - PAGE_PADDING_X*2 - MENU_GUTTER_X) / 2;
+final int BTN_H = 360;           
+
+float worldMouseX() { return mouseX + menuScrollX; }
+float worldMouseY() { return mouseY; } 
+
 // 메뉴 버튼 초기화 함수입니다. 프레임마다 버튼 오브젝트가 변하지 않게 하기 위함입니다.
 void initMenuButtons() {
 
-  dsButton = new rectButton(100, 120, 200, 300, #FEFD48);
+  int x1 = PAGE_PADDING_X;
+  int x2 = PAGE_PADDING_X + BTN_W + MENU_GUTTER_X;
+  int y  = MENU_TOP;
+
+  dsButton = new rectButton(x1, y, BTN_W, BTN_H, #FEFD48);
   dsButton.rectButtonText("Drawing\nSticker", 50);
 
-  slButton = new rectButton(400, 120, 200, 300, #FEFD48);
+  slButton = new rectButton(x2, y, BTN_W, BTN_H, #FEFD48);
   slButton.rectButtonText("Sticker\nLibrary", 50);
 
-  ddButton = new rectButton(700, 120, 200, 300, #FEFD48);
+  ddButton = new rectButton(x1 + PAGE_WIDTH, y, BTN_W, BTN_H, #FEFD48);
   ddButton.rectButtonText("drawing\nDiary", 50);
 
-  dlButton = new rectButton(1000, 120, 200, 300, #FEFD48);
+  dlButton = new rectButton(x2 + PAGE_WIDTH, y, BTN_W, BTN_H, #FEFD48);
   dlButton.rectButtonText("Diary\nLibrary", 50);
 
 }
@@ -74,7 +97,8 @@ void setup() {
     surface.setResizable(false);
 
     font = createFont("data/fonts/nanumHandWriting_babyLove.ttf", 24);
-    
+
+    initMenuButtons();
 }
 
 
@@ -112,7 +136,7 @@ void mousePressed() {
         //handleStartMouse();
         break;
       case menu_screen:
-        handleMenuMouse();
+        handleMenuMousePressed();
         break;
       case drawing_diary:
         handleDiaryMouse();
@@ -133,7 +157,7 @@ void mouseDragged() {
         //handleStartDrag();
         break;
       case menu_screen:
-        //handleMenuDrag();
+        handleMenuDragged();
         break;
       case drawing_diary:
         handleDiaryDrag();
@@ -154,7 +178,7 @@ void mouseReleased() {
         handleStartRelease();
         break;
       case menu_screen:
-        handleMenuRelease();
+        handleMenuReleased();
         break;
       case drawing_diary:
         handleDiaryRelease();
