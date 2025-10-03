@@ -29,6 +29,26 @@ float offsetX, offsetY; // 스티커를 잡은 지점과 스티커 중심 사이
 // 폰트 변수 선언
 PFont font;
 
+// 메뉴 버튼 오브젝트를 한번씩만 만들어줘야 하는 이슈가 발생해서 center control 파일에 선언합니다.
+rectButton dsButton, slButton, ddButton, dlButton;
+
+// 메뉴 버튼 초기화 함수입니다. 프레임마다 버튼 오브젝트가 변하지 않게 하기 위함입니다.
+void initMenuButtons() {
+
+  dsButton = new rectButton(100, 120, 200, 300, #FEFD48);
+  dsButton.rectButtonText("Drawing\nSticker", 50);
+
+  slButton = new rectButton(400, 120, 200, 300, #FEFD48);
+  slButton.rectButtonText("Sticker\nLibrary", 50);
+
+  ddButton = new rectButton(700, 120, 200, 300, #FEFD48);
+  ddButton.rectButtonText("drawing\nDiary", 50);
+
+  dlButton = new rectButton(1000, 120, 200, 300, #FEFD48);
+  dlButton.rectButtonText("Diary\nLibrary", 50);
+
+}
+
 void setup() {
     size(1280, 720);
     PImage happyStickerImg;
@@ -54,6 +74,7 @@ void setup() {
     surface.setResizable(false);
 
     font = createFont("data/fonts/nanumHandWriting_babyLove.ttf", 24);
+    
 }
 
 

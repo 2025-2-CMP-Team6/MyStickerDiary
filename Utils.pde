@@ -3,31 +3,50 @@ boolean mouseHober(float x, float y, float w, float h) {
     return ((mouseY > y && mouseY < y+h) && (mouseX > x && mouseX < x+w)); }
 
 public class rectButton {
-  int position_x;
-  int position_y;
-  int width;
-  int height;
+
+  int position_x, position_y, width, height;
   color cl;
 
+  String textLabel = "";
+  int labelSize = 32;
+
+  boolean isButtonPressing = false;
+
   rectButton(int x, int y, int w, int h, color c) {
+
     position_x = x;
     position_y = y;
     width = w;
     height = h;
     cl = c;
-    fill(c);
-    noStroke();
-    rect(x, y, w, h);
-  }
-
-  public void isRectButtonClicked() {
 
   }
 
   public void rectButtonText(String message, int textSize) {
+
+    textLabel = message;
+    labelSize = textSize;
+    
+  }
+
+  public void render() {
+
+    fill(cl);
+    noStroke();
+    rect(position_x, position_y, width, height);
+
     fill(0);
     textAlign(CENTER, CENTER);
-    textSize(textSize);
-    text(message, position_x + 80, position_y + 120);
+    textSize(labelSize);
+    text(textLabel, position_x + width/2, position_y + height/2);
+
   }
+
+  public boolean isMouseOverButton() {
+
+    return mouseX > position_x && mouseX < position_x + width 
+          && mouseY > position_y && mouseY < position_y + height;
+
+  }
+
 }
