@@ -1,12 +1,13 @@
 GUIController c;
 IFButton b1;
 IFLabel l;
-PImage cursor;
 
 boolean isButtonPressed;
 boolean pressedOnNameBtn = false;
 
 public void drawMenuScreen() {
+
+    pushStyle();
 
     background(#FFCA1A);
 
@@ -60,12 +61,14 @@ public void drawMenuScreen() {
 
 
     if (hoverScrollable || hoverFixed) {
-      image(cursor, mouseX, mouseY, 50, 50);
+      image(cursorImage, mouseX, mouseY, 50, 50);
     }
 
     if(isNameEntered) {
       text("NAME : " + username, NAME_X + NAME_W / 2, NAME_Y + NAME_H + 20);
     }
+
+    popStyle();
 
 }
 

@@ -30,6 +30,9 @@ float offsetX, offsetY; // 스티커를 잡은 지점과 스티커 중심 사이
 // 폰트 변수 선언
 PFont font;
 
+// 호버링 이펙트 아이콘 이미지 변수 선언
+PImage cursorImage;
+
 // 메뉴 버튼 오브젝트를 한번씩만 만들어줘야 하는 이슈가 발생해서 center control 파일에 선언합니다.
 rectButton dsButton, slButton, ddButton, dlButton;
 rectButton nameButton;
@@ -54,6 +57,22 @@ final int BTN_H = 360;
 
 final int NAME_W = 100;
 final int NAME_H = 50;
+
+void switchScreen(int next) {
+
+  isMenuDragging = false;
+  pressedOnNameBtn = false;
+  totalDragDist = 0;
+
+  menuTargetScrollX = menuScrollX;
+
+  isDrawingShape = false;
+  isBrushSizeChange = false;
+  cursor(ARROW);
+
+  currentScreen = next;
+
+}
 
 float worldMouseX() { return mouseX + menuScrollX; }
 float worldMouseY() { return mouseY; } 
@@ -111,13 +130,18 @@ void setup() {
     font = createFont("data/fonts/nanumHandWriting_babyLove.ttf", 24);
 
     // 버튼 창 호버링 시 나오는 아이콘 로드입니다.
-    cursor = loadImage("data/images/name_edit.png");
+    cursorImage = loadImage("data/images/name_edit.png");
 
     initMenuButtons();
 }
 
 
 void draw() {
+    // 디폴트 모드 세팅
+    imageMode(CORNER);
+    rectMode(CORNER);
+    ellipseMode(CENTER);
+    textAlign(LEFT, BASELINE);
     // 현재 상태(currentScreen)에 따라 적절한 함수를 호출
     switch (currentScreen) {
       case start_screen:

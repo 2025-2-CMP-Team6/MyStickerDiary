@@ -46,6 +46,11 @@ float colorGab = 72; // 색의 간격
 color[] palleteColor = {color(255, 0, 0),color(0, 255, 0),color(0, 0, 255), color(255, 255, 0), color(255, 0, 255), color(0, 255, 255), color(128, 128, 128), color(0, 0, 0), color(255, 255, 255)}; // 팔레트 저장 색
 boolean colorToggle = false;
 
+// 뒤로 가기 버튼, 세이브 버튼 전역 변수로 설정해서 버튼 클릭 인식 최적화했습니다.
+final int SAVE_W = 64, SAVE_H = 64;
+final int BACK_W = 64, BACK_H = 64;
+final int BACK_X = 24, BACK_Y = 24;
+
 void setupCreator() {
   // 정사각형 크기의 그래픽 버퍼를 생성
   stickerCanvas = createGraphics(canvasSize, canvasSize);
@@ -111,9 +116,13 @@ backImg = loadImage("data/images/backIcon.png");
 }
 
 void drawCreator() {
+  pushStyle();
+
   imageMode(CORNER);
-  background(225); // 배경
   rectMode(CORNER);
+  ellipseMode(CENTER);
+
+  background(225); // 배경
   stroke(0,1);
   fill(255,255,255);
   rect(canvasX, canvasY, canvasSize, canvasSize); // 캔버스 사각형 그리기
@@ -142,8 +151,12 @@ void drawCreator() {
   else {circle(brushPos[0], brushPos[1], 128);}
   fill(selectedColor);
   circle(brushPos[0], brushPos[1], brushSize);
+
+  popStyle();
+
     // 도형 그리기 미리보기
-    pushStyle();
+  pushStyle();
+
     if (isDrawingShape && mouseHober(canvasX, canvasY, canvasSize, canvasSize)) {
       stroke(selectedColor);
       strokeWeight(brushSize);
@@ -159,43 +172,55 @@ void drawCreator() {
         ellipse(pmousePos[0], pmousePos[1], mouseX, mouseY);
       }
     }
+  
   popStyle();
+
+  pushStyle();
+
+  imageMode(CORNER);
+  rectMode(CORNER);
+  ellipseMode(CENTER);
   // 팔레트
   if (isPalleteOpen) {
+
+    int[] p = new int[2];
+
     for (int i = 0; i < palleteColor.length; i++) {
+
+      paletteCenter(i, p);
       fill(palleteColor[i]);
-      stroke(0,1);
-      int j = 0;
-      int k = 0;
-      if (i>5) {
-        j = i-6;
-        k = 1;
-      }
-      else {
-        j = i;
-        k = 0;
-      }
-      circle(colorPos[0]+k*72, colorPos[1]+j*colorGab, colorSize);
+      stroke(0, 1);
+      circle(p[0], p[1], colorSize);  
+
     }
+
   }
   // 저장
-  image(saveImg, width - 128, height-128);
+  image(saveImg, width - SAVE_W, height - SAVE_H, SAVE_W, SAVE_H);
   // 뒤로
-  image(backImg, 24, 24);
+  image(backImg, BACK_X, BACK_Y, BACK_W, BACK_H);
+
+  popStyle();
+
 }
 
 void handleCreatorMouse() {
-  if (mouseHober(width - 128, height-128, 64, 64)) { // 저장
+
+  if (mouseHober(width - SAVE_W, height - SAVE_H, SAVE_W, SAVE_H)) { // 저장
     PImage newStickerImg = stickerCanvas.get(); // 캔버스를 PImage로 변환
     cursor(ARROW);
     String sticker_name = year() + month() + day() + "_" + hour() + minute() + second();
     Sticker newSticker = new Sticker(0, 0, newStickerImg);  // 스티커 객체 생성
     stickerLibrary.add(newSticker); // 라이브러리 ArrayList에 추가
     newStickerImg.save("data/sticker/"+sticker_name +".png");
-    currentScreen = sticker_library; // 라이브러리 화면으로
+
+    switchScreen(sticker_library);
+    return;
+
   }
-  if (mouseHober(24,24, 64, 64)) { // 뒤로가기
-    currentScreen = sticker_library; // 라이브러리 화면으로
+  if (mouseHober(BACK_X, BACK_Y, BACK_W, BACK_H)) { // 뒤로가기
+    switchScreen(menu_screen);
+    return;
   }
   // 도구 선택
     for (int i = 0; i < 6; i++) {
@@ -230,12 +255,14 @@ void handleCreatorMouse() {
         }
     }
   // 색상 선택
+    // 색상 선택 (클릭 시에만 동작)
     for (int i = 0; i < palleteColor.length; i++) {
-      // 마우스와 색상 원 중심 사이의 거리
-      float d = dist(mouseX, mouseY, colorPos[0], colorPos[1] + i * colorGab);
-      if (d < colorSize / 2) {  // 거리가 반지름보다 작을경우
+      int[] p = new int[2];
+      paletteCenter(i, p);                         // ✅ 그릴 때와 동일 좌표
+      float d2 = dist(mouseX, mouseY, p[0], p[1]); // 중심 거리
+      if (d2 < colorSize / 2.0f) {
         selectedColor = palleteColor[i];
-        return; // 색상이 선택되었으면 함수 종료
+        return;
       }
     }
     // 캔버스 내에서 도형 그리기를 시작하는지 확인

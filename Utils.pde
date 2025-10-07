@@ -67,3 +67,13 @@ public class rectButton {
   }
 
 }
+
+void paletteCenter(int i, int[] outXY) {
+
+  int col = (i > 5) ? 1 : 0;          
+  int row = (i > 5) ? (i - 6) : i;    
+
+  outXY[0] = colorPos[0] + col * 72;                
+  outXY[1] = colorPos[1] + row * (int)colorGab;     
+
+}
