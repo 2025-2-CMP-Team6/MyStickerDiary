@@ -1,8 +1,10 @@
 GUIController c;
 IFButton b1;
 IFLabel l;
+PImage cursor;
 
 boolean isButtonPressed;
+boolean pressedOnNameBtn = false;
 
 public void drawMenuScreen() {
 
@@ -23,9 +25,11 @@ public void drawMenuScreen() {
         if (abs(menuTargetScrollX - menuScrollX) < 0.5) {
             menuScrollX = menuTargetScrollX;
         }
-        
-  }
+    
+    }
 
+    // 추가 버튼 만들고 싶으실 때
+    // push-popMatrix에서 빼면 드래그 영향 안받아요! 고정됩니다.
     pushMatrix();
     
     translate(-menuScrollX, 0);
@@ -37,10 +41,46 @@ public void drawMenuScreen() {
 
     popMatrix();
 
+    nameButton.render();
+
+    boolean hoverScrollable =
+      mouseHober(worldMouseX(), worldMouseY(),
+                dsButton.position_x, dsButton.position_y, dsButton.width, dsButton.height) ||
+      mouseHober(worldMouseX(), worldMouseY(),
+                slButton.position_x, slButton.position_y, slButton.width, slButton.height) ||
+      mouseHober(worldMouseX(), worldMouseY(),
+                ddButton.position_x, ddButton.position_y, ddButton.width, ddButton.height) ||
+      mouseHober(worldMouseX(), worldMouseY(),
+                dlButton.position_x, dlButton.position_y, dlButton.width, dlButton.height);
+
+
+    boolean hoverFixed =
+      mouseHober(mouseX, mouseY,
+                nameButton.position_x, nameButton.position_y, nameButton.width, nameButton.height);
+
+
+    if (hoverScrollable || hoverFixed) {
+      image(cursor, mouseX, mouseY, 50, 50);
+    }
+
+    if(isNameEntered) {
+      text("NAME : " + username, NAME_X + NAME_W / 2, NAME_Y + NAME_H + 20);
+    }
+
 }
 
 public void handleMenuMousePressed() {
+  
+  if (hitScreen(nameButton, mouseX, mouseY)) {
 
+    pressedOnNameBtn = true;
+    isMenuDragging = false;  
+    totalDragDist = 0;
+    return;
+
+  }
+
+  pressedOnNameBtn = false;
   isMenuDragging = true;
   dragStartX = mouseX;
   dragStartScroll = menuScrollX;
@@ -48,11 +88,11 @@ public void handleMenuMousePressed() {
 
 }
 
-
 public void handleMenuDragged() {
 
+  if (pressedOnNameBtn) return;  
   if (!isMenuDragging) return;
-  float dx = mouseX - dragStartX;            
+  float dx = mouseX - dragStartX;
   totalDragDist = max(totalDragDist, abs(dx));
   menuScrollX = constrain(dragStartScroll - dx, 0, PAGE_WIDTH);
 
@@ -60,14 +100,20 @@ public void handleMenuDragged() {
 
 public void handleMenuReleased() {
 
+  if (pressedOnNameBtn) {
+    
+    if (totalDragDist < 10) currentScreen = name_screen;
+    pressedOnNameBtn = false;
+    return;
+
+  }
+
   if (!isMenuDragging) return;
   isMenuDragging = false;
 
   if (totalDragDist < 10) {
-
     handleMenuTap();
     return;
-
   }
 
   menuTargetScrollX = (menuScrollX > PAGE_WIDTH * 0.5f) ? PAGE_WIDTH : 0;
@@ -80,33 +126,16 @@ private void handleMenuTap() {
   float wx = worldMouseX();
   float wy = worldMouseY();
 
-  if (hit(dsButton, wx, wy)) {
+  if (hit(dsButton, wx, wy)) { currentScreen = making_sticker;  return; }
+  if (hit(slButton, wx, wy)) { currentScreen = sticker_library; return; }
+  if (hit(ddButton, wx, wy)) { currentScreen = drawing_diary;   return; }
+  if (hit(dlButton, wx, wy)) { currentScreen = diary_library;   return; }
 
-    currentScreen = making_sticker;
+  if (hitScreen(nameButton, mouseX, mouseY)) {
+    currentScreen = name_screen;
     return;
-    
   }
 
-  if (hit(slButton, wx, wy)) {
-
-    currentScreen = sticker_library;
-    return;
-
-  }
-
-  if (hit(ddButton, wx, wy)) {
-
-    currentScreen = drawing_diary;
-    return;
-
-  }
-
-  if (hit(dlButton, wx, wy)) {
-
-    currentScreen = diary_library;
-    return;
-
-  }
 }
 
 private boolean hit(rectButton b, float wx, float wy) {
@@ -114,4 +143,9 @@ private boolean hit(rectButton b, float wx, float wy) {
   return (wx > b.position_x && wx < b.position_x + b.width &&
           wy > b.position_y && wy < b.position_y + b.height);
           
+}
+
+private boolean hitScreen(rectButton b, float sx, float sy) {
+  return (sx > b.position_x && sx < b.position_x + b.width &&
+          sy > b.position_y && sy < b.position_y + b.height);
 }

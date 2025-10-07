@@ -70,9 +70,9 @@ void drawLibrary() {
   }
   
   void handleLibraryMouse() {
-    // 뒤로가기버튼
+    // 일기장으로 버튼
     if (mouseX > width - 175 && mouseX < width - 25 && mouseY > 25 && mouseY < 75) {
-      currentScreen = diary_library;
+      currentScreen = drawing_diary;
       return;
     }
     

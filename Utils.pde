@@ -2,6 +2,11 @@
 boolean mouseHober(float x, float y, float w, float h) {
     return ((mouseY > y && mouseY < y+h) && (mouseX > x && mouseX < x+w)); }
 
+
+boolean mouseHober(float mx, float my, float x, float y, float w, float h) {
+  return ((my > y && my < y+h) && (mx > x && mx < x+w));
+}
+
 public class rectButton {
 
   int position_x, position_y, width, height;
@@ -13,6 +18,7 @@ public class rectButton {
   int labelSize = 32;
 
   boolean isButtonPressing = false;
+  boolean useShadow = true;
 
   rectButton(int x, int y, int w, int h, color c) {
 
@@ -26,6 +32,8 @@ public class rectButton {
 
   }
 
+  public void setShadow(boolean on) { useShadow = on; }
+
   public void rectButtonText(String message, int textSize) {
 
     textLabel = message;
@@ -34,12 +42,12 @@ public class rectButton {
   }
 
   public void render() {
-
     int shadow = 16;
-
-    fill(0);
-    noStroke();
-    rect(position_x + shadow, position_y + shadow, width, height);
+    if (useShadow) {
+      fill(0);
+      noStroke();
+      rect(position_x + shadow, position_y + shadow, width, height);
+    }
 
     fill(cl);
     noStroke();
@@ -49,7 +57,6 @@ public class rectButton {
     textAlign(CENTER, CENTER);
     textSize(labelSize);
     text(textLabel, position_x + width/2, position_y + height/2);
-
   }
 
   public boolean isMouseOverButton() {

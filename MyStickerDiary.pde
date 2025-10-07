@@ -8,6 +8,7 @@ final int making_sticker = 2;
 final int sticker_library = 3;
 final int drawing_diary = 4;
 final int diary_library = 5;
+final int name_screen = 6;
 
 
 
@@ -31,6 +32,7 @@ PFont font;
 
 // 메뉴 버튼 오브젝트를 한번씩만 만들어줘야 하는 이슈가 발생해서 center control 파일에 선언합니다.
 rectButton dsButton, slButton, ddButton, dlButton;
+rectButton nameButton;
 
 // 메뉴 스와이프 기능 관련 전역 변수입니다.
 final int PAGE_WIDTH = 1280;        
@@ -41,12 +43,17 @@ float dragStartX = 0;
 float dragStartScroll = 0;
 float totalDragDist = 0;
 
-final int MENU_TOP = 120;        
+final int MENU_TOP = 200;        
 final int PAGE_PADDING_X = 120;   
 final int MENU_GUTTER_X = 80;     
+final int NAME_X = 1100;
+final int NAME_Y = 50;
 
 final int BTN_W = (PAGE_WIDTH - PAGE_PADDING_X*2 - MENU_GUTTER_X) / 2;
-final int BTN_H = 360;           
+final int BTN_H = 360;      
+
+final int NAME_W = 100;
+final int NAME_H = 50;
 
 float worldMouseX() { return mouseX + menuScrollX; }
 float worldMouseY() { return mouseY; } 
@@ -56,7 +63,9 @@ void initMenuButtons() {
 
   int x1 = PAGE_PADDING_X;
   int x2 = PAGE_PADDING_X + BTN_W + MENU_GUTTER_X;
+  int x_name = NAME_X;
   int y  = MENU_TOP;
+  int y_name = NAME_Y;
 
   dsButton = new rectButton(x1, y, BTN_W, BTN_H, #FEFD48);
   dsButton.rectButtonText("Drawing\nSticker", 50);
@@ -70,6 +79,9 @@ void initMenuButtons() {
   dlButton = new rectButton(x2 + PAGE_WIDTH, y, BTN_W, BTN_H, #FEFD48);
   dlButton.rectButtonText("Diary\nLibrary", 50);
 
+  nameButton = new rectButton(NAME_X, NAME_Y, NAME_W, NAME_H, #3FE87F);
+  nameButton.rectButtonText("Name", 20);
+  nameButton.setShadow(false);
 }
 
 void setup() {
@@ -98,6 +110,9 @@ void setup() {
 
     font = createFont("data/fonts/nanumHandWriting_babyLove.ttf", 24);
 
+    // 버튼 창 호버링 시 나오는 아이콘 로드입니다.
+    cursor = loadImage("data/images/name_edit.png");
+
     initMenuButtons();
 }
 
@@ -122,6 +137,9 @@ void draw() {
         break;
       case diary_library:
         drawDiaryLibrary();
+        break;
+      case name_screen:
+        drawNameScreen();
         break;
       default :
       break;
