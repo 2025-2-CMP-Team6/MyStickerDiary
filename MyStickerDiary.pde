@@ -26,6 +26,7 @@ ArrayList<Sticker> placedStickers; // 일기장에 붙인 스티커
 
 Sticker currentlyDraggedSticker = null; // 현재 드래그 중인 스티커
 float offsetX, offsetY; // 스티커를 잡은 지점과 스티커 중심 사이의 간격
+float defaultStickerSize = 100.0; // 스티커의 기본 크기
 
 // 폰트 변수 선언
 PFont font;
@@ -117,8 +118,8 @@ void setup() {
       sadStickerImg = loadImage("data/images/sad.png");
 
       // 불러온 이미지로 스티커 객체를 만들어 보관함에 추가
-      stickerLibrary.add(new Sticker(0, 0, happyStickerImg));
-      stickerLibrary.add(new Sticker(0, 0, sadStickerImg));
+      stickerLibrary.add(new Sticker(0, 0, happyStickerImg, defaultStickerSize));
+      stickerLibrary.add(new Sticker(0, 0, sadStickerImg, defaultStickerSize));
       setupCreator();
 
     // 실행 창 이름 지정

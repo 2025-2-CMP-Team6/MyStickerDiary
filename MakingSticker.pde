@@ -242,7 +242,7 @@ void handleCreatorMouse() {
     PImage newStickerImg = stickerCanvas.get(); // 캔버스를 PImage로 변환
     cursor(ARROW);
     String sticker_name = year() + month() + day() + "_" + hour() + minute() + second();
-    Sticker newSticker = new Sticker(0, 0, newStickerImg);  // 스티커 객체 생성
+    Sticker newSticker = new Sticker(0, 0, newStickerImg, defaultStickerSize);  // 스티커 객체 생성
     stickerLibrary.add(newSticker); // 라이브러리 ArrayList에 추가
     newStickerImg.save("data/sticker/"+sticker_name +".png");
 

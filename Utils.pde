@@ -84,3 +84,7 @@ void paletteCenter(int i, int[] outXY) {
   outXY[1] = colorPos[1] + row * (int)colorGab;     
 
 }
+
+PVector midpoint(float x1, float y1, float x2, float y2) {
+  return new PVector((x1 + x2) / 2, (y1 + y2) / 2);
+}
