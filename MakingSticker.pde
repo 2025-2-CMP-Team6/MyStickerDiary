@@ -198,9 +198,7 @@ void drawCreator() {
       circle(p[0], p[1], colorSize);  
 
     }
-<<<<<<< Updated upstream
 
-=======
     if (mouseHober(colorPos[0]-(colorGab/2), colorPos[1]-(colorGab/2), 2*colorGab, colorGab*6)) {
       cursor(spoideCursor,0,30);
     }
@@ -228,7 +226,6 @@ void drawCreator() {
           cursor(ARROW);
       }
     }
->>>>>>> Stashed changes
   }
   // 저장
   image(saveImg, width - SAVE_W, height - SAVE_H, SAVE_W, SAVE_H);
@@ -253,15 +250,9 @@ void handleCreatorMouse() {
     return;
 
   }
-<<<<<<< Updated upstream
   if (mouseHober(BACK_X, BACK_Y, BACK_W, BACK_H)) { // 뒤로가기
     switchScreen(menu_screen);
     return;
-=======
-  if (mouseHober(24,24, 64, 64)) { // 뒤로가기
-    currentScreen = sticker_library; // 라이브러리 화면으로
-    cursor(ARROW);
->>>>>>> Stashed changes
   }
   // 도구 선택
     for (int i = 0; i < 6; i++) {
@@ -298,26 +289,10 @@ void handleCreatorMouse() {
   // 색상 선택
     // 색상 선택 (클릭 시에만 동작)
     for (int i = 0; i < palleteColor.length; i++) {
-<<<<<<< Updated upstream
       int[] p = new int[2];
       paletteCenter(i, p);                         // ✅ 그릴 때와 동일 좌표
       float d2 = dist(mouseX, mouseY, p[0], p[1]); // 중심 거리
       if (d2 < colorSize / 2.0f) {
-=======
-      int j = 0;
-      int k = 0;
-      if (i>5) {
-        j = i-6;
-        k = 1;
-      }
-      else {
-        j = i;
-        k = 0;
-      }
-      // 마우스와 색상 원 중심 사이의 거리
-      float d = dist(mouseX, mouseY, colorPos[0]+k*72, colorPos[1]+j*colorGab);
-      if (d < colorSize / 2) {  // 거리가 반지름보다 작을경우
->>>>>>> Stashed changes
         selectedColor = palleteColor[i];
         return;
       }

@@ -74,8 +74,6 @@ public class rectButton {
   }
 }
 
-<<<<<<< Updated upstream
-}
 
 void paletteCenter(int i, int[] outXY) {
 
@@ -86,5 +84,3 @@ void paletteCenter(int i, int[] outXY) {
   outXY[1] = colorPos[1] + row * (int)colorGab;     
 
 }
-=======
->>>>>>> Stashed changes
