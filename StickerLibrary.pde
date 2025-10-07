@@ -60,9 +60,11 @@ void drawLibrary() {
       
       // 마우스 영역 확인
       if (mouseHober(s.x-newW/2, s.y-newH/2, newW, newH)) {
-        text("호버링",mouseX,mouseY);
-        fill(255,255,255,1);
+        stroke(0);
+        strokeWeight(3);
+        noFill();
         rect(s.x, s.y, newW, newH);
+        strokeWeight(1);
         fill(0);
       }
       
@@ -103,7 +105,8 @@ void drawLibrary() {
       if (mouseHober(s.x-newW/2, s.y-newH/2, newW, newH)) {
         Sticker newSticker = new Sticker(width/2, height/2, s.img);
         placedStickers.add(newSticker);
-        //currentScreen = diary_library;
+        currentScreen = drawing_diary;
+        selectedSticker = newSticker;
         break; 
       }
     }

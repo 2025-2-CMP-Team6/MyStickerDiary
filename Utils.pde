@@ -1,6 +1,13 @@
 // 마우스 호버링
-boolean mouseHober(float x, float y, float w, float h) {
-    return ((mouseY > y && mouseY < y+h) && (mouseX > x && mouseX < x+w)); }
+public boolean mouseHober(float x, float y, float w, float h) {
+    return ((mouseY > y && mouseY < y+h) && (mouseX > x && mouseX < x+w));
+}
+public float median(float a, float b, float c) {
+  return max(a, min(b,c));
+}
+
+
+
 
 
 boolean mouseHober(float mx, float my, float x, float y, float w, float h) {
@@ -65,7 +72,9 @@ public class rectButton {
           && mouseY > position_y && mouseY < position_y + height;
 
   }
+}
 
+<<<<<<< Updated upstream
 }
 
 void paletteCenter(int i, int[] outXY) {
@@ -77,3 +86,5 @@ void paletteCenter(int i, int[] outXY) {
   outXY[1] = colorPos[1] + row * (int)colorGab;     
 
 }
+=======
+>>>>>>> Stashed changes

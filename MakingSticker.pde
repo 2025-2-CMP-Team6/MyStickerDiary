@@ -3,14 +3,16 @@
 PGraphics stickerCanvas; // 캔버스 
 int canvasSize = 680; // 정사각형 캔버스 크기
 int canvasX, canvasY; // 캔버스가 그려질 화면상의 위치
+
 // 기능 아이콘
 PImage saveImg;  // 저장 이미지
 PImage backImg;  // 뒤로가기 이미지
 
 // 그리기 도구
-String tool = "brush"; // 현재 선택된 도구
+String tool = ""; // 현재 선택된 도구
 float toolGab = 72; // 도구 간격
 int toolPos[] = {128,104};  // 도구 좌표
+String posTool;  // 이전 도구
 
 PImage brushImg;  // 브러쉬 이미지
 PImage paintImg;  // 페인트 이미지
@@ -19,6 +21,8 @@ PImage eraserImg;  // 지우개 이미지
 PImage brushCursor;  // 브러쉬 커서
 PImage paintCursor;  // 페인트 커서
 PImage eraserCursor; // 지우개 커서
+PImage spoideCursor;  // 스포이드 커서
+
 
 color selectedColor = color(0); // 현재 선택된 그리기 색상
 // 브러쉬
@@ -63,7 +67,7 @@ void setupCreator() {
   stickerCanvas.clear();
   stickerCanvas.endDraw();
   // 버튼 아이콘
-saveImg = loadImage("data/images/SaveIcon.png");
+saveImg = loadImage("data/images/saveIcon.png");
 backImg = loadImage("data/images/backIcon.png");
 
   // 도구 아이콘
@@ -75,9 +79,10 @@ backImg = loadImage("data/images/backIcon.png");
  brushCursor = loadImage("data/images/brush.png");
  paintCursor = loadImage("data/images/paint.png");
  eraserCursor = loadImage("data/images/eraser.png");
+ spoideCursor = loadImage("data/images/spoide.png");
  lineCursor = createGraphics(32,32);
- lineCursor.beginDraw();
  lineCursor.noSmooth();
+ lineCursor.beginDraw();
  lineCursor.stroke(0);
  lineCursor.strokeWeight(1);
  lineCursor.line(0,2,4,2);
@@ -86,8 +91,8 @@ backImg = loadImage("data/images/backIcon.png");
  lineCursor.endDraw();
 
  rectCursor = createGraphics(32,32);
- rectCursor.beginDraw();
  rectCursor.noSmooth();
+ rectCursor.beginDraw();
  rectCursor.stroke(0);
  rectCursor.strokeWeight(1);
  rectCursor.line(0,2,4,2);
@@ -96,8 +101,8 @@ backImg = loadImage("data/images/backIcon.png");
  rectCursor.endDraw();
  
  circleCursor = createGraphics(32,32);
- circleCursor.beginDraw();
  circleCursor.noSmooth();
+ circleCursor.beginDraw();
  circleCursor.stroke(0);
  circleCursor.strokeWeight(1);
  circleCursor.line(0,2,4,2);
@@ -106,8 +111,8 @@ backImg = loadImage("data/images/backIcon.png");
  circleCursor.endDraw();
 
  sizeCursor = createGraphics(8,8);
- sizeCursor.beginDraw();
  sizeCursor.noSmooth(); 
+ sizeCursor.beginDraw();
  sizeCursor.noStroke(); 
  sizeCursor.fill(0);
  sizeCursor.triangle(3,0, 0,3, 3,7);
@@ -137,7 +142,7 @@ void drawCreator() {
   image(eraserImg, toolPos[0], toolPos[1] + toolGab*2);
   fill(255);
   stroke(0);
-  strokeWeight(1);
+  strokeWeight(3);
   rectMode(CENTER);
   line(toolPos[0]+8, toolPos[1]+toolGab*3+8,toolPos[0]+48,toolPos[1]+toolGab*3+48); // 선
   rect(toolPos[0]+32, toolPos[1]+toolGab*4+32, 48, 48); // 사각형
@@ -193,7 +198,37 @@ void drawCreator() {
       circle(p[0], p[1], colorSize);  
 
     }
+<<<<<<< Updated upstream
 
+=======
+    if (mouseHober(colorPos[0]-(colorGab/2), colorPos[1]-(colorGab/2), 2*colorGab, colorGab*6)) {
+      cursor(spoideCursor,0,30);
+    }
+    else {
+      switch (tool) {
+        case "brush":
+          cursor(brushCursor,0,0);
+          break;
+        case "paint":
+          cursor(paintCursor,0,0);
+          break;
+        case "eraser":
+        cursor(eraserCursor,0,31);
+          break;
+        case "line":
+          cursor(lineCursor.get(),2,2);
+          break;
+        case "rect":
+          cursor(rectCursor.get(),2,2);
+          break;
+        case "circle":
+          cursor(circleCursor.get(),2,2);
+          break;
+        default:
+          cursor(ARROW);
+      }
+    }
+>>>>>>> Stashed changes
   }
   // 저장
   image(saveImg, width - SAVE_W, height - SAVE_H, SAVE_W, SAVE_H);
@@ -218,9 +253,15 @@ void handleCreatorMouse() {
     return;
 
   }
+<<<<<<< Updated upstream
   if (mouseHober(BACK_X, BACK_Y, BACK_W, BACK_H)) { // 뒤로가기
     switchScreen(menu_screen);
     return;
+=======
+  if (mouseHober(24,24, 64, 64)) { // 뒤로가기
+    currentScreen = sticker_library; // 라이브러리 화면으로
+    cursor(ARROW);
+>>>>>>> Stashed changes
   }
   // 도구 선택
     for (int i = 0; i < 6; i++) {
@@ -236,7 +277,7 @@ void handleCreatorMouse() {
               break;
             case 2:
                 tool = "eraser";
-                cursor(eraserCursor,0,0);
+                cursor(eraserCursor,0,31);
                 break;
             case 3:
                 tool = "line";
@@ -257,10 +298,26 @@ void handleCreatorMouse() {
   // 색상 선택
     // 색상 선택 (클릭 시에만 동작)
     for (int i = 0; i < palleteColor.length; i++) {
+<<<<<<< Updated upstream
       int[] p = new int[2];
       paletteCenter(i, p);                         // ✅ 그릴 때와 동일 좌표
       float d2 = dist(mouseX, mouseY, p[0], p[1]); // 중심 거리
       if (d2 < colorSize / 2.0f) {
+=======
+      int j = 0;
+      int k = 0;
+      if (i>5) {
+        j = i-6;
+        k = 1;
+      }
+      else {
+        j = i;
+        k = 0;
+      }
+      // 마우스와 색상 원 중심 사이의 거리
+      float d = dist(mouseX, mouseY, colorPos[0]+k*72, colorPos[1]+j*colorGab);
+      if (d < colorSize / 2) {  // 거리가 반지름보다 작을경우
+>>>>>>> Stashed changes
         selectedColor = palleteColor[i];
         return;
       }
