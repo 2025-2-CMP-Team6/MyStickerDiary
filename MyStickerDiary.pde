@@ -1,5 +1,7 @@
 import interfascia.*;
 import uibooster.*;
+import java.io.File;
+import java.util.Arrays;
 
 // 화면 통제 변수 선언
 final int start_screen = 0;
@@ -112,14 +114,6 @@ void setup() {
         imageMode(CENTER);
       stickerLibrary = new ArrayList<Sticker>();
       placedStickers = new ArrayList<Sticker>();
-      
-      // data 폴더에서 이미지 불러오기
-      happyStickerImg = loadImage("data/images/happy.png");
-      sadStickerImg = loadImage("data/images/sad.png");
-
-      // 불러온 이미지로 스티커 객체를 만들어 보관함에 추가
-      stickerLibrary.add(new Sticker(0, 0, happyStickerImg, defaultStickerSize));
-      stickerLibrary.add(new Sticker(0, 0, sadStickerImg, defaultStickerSize));
       setupCreator();
 
     // 실행 창 이름 지정
@@ -134,6 +128,35 @@ void setup() {
     cursorImage = loadImage("data/images/name_edit.png");
 
     initMenuButtons();
+    loadStickersFromFolder("sticker");
+}
+
+void loadStickersFromFolder(String folderPath) {
+  File folder = new File(dataPath(folderPath));
+  if (folder.exists() && folder.isDirectory()) {
+    File[] files = folder.listFiles();
+    if (files != null) {
+      Arrays.sort(files); // 파일 이름순으로 정렬
+      for (File file : files) {
+        if (file.isFile()) {
+          String fileName = file.getName().toLowerCase();
+          // .DS_Store 같은 시스템 파일을 제외하고 이미지 파일만 로드하도록 수정
+          if (fileName.endsWith(".png") || fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") || fileName.endsWith(".gif")) {
+            String filePath = file.getAbsolutePath();
+            PImage img = loadImage(filePath);
+            stickerLibrary.add(new Sticker(0, 0, img, defaultStickerSize));
+            println("file load success :"+filePath);
+          }
+        }
+      }
+    }
+    else {
+      println("file load fail");
+    }
+  }
+  else {
+        println("Folder not found: " + folderPath);
+    }
 }
 
 
