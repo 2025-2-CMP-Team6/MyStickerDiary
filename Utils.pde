@@ -16,7 +16,7 @@ boolean mouseHober(float mx, float my, float x, float y, float w, float h) {
 
 public class rectButton {
 
-  int position_x, position_y, width, height;
+  int position_x, position_y, width, height, position_x_r, position_y_r;
   int px;
   int py;
   color cl;
@@ -29,6 +29,8 @@ public class rectButton {
 
   rectButton(int x, int y, int w, int h, color c) {
 
+    pushStyle();
+    rectMode(CORNER);
     position_x = x;
     position_y = y;
     width = w;
@@ -36,7 +38,10 @@ public class rectButton {
     cl = c;
     px = position_x;
     py = position_y;
-
+    position_x_r = position_x + width;
+    position_y_r = position_y + height;
+    popStyle();
+    
   }
 
   public void setShadow(boolean on) { useShadow = on; }
@@ -60,10 +65,14 @@ public class rectButton {
     noStroke();
     rect(position_x, position_y, width, height);
 
+
+    pushStyle();
     fill(0);
     textAlign(CENTER, CENTER);
     textSize(labelSize);
     text(textLabel, position_x + width/2, position_y + height/2);
+    popStyle();
+
   }
 
   public boolean isMouseOverButton() {
@@ -72,6 +81,14 @@ public class rectButton {
           && mouseY > position_y && mouseY < position_y + height;
 
   }
+
+  /*public boolean isMousePressed() {
+
+  }
+
+  public boolean isMouseReleased() {
+
+  }*/
 }
 
 

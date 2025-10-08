@@ -2,6 +2,7 @@ import interfascia.*;
 import uibooster.*;
 import java.io.File;
 import java.util.Arrays;
+import java.awt.Font;
 import g4p_controls.*;
 
 // 화면 통제 변수 선언
@@ -66,12 +67,17 @@ final int NAME_W = 100;
 final int NAME_H = 50;
 
 void textAreaUI() {
+
   if(textArea == null) {
+
     textArea = new GTextArea(this, 0, textFieldY, width, height - textFieldY, G4P.SCROLLBARS_VERTICAL_ONLY);
     textArea.setOpaque(true);
     textArea.setVisible(false);
     textArea.setText("");
+    textArea.setFont(new Font("Dialog", Font.PLAIN, 24));
+
   }
+
 }
 
 void switchScreen(int next) {
@@ -131,10 +137,24 @@ void initMenuButtons() {
   nameButton.setShadow(false);
 }
 
+void ensureDiaryUI() {
+  if(stickerStoreButton == null) {
+    stickerStoreButton = new rectButton(20, 30, 200, 60, #c8dcff);
+    stickerStoreButton.rectButtonText("Sticker storage", 25);
+    stickerStoreButton.setShadow(false);
+  }
+
+  if (finishButton == null) {
+    finishButton = new rectButton(1100, textFieldY - 60, 180, 60, #F9E4B7);
+    finishButton.rectButtonText("Finish", 20);
+    finishButton.setShadow(false);
+  }
+}
+
 void setup() {
     size(1280, 720);
-    PImage happyStickerImg;
-    PImage sadStickerImg;
+    // PImage happyStickerImg;
+    // PImage sadStickerImg;
     
     imageMode(CENTER);
     stickerLibrary = new ArrayList<Sticker>();

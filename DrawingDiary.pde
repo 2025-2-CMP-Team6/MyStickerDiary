@@ -7,20 +7,30 @@ int handleSize = 16; // 조절점 크기
 int isResizing = -1; // 크기 조절 중인지 확인
 PVector resizeAnchor = new PVector(); // 크기 조절 시 고정점
 
+rectButton stickerStoreButton;
+rectButton finishButton;
+boolean storagePressed = false;
+boolean finishPressed = false;
+
 
 void drawDiary() {
+
+  pushStyle();
   background(255, 250, 220);
   rectMode(TOP);
   fill(125,125,125);
   rect(0, textFieldY, width, height);
-  fill(200, 220, 255);
+  // 기존 "스티커보관함" 버튼 프레스 & 릴리스 최적화를 위해
+  // rectButton으로 다시 만들었습니다! 양해 부탁드립니다.
+  /*fill(200, 220, 255);
   rect(20, 30, 200, 60);
   rectMode(CENTER);
   rect(120, 60, 200, 60);
   fill(0);
   textAlign(CENTER, CENTER);
   textSize(25);
-  text("스티커 보관함", 120, 60);
+  text("스티커 보관함", 120, 60);*/
+  
   // 일기장에 붙여진 스티커들을 모두 그리기
   for (Sticker s : placedStickers) {
     s.display();
@@ -38,14 +48,20 @@ void drawDiary() {
     }
     popStyle();
   }
+  popStyle();
+
+  ensureDiaryUI();
+  finishButton.render();
+  stickerStoreButton.render();
+
 }
   
 void handleDiaryMouse() { // 마우스를 처음 눌렀을 때 호출
-  if (mouseX > 20 && mouseX < 220 && mouseY > 30 && mouseY < 90) {
-    selectedSticker = null;
-    switchScreen(sticker_library);
-    return; // 버튼을 눌렀으면 스티커 잡기 로직은 실행하지 않음
-  }
+
+
+  storagePressed = mouseHober(stickerStoreButton.position_x, stickerStoreButton.position_y,
+                              stickerStoreButton.width, stickerStoreButton.height);
+
   // 스티커 위에서 마우스를 눌렀는지 확인
   isResizing = -1; // 리사이징 상태 초기화
   selectedSticker = null;
@@ -88,6 +104,12 @@ void handleDiaryMouse() { // 마우스를 처음 눌렀을 때 호출
       break;
     }
   }
+  
+  finishPressed = mouseHober(
+    finishButton.position_x, finishButton.position_y,
+    finishButton.width, finishButton.height
+  );
+  
 }
   
 void handleDiaryDrag() {  // 드래그하는 동안 호출
@@ -142,8 +164,21 @@ void handleDiaryDrag() {  // 드래그하는 동안 호출
   
 // 마우스를 놓을 때 호출
 void handleDiaryRelease() {
+  
   currentlyDraggedSticker = null; // 스티커 놓기
     isResizing = -1;
+
+   if (finishPressed && mouseHober(
+        finishButton.position_x, finishButton.position_y,
+        finishButton.width,      finishButton.height)) { switchScreen(diary_library); }
+
+   if (storagePressed && mouseHober(
+        stickerStoreButton.position_x, stickerStoreButton.position_y,
+        stickerStoreButton.width, stickerStoreButton.height)) { switchScreen(sticker_library); }
+
+  finishPressed = false;
+  storagePressed = false;
+
 }
 
 
