@@ -75,23 +75,35 @@ public class rectButton {
   }
 
   public void render() {
-
+    // 부드러운 보간 (가볍게, 과도한 진동 방지)
     float target = (armed && pressedInside) ? 1.0f : 0.0f;
-    pressAnim += (target - pressAnim) * 0.25f;   
+    // 선형 보간 사용 — overshoot 줄이고 깜빡임 완화
+    pressAnim = pressAnim + (target - pressAnim) * 0.20f;
+    pressAnim = constrain(pressAnim, 0, 1);
 
-    // 시각 효과 파라미터
+    // 시각 파라미터
     int baseShadow = 16;
-    int faceOffset = round(baseShadow * pressAnim);       // 눌리면 아래/오른쪽 이동
-    int shadowOffset = max(0, baseShadow - faceOffset);   // 그림자 길이 줄이기
-    color faceColor = lerpColor(cl, color(0), 0.18f * pressAnim); // 약간 어둡게
+    int minShadowOffset = 2;       // 완전 눌려도 최소한 남길 그림자 거리
+    int maxFaceOffset   = baseShadow - minShadowOffset;
+
+    // 면이 내려갈 거리(완전 눌려도 baseShadow에 딱 닿지 않게)
+    float faceOffset   = lerp(0, maxFaceOffset, pressAnim);
+    // 그림자는 반대로 짧아지되, 최소 오프셋은 유지
+    float shadowOffset = baseShadow - faceOffset; // 항상 >= minShadowOffset
+
+    // 그림자 투명도도 살짝 줄여주기(깜빡임 대신 자연스러운 약화)
+    int shadowAlpha = (int) lerp(110, 40, pressAnim);
+
+    // 버튼 면 색도 살짝 어둡게
+    color faceColor = lerpColor(cl, color(0), 0.12f * pressAnim);
 
     pushStyle();
     rectMode(CORNER);
     noStroke();
 
-    // 그림자
-    if (useShadow && shadowOffset > 0) {
-      fill(0);
+    // 그림자: 항상 그리되, 오프셋/알파만 눌림에 따라 변화
+    if (useShadow) {
+      fill(0, shadowAlpha);
       rect(position_x + shadowOffset, position_y + shadowOffset, width, height);
     }
 
@@ -107,9 +119,10 @@ public class rectButton {
 
     popStyle();
 
-    // 우측/하단 좌표 업데이트(혹시 외부에서 쓰면 일관성 유지)
+    // 우측/하단 좌표 갱신(외부 참조 호환)
     position_x_r = position_x + width;
     position_y_r = position_y + height;
+    
   }
 
   public boolean isMouseOverButton() {
@@ -123,13 +136,6 @@ public class rectButton {
             my > position_y && my < position_y + height);
   }
 
-  /*public boolean isMousePressed() {
-
-  }
-
-  public boolean isMouseReleased() {
-
-  }*/
 }
 
 
