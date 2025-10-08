@@ -2,6 +2,9 @@ import interfascia.*;
 import uibooster.*;
 import java.io.File;
 import java.util.Arrays;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.awt.Font;
 import g4p_controls.*;
 
@@ -41,10 +44,14 @@ GTextField titleArea;  // 제목
 GTextArea textArea; // 내용
 float titlespace = 48;
 
+// 달력 
+Calendar calendar = Calendar.getInstance();
+
+
 // 메뉴 버튼 오브젝트를 한번씩만 만들어줘야 하는 이슈가 발생해서 center control 파일에 선언합니다.
 rectButton dsButton, slButton, ddButton, dlButton;
 rectButton nameButton;
-rectButton yearButton, monthButton, dayButton;
+rectButton dateButton;
 
 // 메뉴 스와이프 기능 관련 전역 변수입니다.
 final int PAGE_WIDTH = 1280;        
@@ -70,14 +77,8 @@ final int NAME_H = 50;
 final int DATE_W = 50;
 final int DATE_H = 30;
 
-final int YEAR_X = 20;
-final int YEAR_Y = 45;
-
-final int MONTH_X = 80;
-final int MONTH_Y = 45;
-
-final int DAY_X = 140;
-final int DAY_Y = 45;
+final int DATE_X = 140;
+final int DATE_Y = 45;
 
 
 void textAreaUI() {
@@ -161,23 +162,10 @@ void ensureDiaryUI() {
     finishButton.rectButtonText("Finish", 20);
     finishButton.setShadow(false);
   }
-
-  if(yearButton == null) {
-    yearButton = new rectButton(YEAR_X, YEAR_Y, DATE_W, DATE_H, #F6F7FB);
-    yearButton.rectButtonText("Year", 15);
-    yearButton.setShadow(false);
-  }
-
-  if(monthButton == null) {
-    monthButton = new rectButton(MONTH_X, MONTH_Y, DATE_W, DATE_H, #F6F7FB);
-    monthButton.rectButtonText("Month", 15);
-    monthButton.setShadow(false);
-  }
-
-  if(dayButton == null) {
-    dayButton = new rectButton(DAY_X, DAY_Y, DATE_W, DATE_H, #F6F7FB);
-    dayButton.rectButtonText("Day", 15);
-    dayButton.setShadow(false);
+  if(dateButton == null) {
+    dateButton = new rectButton(DATE_X, DATE_Y, DATE_W, DATE_H, #F6F7FB);
+    dateButton.rectButtonText("Date", 15);
+    dateButton.setShadow(false);
   }
 
 }

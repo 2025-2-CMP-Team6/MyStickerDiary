@@ -12,11 +12,18 @@ rectButton finishButton;
 boolean storagePressed = false;
 boolean finishPressed = false;
 
-boolean yearPressed = false;
-boolean monthPressed = false;
-boolean dayPressed = false;
+boolean isDatePickerVisible = false;
+Calendar datePickerCalendar; 
+int datePickerWidth = 300;
+int datePickerHeight = 280;
+int datePickerX;
+int datePickerY;
 
-String diary_year, diary_month, diary_day;
+boolean datePressed = false;
+
+int diary_day = calendar.get(Calendar.DAY_OF_MONTH);
+int diary_month = calendar.get(Calendar.MONTH) + 1;
+int diary_year = calendar.get(Calendar.YEAR);
 
 void drawDiary() {
 
@@ -54,17 +61,19 @@ void drawDiary() {
   ensureDiaryUI();
   finishButton.render();
   stickerStoreButton.render();
-  yearButton.render();
-  monthButton.render();
-  dayButton.render();
+  dateButton.render();
 
-  if(diary_year != null && diary_month != null && diary_day != null) {
-    
+  if(diary_year != -1 && diary_month != -1 && diary_day != -1) {
     pushStyle();
     textSize(30);
     fill(0);
     text("Date : " + diary_year + ". " + diary_month + ". " + diary_day, 200, 30);
     popStyle();
+  }
+
+  // 날짜 선택기(달력)가 활성화되어 있으면 그리기
+  if (isDatePickerVisible) {
+    drawDatePicker();
   }
 }
   
@@ -79,6 +88,12 @@ void updateTextUIVisibility() {
   
 }
 void handleDiaryMouse() { // 마우스를 처음 눌렀을 때 호출
+
+  // 날짜 선택기가 활성화되어 있으면, 다른 UI 요소와의 상호작용을 막습니다.
+  if (isDatePickerVisible) {
+    // 클릭 처리는 mouseReleased에서 하므로 여기서는 아무것도 하지 않고 반환합니다.
+    return;
+  }
 
   // 스티커 위에서 마우스를 눌렀는지 확인
   isResizing = -1; // 리사이징 상태 초기화
@@ -130,20 +145,10 @@ void handleDiaryMouse() { // 마우스를 처음 눌렀을 때 호출
     finishButton.position_x, finishButton.position_y,
     finishButton.width, finishButton.height
   );
-  
-  yearPressed = mouseHober(
-    yearButton.position_x, yearButton.position_y,
-    yearButton.width, yearButton.height
-  );
 
-  monthPressed = mouseHober(
-    monthButton.position_x, monthButton.position_y,
-    monthButton.width, monthButton.height
-  );
-
-  dayPressed = mouseHober(
-    dayButton.position_x, dayButton.position_y,
-    dayButton.width, dayButton.height
+  datePressed = mouseHober(
+    dateButton.position_x, dateButton.position_y,
+    dateButton.width, dateButton.height
   );
   
 }
@@ -201,6 +206,12 @@ void handleDiaryDrag() {  // 드래그하는 동안 호출
 // 마우스를 놓을 때 호출
 void handleDiaryRelease() {
   
+  // 날짜 선택기가 활성화되어 있으면, 날짜 선택기 관련 클릭만 처리합니다.
+  if (isDatePickerVisible) {
+    handleDatePickerMouseRelease();
+    return;
+  }
+
   currentlyDraggedSticker = null; // 스티커 놓기
     isResizing = -1;
 
@@ -212,44 +223,202 @@ void handleDiaryRelease() {
       stickerStoreButton.position_x, stickerStoreButton.position_y,
       stickerStoreButton.width, stickerStoreButton.height)) { switchScreen(sticker_library); }
 
-  if (yearPressed && mouseHober(
-      yearButton.position_x, yearButton.position_y,
-      yearButton.width, yearButton.height)) { openYearDialog(); }
-
-  if (monthPressed && mouseHober(
-      monthButton.position_x, monthButton.position_y,
-      monthButton.width, monthButton.height)) { openMonthDialog(); }
-
-  if (dayPressed && mouseHober(
-      dayButton.position_x, dayButton.position_y,
-      dayButton.width, dayButton.height)) { openDayDialog(); }
-  
+  if (datePressed && mouseHober(
+      dateButton.position_x, dateButton.position_y,
+      dateButton.width, dateButton.height)) { openDatePickerDialog(); }
 
   finishPressed = false;
   storagePressed = false;
-  yearPressed = false;
-  monthPressed = false;
-  dayPressed = false;
+  datePressed = false;
 
 }
 
-void openYearDialog() {
-
-  UiBooster booster = new UiBooster();
-  diary_year = booster.showTextInputDialog("Year");
-
+void openDatePickerDialog() {
+  if (datePickerCalendar == null) {
+    datePickerCalendar = (Calendar) calendar.clone();
+  } else {
+    // 열 때마다 현재 일기 날짜로 달력을 동기화
+    datePickerCalendar.setTime(calendar.getTime());
+  }
+  datePickerX = DATE_X;
+  datePickerY = DATE_Y+DATE_H;
+  isDatePickerVisible = true;
 }
 
-void openMonthDialog() {
+void drawDatePicker() {
+  pushStyle();
 
-  UiBooster booster = new UiBooster();
-  diary_month = booster.showTextInputDialog("Month");
+  fill(0, 150);
+  rect(0, 0, width, height);
+  textAlign(CENTER, CENTER);
+  rectMode(CORNER);
+  fill(245, 245, 245);
+  stroke(150);
+  strokeWeight(1);
+  rect(datePickerX, datePickerY, datePickerWidth, datePickerHeight, 8);
 
+  textAlign(CENTER, CENTER);
+  fill(0);
+  textSize(20);
+  String monthString;
+  switch (datePickerCalendar.get(Calendar.MONTH)) { // 달 string 으로
+    case 0:
+      monthString = "Jan";
+      break;
+    case 1:
+      monthString = "Feb";
+      break;
+    case 2:
+      monthString = "Mar";
+      break;
+    case 3:
+      monthString = "Apr";
+      break;
+    case 4:
+      monthString = "May";
+      break;
+    case 5:
+      monthString = "Jun";
+      break;
+    case 6:
+      monthString = "Jul";
+      break;
+    case 7:
+      monthString = "Aug";
+      break;
+    case 8:
+      monthString = "Sep";
+      break;
+    case 9:
+      monthString = "Oct";
+      break;
+    case 10:
+      monthString = "Nov";
+      break;
+    case 11:
+      monthString = "Dec";
+      break;
+    default:
+      monthString = "";
+      break;
+  }
+  text(datePickerCalendar.get(Calendar.YEAR) + " " + monthString, datePickerX + datePickerWidth / 2, datePickerY + 30);
+
+  // 화살표
+  textSize(24);
+  text("<", datePickerX + 30, datePickerY + 30); // 이전 달
+  text(">", datePickerX + datePickerWidth - 30, datePickerY + 30); // 다음 달
+
+  // 요일 레이블
+  String[] daysOfWeek = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+  textSize(14);
+  float cellWidth = datePickerWidth / 7.0;
+  for (int i = 0; i < 7; i++) {
+    fill(i == 0 ? color(200, 0, 0) : 0); // 일요일
+    text(daysOfWeek[i], datePickerX + cellWidth * i + cellWidth / 2, datePickerY + 70);
+  }
+
+  // 날짜 그리드
+  Calendar tempCal = (Calendar) datePickerCalendar.clone();
+  tempCal.set(Calendar.DAY_OF_MONTH, 1);
+  int firstDayOfWeek = tempCal.get(Calendar.DAY_OF_WEEK);
+  int maxDaysInMonth = tempCal.getActualMaximum(Calendar.DAY_OF_MONTH);
+
+  int day = 1;
+  float cellHeight = (datePickerHeight - 100) / 6.0;
+  textSize(16);
+
+  for (int row = 0; row < 6; row++) {
+    for (int col = 0; col < 7; col++) {
+      if (row == 0 && col < firstDayOfWeek - 1) continue; // 1일 이전
+      if (day > maxDaysInMonth) break; // 마지막 날짜를 넘어가면 중단
+
+      float x = datePickerX + col * cellWidth;
+      float y = datePickerY + 90 + row * cellHeight;
+      
+      // 현재 선택된 날짜 표시
+      if (datePickerCalendar.get(Calendar.YEAR) == diary_year &&
+          datePickerCalendar.get(Calendar.MONTH) + 1 == diary_month &&
+          day == diary_day) {
+        fill(200, 220, 255);
+        noStroke();
+        ellipse(x + cellWidth / 2, y + cellHeight / 2, cellWidth * 0.8, cellHeight * 0.8);
+      }
+      
+      // 마우스 호버 효과
+      if (mouseHober(x, y, cellWidth, cellHeight)) {
+        noFill();
+        stroke(0, 100);
+        strokeWeight(1);
+        rect(x+2, y+2, cellWidth-4, cellHeight-4, 4);
+      }
+      else if (mouseHober(datePickerX, datePickerY, 60, 60)) {
+        noStroke();
+        fill(0,50);
+        rect(datePickerX, datePickerY, 60, 60, 4);
+      }
+      else if (mouseHober(datePickerX + datePickerWidth - 60, datePickerY, 60, 60)) {
+        noStroke();
+        fill(0,50);
+        rect(datePickerX + datePickerWidth - 60, datePickerY, 60, 60, 4);
+      }
+      
+      fill(col == 0 ? color(200, 0, 0) : 0); // 일요일 날짜는 빨간색
+      text(day, x + cellWidth / 2, y + cellHeight / 2);
+      day++;
+    }
+  }
+  popStyle();
 }
 
-void openDayDialog() {
+void handleDatePickerMouseRelease() {
+  float cellWidth = datePickerWidth / 7.0;
 
-  UiBooster booster = new UiBooster();
-  diary_day = booster.showTextInputDialog("Day");
+  // 이전 달 화살표 클릭
+  if (mouseHober(datePickerX, datePickerY, 60, 60)) {
+    datePickerCalendar.add(Calendar.MONTH, -1);
+    return;
+  }
+  // 다음 달 화살표 클릭
+  if (mouseHober(datePickerX + datePickerWidth - 60, datePickerY, 60, 60)) {
+    datePickerCalendar.add(Calendar.MONTH, 1);
+    return;
+  }
 
+  // 날짜 클릭 확인
+  Calendar tempCal = (Calendar) datePickerCalendar.clone();
+  tempCal.set(Calendar.DAY_OF_MONTH, 1);
+  int firstDayOfWeek = tempCal.get(Calendar.DAY_OF_WEEK);
+  int maxDaysInMonth = tempCal.getActualMaximum(Calendar.DAY_OF_MONTH);
+  int day = 1;
+  float cellHeight = (datePickerHeight - 100) / 6.0;
+
+  for (int row = 0; row < 6; row++) {
+    for (int col = 0; col < 7; col++) {
+      if (row == 0 && col < firstDayOfWeek - 1) continue;
+      if (day > maxDaysInMonth) break;
+
+      float x = datePickerX + col * cellWidth;
+      float y = datePickerY + 90 + row * cellHeight;
+
+      if (mouseHober(x, y, cellWidth, cellHeight)) {
+        // 날짜 선택
+        diary_year = datePickerCalendar.get(Calendar.YEAR);
+        diary_month = datePickerCalendar.get(Calendar.MONTH) + 1;
+        diary_day = day;
+
+        // 메인 calendar 업데이트
+        calendar.set(diary_year, diary_month - 1, diary_day);
+
+        isDatePickerVisible = false;
+        return;
+      }
+      day++;
+    }
+  }
+  
+  // 달력 바깥 영역을 클릭하면 닫기
+  if (!mouseHober(datePickerX, datePickerY, datePickerWidth, datePickerHeight)) {
+      isDatePickerVisible = false;
+  }
 }
