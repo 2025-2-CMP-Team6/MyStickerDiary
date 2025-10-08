@@ -74,7 +74,7 @@ void drawLibrary() {
   void handleLibraryMouse() {
     // 일기장으로 버튼
     if (mouseX > width - 175 && mouseX < width - 25 && mouseY > 25 && mouseY < 75) {
-      currentScreen = drawing_diary;
+      switchScreen(drawing_diary);
       return;
     }
     
@@ -82,7 +82,7 @@ void drawLibrary() {
     if (mouseX > width/2 - 125 && mouseX < width/2 + 125 && 
         mouseY > height - 110 && mouseY < height - 50) {
       setupCreator(); 
-      currentScreen = making_sticker;
+      switchScreen(making_sticker);
       return;
     }
     
@@ -105,7 +105,7 @@ void drawLibrary() {
       if (mouseHober(s.x-newW/2, s.y-newH/2, newW, newH)) {
         Sticker newSticker = new Sticker(width/2, height/2, s.img, defaultStickerSize);
         placedStickers.add(newSticker);
-        currentScreen = drawing_diary;
+        switchScreen(drawing_diary);
         selectedSticker = newSticker;
         break; 
       }

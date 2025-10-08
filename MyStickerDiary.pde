@@ -2,6 +2,7 @@ import interfascia.*;
 import uibooster.*;
 import java.io.File;
 import java.util.Arrays;
+import g4p_controls.*;
 
 // 화면 통제 변수 선언
 final int start_screen = 0;
@@ -36,6 +37,9 @@ PFont font;
 // 호버링 이펙트 아이콘 이미지 변수 선언
 PImage cursorImage;
 
+// 텍스트UI 변수 선언
+GTextArea textArea;
+
 // 메뉴 버튼 오브젝트를 한번씩만 만들어줘야 하는 이슈가 발생해서 center control 파일에 선언합니다.
 rectButton dsButton, slButton, ddButton, dlButton;
 rectButton nameButton;
@@ -61,6 +65,15 @@ final int BTN_H = 360;
 final int NAME_W = 100;
 final int NAME_H = 50;
 
+void textAreaUI() {
+  if(textArea == null) {
+    textArea = new GTextArea(this, 0, textFieldY, width, height - textFieldY, G4P.SCROLLBARS_VERTICAL_ONLY);
+    textArea.setOpaque(true);
+    textArea.setVisible(false);
+    textArea.setText("");
+  }
+}
+
 void switchScreen(int next) {
 
   isMenuDragging = false;
@@ -75,6 +88,18 @@ void switchScreen(int next) {
 
   currentScreen = next;
 
+  updateTextUIVisibility();
+
+}
+
+void updateTextUIVisibility() {
+
+  boolean onDiary = (currentScreen == drawing_diary);
+  if (textArea != null) {
+    textArea.setVisible(onDiary);
+    textArea.setEnabled(onDiary);
+  }
+  
 }
 
 float worldMouseX() { return mouseX + menuScrollX; }
@@ -85,9 +110,9 @@ void initMenuButtons() {
 
   int x1 = PAGE_PADDING_X;
   int x2 = PAGE_PADDING_X + BTN_W + MENU_GUTTER_X;
-  int x_name = NAME_X;
+  // int x_name = NAME_X;
   int y  = MENU_TOP;
-  int y_name = NAME_Y;
+  // int y_name = NAME_Y;
 
   dsButton = new rectButton(x1, y, BTN_W, BTN_H, #FEFD48);
   dsButton.rectButtonText("Drawing\nSticker", 50);
@@ -111,11 +136,12 @@ void setup() {
     PImage happyStickerImg;
     PImage sadStickerImg;
     
-        imageMode(CENTER);
-      stickerLibrary = new ArrayList<Sticker>();
-      placedStickers = new ArrayList<Sticker>();
-      setupCreator();
-
+    imageMode(CENTER);
+    stickerLibrary = new ArrayList<Sticker>();
+    placedStickers = new ArrayList<Sticker>();
+    setupCreator();
+    textAreaUI();
+  
     // 실행 창 이름 지정
     surface.setTitle("MyStickerDiary");
 

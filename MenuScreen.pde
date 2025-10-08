@@ -105,7 +105,7 @@ public void handleMenuReleased() {
 
   if (pressedOnNameBtn) {
     
-    if (totalDragDist < 10) currentScreen = name_screen;
+    if (totalDragDist < 10) switchScreen(name_screen);
     pressedOnNameBtn = false;
     return;
 
@@ -129,13 +129,13 @@ private void handleMenuTap() {
   float wx = worldMouseX();
   float wy = worldMouseY();
 
-  if (hit(dsButton, wx, wy)) { currentScreen = making_sticker;  return; }
-  if (hit(slButton, wx, wy)) { currentScreen = sticker_library; return; }
-  if (hit(ddButton, wx, wy)) { currentScreen = drawing_diary;   return; }
-  if (hit(dlButton, wx, wy)) { currentScreen = diary_library;   return; }
+  if (hit(dsButton, wx, wy)) { switchScreen(making_sticker); return; }
+  if (hit(slButton, wx, wy)) { switchScreen(sticker_library); return; }
+  if (hit(ddButton, wx, wy)) { switchScreen(drawing_diary);   return; }
+  if (hit(dlButton, wx, wy)) { switchScreen(diary_library);   return; }
 
   if (hitScreen(nameButton, mouseX, mouseY)) {
-    currentScreen = name_screen;
+    switchScreen(name_screen);
     return;
   }
 

@@ -70,6 +70,6 @@ public void drawClickAnywhere() {
 }
 
 public void handleStartRelease() {
-    currentScreen = menu_screen;
+    switchScreen(menu_screen);
     if(ddButton == null) initMenuButtons();
 }

@@ -13,10 +13,10 @@ void drawNameScreen() {
 
     if(username != null) {
         isNameEntered = true;
-        currentScreen = menu_screen;
+        switchScreen(menu_screen);
         return;
     } else {
-        currentScreen = menu_screen;
+        switchScreen(menu_screen);
         return;
     }
 }
