@@ -64,15 +64,30 @@ public void drawMenuScreen() {
       image(cursorImage, mouseX, mouseY, 50, 50);
     }
 
-    if(isNameEntered) {
-      text("NAME : " + username, NAME_X + NAME_W / 2, NAME_Y + NAME_H + 20);
-    }
+    if (isNameEntered) {
+      
+      pushStyle();
+      fill(0);
+      textAlign(CENTER, TOP);   
+      textSize(16);             
+      text("NAME : " + username,
+          NAME_X + NAME_W/2,
+          NAME_Y + NAME_H + 8);
+      popStyle();
+      
+  }
 
     popStyle();
 
 }
 
 public void handleMenuMousePressed() {
+
+  dsButton.onPress((int)worldMouseX(), (int)worldMouseY());
+  slButton.onPress((int)worldMouseX(), (int)worldMouseY());
+  ddButton.onPress((int)worldMouseX(), (int)worldMouseY());
+  dlButton.onPress((int)worldMouseX(), (int)worldMouseY());
+  nameButton.onPress(mouseX, mouseY);
   
   if (hitScreen(nameButton, mouseX, mouseY)) {
 
@@ -99,9 +114,21 @@ public void handleMenuDragged() {
   totalDragDist = max(totalDragDist, abs(dx));
   menuScrollX = constrain(dragStartScroll - dx, 0, PAGE_WIDTH);
 
+  dsButton.onDrag((int)worldMouseX(), (int)worldMouseY());
+  slButton.onDrag((int)worldMouseX(), (int)worldMouseY());
+  ddButton.onDrag((int)worldMouseX(), (int)worldMouseY());
+  dlButton.onDrag((int)worldMouseX(), (int)worldMouseY());
+  nameButton.onDrag(mouseX, mouseY);
+
 }
 
 public void handleMenuReleased() {
+
+  boolean clickDS = dsButton.onRelease((int)worldMouseX(), (int)worldMouseY());
+  boolean clickSL = slButton.onRelease((int)worldMouseX(), (int)worldMouseY());
+  boolean clickDD = ddButton.onRelease((int)worldMouseX(), (int)worldMouseY());
+  boolean clickDL = dlButton.onRelease((int)worldMouseX(), (int)worldMouseY());
+  boolean clickNAME = nameButton.onRelease(mouseX, mouseY);
 
   if (pressedOnNameBtn) {
     
@@ -115,37 +142,17 @@ public void handleMenuReleased() {
   isMenuDragging = false;
 
   if (totalDragDist < 10) {
-    handleMenuTap();
-    return;
+
+      if (clickDS) { switchScreen(making_sticker);  return; }
+      if (clickSL) { switchScreen(sticker_library); return; }
+      if (clickDD) { switchScreen(drawing_diary);   return; }
+      if (clickDL) { switchScreen(diary_library);   return; }
+      if (clickNAME) { switchScreen(name_screen);   return; }
+
+  } else {
+      menuTargetScrollX = (menuScrollX > PAGE_WIDTH * 0.5f) ? PAGE_WIDTH : 0;
   }
 
-  menuTargetScrollX = (menuScrollX > PAGE_WIDTH * 0.5f) ? PAGE_WIDTH : 0;
-
-}
-
-
-private void handleMenuTap() {
-
-  float wx = worldMouseX();
-  float wy = worldMouseY();
-
-  if (hit(dsButton, wx, wy)) { switchScreen(making_sticker); return; }
-  if (hit(slButton, wx, wy)) { switchScreen(sticker_library); return; }
-  if (hit(ddButton, wx, wy)) { switchScreen(drawing_diary);   return; }
-  if (hit(dlButton, wx, wy)) { switchScreen(diary_library);   return; }
-
-  if (hitScreen(nameButton, mouseX, mouseY)) {
-    switchScreen(name_screen);
-    return;
-  }
-
-}
-
-private boolean hit(rectButton b, float wx, float wy) {
-
-  return (wx > b.position_x && wx < b.position_x + b.width &&
-          wy > b.position_y && wy < b.position_y + b.height);
-          
 }
 
 private boolean hitScreen(rectButton b, float sx, float sy) {

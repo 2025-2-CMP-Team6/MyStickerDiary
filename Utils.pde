@@ -27,6 +27,11 @@ public class rectButton {
   boolean isButtonPressing = false;
   boolean useShadow = true;
 
+  private boolean armed = false;
+  private boolean pressedInside = false;
+
+  private float pressAnim = 0.0f;
+
   rectButton(int x, int y, int w, int h, color c) {
 
     pushStyle();
@@ -41,7 +46,7 @@ public class rectButton {
     position_x_r = position_x + width;
     position_y_r = position_y + height;
     popStyle();
-    
+
   }
 
   public void setShadow(boolean on) { useShadow = on; }
@@ -53,33 +58,69 @@ public class rectButton {
     
   }
 
+  public void onPress(int mx, int my) {
+    armed = hit(mx, my);
+    pressedInside = armed; 
+  }
+
+  public void onDrag(int mx, int my) {
+    if (armed) pressedInside = hit(mx, my);
+  }
+
+  public boolean onRelease(int mx, int my) {
+    boolean clicked = armed && hit(mx, my);
+    armed = false;
+    pressedInside = false;
+    return clicked;
+  }
+
   public void render() {
-    int shadow = 16;
-    if (useShadow) {
-      fill(0);
-      noStroke();
-      rect(position_x + shadow, position_y + shadow, width, height);
-    }
 
-    fill(cl);
-    noStroke();
-    rect(position_x, position_y, width, height);
+    float target = (armed && pressedInside) ? 1.0f : 0.0f;
+    pressAnim += (target - pressAnim) * 0.25f;   
 
+    // 시각 효과 파라미터
+    int baseShadow = 16;
+    int faceOffset = round(baseShadow * pressAnim);       // 눌리면 아래/오른쪽 이동
+    int shadowOffset = max(0, baseShadow - faceOffset);   // 그림자 길이 줄이기
+    color faceColor = lerpColor(cl, color(0), 0.18f * pressAnim); // 약간 어둡게
 
     pushStyle();
+    rectMode(CORNER);
+    noStroke();
+
+    // 그림자
+    if (useShadow && shadowOffset > 0) {
+      fill(0);
+      rect(position_x + shadowOffset, position_y + shadowOffset, width, height);
+    }
+
+    // 버튼 면
+    fill(faceColor);
+    rect(position_x + faceOffset, position_y + faceOffset, width, height);
+
+    // 텍스트
     fill(0);
     textAlign(CENTER, CENTER);
     textSize(labelSize);
-    text(textLabel, position_x + width/2, position_y + height/2);
+    text(textLabel, position_x + width/2 + faceOffset, position_y + height/2 + faceOffset);
+
     popStyle();
 
+    // 우측/하단 좌표 업데이트(혹시 외부에서 쓰면 일관성 유지)
+    position_x_r = position_x + width;
+    position_y_r = position_y + height;
   }
 
   public boolean isMouseOverButton() {
 
-    return mouseX > position_x && mouseX < position_x + width 
-          && mouseY > position_y && mouseY < position_y + height;
+    return hit(mouseX, mouseY);
 
+  }
+
+  private boolean hit(int mx, int my) {
+    return (mx > position_x && mx < position_x + width &&
+            my > position_y && my < position_y + height);
   }
 
   /*public boolean isMousePressed() {
