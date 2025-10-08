@@ -12,6 +12,11 @@ rectButton finishButton;
 boolean storagePressed = false;
 boolean finishPressed = false;
 
+boolean yearPressed = false;
+boolean monthPressed = false;
+boolean dayPressed = false;
+
+String diary_year, diary_month, diary_day;
 
 void drawDiary() {
 
@@ -30,6 +35,12 @@ void drawDiary() {
   textAlign(CENTER, CENTER);
   textSize(25);
   text("스티커 보관함", 120, 60);*/
+
+  pushStyle();
+  fill(0);
+  textSize(30);
+  text("Name : " + username, 20, 30);
+  popStyle();
   
   // 일기장에 붙여진 스티커들을 모두 그리기
   for (Sticker s : placedStickers) {
@@ -53,14 +64,23 @@ void drawDiary() {
   ensureDiaryUI();
   finishButton.render();
   stickerStoreButton.render();
+  yearButton.render();
+  monthButton.render();
+  dayButton.render();
+
+  if(diary_year != null && diary_month != null && diary_day != null) {
+    
+    pushStyle();
+    textSize(30);
+    fill(0);
+    text("Date : " + diary_year + ". " + diary_month + ". " + diary_day, 200, 30);
+    popStyle();
+
+  }
 
 }
   
 void handleDiaryMouse() { // 마우스를 처음 눌렀을 때 호출
-
-
-  storagePressed = mouseHober(stickerStoreButton.position_x, stickerStoreButton.position_y,
-                              stickerStoreButton.width, stickerStoreButton.height);
 
   // 스티커 위에서 마우스를 눌렀는지 확인
   isResizing = -1; // 리사이징 상태 초기화
@@ -104,10 +124,28 @@ void handleDiaryMouse() { // 마우스를 처음 눌렀을 때 호출
       break;
     }
   }
+
+  storagePressed = mouseHober(stickerStoreButton.position_x, stickerStoreButton.position_y,
+    stickerStoreButton.width, stickerStoreButton.height);
   
   finishPressed = mouseHober(
     finishButton.position_x, finishButton.position_y,
     finishButton.width, finishButton.height
+  );
+  
+  yearPressed = mouseHober(
+    yearButton.position_x, yearButton.position_y,
+    yearButton.width, yearButton.height
+  );
+
+  monthPressed = mouseHober(
+    monthButton.position_x, monthButton.position_y,
+    monthButton.width, monthButton.height
+  );
+
+  dayPressed = mouseHober(
+    dayButton.position_x, dayButton.position_y,
+    dayButton.width, dayButton.height
   );
   
 }
@@ -168,18 +206,52 @@ void handleDiaryRelease() {
   currentlyDraggedSticker = null; // 스티커 놓기
     isResizing = -1;
 
-   if (finishPressed && mouseHober(
-        finishButton.position_x, finishButton.position_y,
-        finishButton.width,      finishButton.height)) { switchScreen(diary_library); }
+  if (finishPressed && mouseHober(
+      finishButton.position_x, finishButton.position_y,
+      finishButton.width,      finishButton.height)) { switchScreen(diary_library); }
 
-   if (storagePressed && mouseHober(
-        stickerStoreButton.position_x, stickerStoreButton.position_y,
-        stickerStoreButton.width, stickerStoreButton.height)) { switchScreen(sticker_library); }
+  if (storagePressed && mouseHober(
+      stickerStoreButton.position_x, stickerStoreButton.position_y,
+      stickerStoreButton.width, stickerStoreButton.height)) { switchScreen(sticker_library); }
+
+  if (yearPressed && mouseHober(
+      yearButton.position_x, yearButton.position_y,
+      yearButton.width, yearButton.height)) { openYearDialog(); }
+
+  if (monthPressed && mouseHober(
+      monthButton.position_x, monthButton.position_y,
+      monthButton.width, monthButton.height)) { openMonthDialog(); }
+
+  if (dayPressed && mouseHober(
+      dayButton.position_x, dayButton.position_y,
+      dayButton.width, dayButton.height)) { openDayDialog(); }
+  
 
   finishPressed = false;
   storagePressed = false;
+  yearPressed = false;
+  monthPressed = false;
+  dayPressed = false;
 
 }
 
+void openYearDialog() {
 
+  UiBooster booster = new UiBooster();
+  diary_year = booster.showTextInputDialog("Year");
 
+}
+
+void openMonthDialog() {
+
+  UiBooster booster = new UiBooster();
+  diary_month = booster.showTextInputDialog("Month");
+
+}
+
+void openDayDialog() {
+
+  UiBooster booster = new UiBooster();
+  diary_day = booster.showTextInputDialog("Day");
+
+}

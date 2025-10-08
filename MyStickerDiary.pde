@@ -14,8 +14,6 @@ final int drawing_diary = 4;
 final int diary_library = 5;
 final int name_screen = 6;
 
-
-
 // 현재 보이는 화면 저장하는 변수 선언
 // 초기화면은 시작화면 (StartScreen)
 int currentScreen = start_screen;
@@ -44,6 +42,7 @@ GTextArea textArea;
 // 메뉴 버튼 오브젝트를 한번씩만 만들어줘야 하는 이슈가 발생해서 center control 파일에 선언합니다.
 rectButton dsButton, slButton, ddButton, dlButton;
 rectButton nameButton;
+rectButton yearButton, monthButton, dayButton;
 
 // 메뉴 스와이프 기능 관련 전역 변수입니다.
 final int PAGE_WIDTH = 1280;        
@@ -65,6 +64,19 @@ final int BTN_H = 360;
 
 final int NAME_W = 100;
 final int NAME_H = 50;
+
+final int DATE_W = 50;
+final int DATE_H = 30;
+
+final int YEAR_X = 20;
+final int YEAR_Y = 45;
+
+final int MONTH_X = 80;
+final int MONTH_Y = 45;
+
+final int DAY_X = 140;
+final int DAY_Y = 45;
+
 
 void textAreaUI() {
 
@@ -139,7 +151,7 @@ void initMenuButtons() {
 
 void ensureDiaryUI() {
   if(stickerStoreButton == null) {
-    stickerStoreButton = new rectButton(20, 30, 200, 60, #c8dcff);
+    stickerStoreButton = new rectButton(1100, textFieldY - 120, 180, 60, #c8dcff);
     stickerStoreButton.rectButtonText("Sticker storage", 25);
     stickerStoreButton.setShadow(false);
   }
@@ -149,6 +161,25 @@ void ensureDiaryUI() {
     finishButton.rectButtonText("Finish", 20);
     finishButton.setShadow(false);
   }
+
+  if(yearButton == null) {
+    yearButton = new rectButton(YEAR_X, YEAR_Y, DATE_W, DATE_H, #F6F7FB);
+    yearButton.rectButtonText("Year", 15);
+    yearButton.setShadow(false);
+  }
+
+  if(monthButton == null) {
+    monthButton = new rectButton(MONTH_X, MONTH_Y, DATE_W, DATE_H, #F6F7FB);
+    monthButton.rectButtonText("Month", 15);
+    monthButton.setShadow(false);
+  }
+
+  if(dayButton == null) {
+    dayButton = new rectButton(DAY_X, DAY_Y, DATE_W, DATE_H, #F6F7FB);
+    dayButton.rectButtonText("Day", 15);
+    dayButton.setShadow(false);
+  }
+
 }
 
 void setup() {
