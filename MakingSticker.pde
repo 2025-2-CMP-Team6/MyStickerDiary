@@ -67,7 +67,7 @@ void setupCreator() {
   stickerCanvas.clear();
   stickerCanvas.endDraw();
   // 버튼 아이콘
-saveImg = loadImage("data/images/saveIcon.png");
+saveImg = loadImage("data/images/SaveIcon.png");
 backImg = loadImage("data/images/backIcon.png");
 
   // 도구 아이콘
