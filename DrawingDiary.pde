@@ -64,10 +64,6 @@ void drawDiary() {
   ensureDiaryUI();
   finishButton.render();
   stickerStoreButton.render();
-  yearButton.render();
-  monthButton.render();
-  dayButton.render();
-
   if(diary_year != null && diary_month != null && diary_day != null) {
     
     pushStyle();
@@ -77,7 +73,6 @@ void drawDiary() {
     popStyle();
 
   }
-
 }
   
 void handleDiaryMouse() { // 마우스를 처음 눌렀을 때 호출

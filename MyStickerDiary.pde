@@ -1,3 +1,4 @@
+import processing.core.*; // processing library
 import interfascia.*;
 import uibooster.*;
 import java.io.File;
@@ -37,7 +38,9 @@ PFont font;
 PImage cursorImage;
 
 // 텍스트UI 변수 선언
-GTextArea textArea;
+GTextField titleArea;  // 제목
+GTextArea textArea; // 내용
+float titlespace = 48;
 
 // 메뉴 버튼 오브젝트를 한번씩만 만들어줘야 하는 이슈가 발생해서 center control 파일에 선언합니다.
 rectButton dsButton, slButton, ddButton, dlButton;
@@ -79,17 +82,21 @@ final int DAY_Y = 45;
 
 
 void textAreaUI() {
-
+  if (titleArea == null) {
+    titleArea = new GTextField(this, 4, textFieldY+4, width-8, titlespace);
+    titleArea.setOpaque(true);
+    titleArea.setVisible(false);
+    titleArea.setPromptText("Title");
+    titleArea.setFont(new Font("Dialog", Font.PLAIN, 24));
+  }
   if(textArea == null) {
 
-    textArea = new GTextArea(this, 0, textFieldY, width, height - textFieldY, G4P.SCROLLBARS_VERTICAL_ONLY);
+    textArea = new GTextArea(this, 4, textFieldY + titlespace + 8, width-8, height - textFieldY - 8 - titlespace, G4P.SCROLLBARS_VERTICAL_ONLY);
     textArea.setOpaque(true);
     textArea.setVisible(false);
-    textArea.setText("");
+    textArea.setPromptText("Text");
     textArea.setFont(new Font("Dialog", Font.PLAIN, 24));
-
   }
-
 }
 
 void switchScreen(int next) {
@@ -110,15 +117,6 @@ void switchScreen(int next) {
 
 }
 
-void updateTextUIVisibility() {
-
-  boolean onDiary = (currentScreen == drawing_diary);
-  if (textArea != null) {
-    textArea.setVisible(onDiary);
-    textArea.setEnabled(onDiary);
-  }
-  
-}
 
 float worldMouseX() { return mouseX + menuScrollX; }
 float worldMouseY() { return mouseY; } 
@@ -184,8 +182,7 @@ void ensureDiaryUI() {
 
 void setup() {
     size(1280, 720);
-    // PImage happyStickerImg;
-    // PImage sadStickerImg;
+    pixelDensity(1);
     
     imageMode(CENTER);
     stickerLibrary = new ArrayList<Sticker>();
