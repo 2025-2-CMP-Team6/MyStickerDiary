@@ -25,16 +25,6 @@ void drawDiary() {
   rectMode(TOP);
   fill(125,125,125);
   rect(0, textFieldY, width, height);
-  // 기존 "스티커보관함" 버튼 프레스 & 릴리스 최적화를 위해
-  // rectButton으로 다시 만들었습니다! 양해 부탁드립니다.
-  /*fill(200, 220, 255);
-  rect(20, 30, 200, 60);
-  rectMode(CENTER);
-  rect(120, 60, 200, 60);
-  fill(0);
-  textAlign(CENTER, CENTER);
-  textSize(25);
-  text("스티커 보관함", 120, 60);*/
 
   pushStyle();
   fill(0);
@@ -75,11 +65,19 @@ void drawDiary() {
     fill(0);
     text("Date : " + diary_year + ". " + diary_month + ". " + diary_day, 200, 30);
     popStyle();
-
   }
-
 }
   
+void updateTextUIVisibility() {
+  boolean onDiary = (currentScreen == drawing_diary);
+  if (textArea != null) {
+    titleArea.setVisible(onDiary);
+    titleArea.setEnabled(onDiary);
+    textArea.setVisible(onDiary);
+    textArea.setEnabled(onDiary);
+  }
+  
+}
 void handleDiaryMouse() { // 마우스를 처음 눌렀을 때 호출
 
   // 스티커 위에서 마우스를 눌렀는지 확인
