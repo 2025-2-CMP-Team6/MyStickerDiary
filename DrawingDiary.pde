@@ -240,7 +240,7 @@ void handleDiaryRelease() {
     return;
   }
   if (yearmonthOK != null) {
-    if (yearmonthOK.onRelease((int)worldMouseX(), (int)worldMouseY())) {
+    if (yearmonthOK.onRelease(mouseX, mouseY)) {
       diary_month = monthPicker;
       diary_year = yearPicker;
       calendar.set(diary_year, diary_month - 1, diary_day);
@@ -259,7 +259,10 @@ void handleDiaryRelease() {
 
   if (finishPressed && mouseHober(
       finishButton.position_x, finishButton.position_y,
-      finishButton.width,      finishButton.height)) { switchScreen(diary_library); }
+      finishButton.width,      finishButton.height)) {
+         switchScreen(diary_library);
+         saveDiary();
+       }
 
   if (storagePressed && mouseHober(
       stickerStoreButton.position_x, stickerStoreButton.position_y,
@@ -437,25 +440,28 @@ void drawYearMonthPicker() {  // 년도 설정창 드로우
   textAlign(CENTER,CENTER);
   if (nowDragInPicker == 0) {
     text(yearPicker,yearPickerX,yearmonthY);  // 선택 년도
+    text(monthToString(monthPicker),yearmonthScrollX+yearmonthScrollW/2+128,yearmonthY); // 선택 달
+    fill(125);
     if (yearPicker > 0) {text(yearPicker-1,yearPickerX,yearmonthY-48);}
     if (yearPicker < 9999) {text(yearPicker+1,yearPickerX,yearmonthY+48);}
-    text(monthToString(monthPicker),yearmonthScrollX+yearmonthScrollW/2+128,yearmonthY); // 선택 달
     if (monthPicker > 0) {text(monthToString(monthPicker-1),yearmonthScrollX+yearmonthScrollW/2+128,yearmonthY-48);}
     if (monthPicker < 11) {text(monthToString(monthPicker+1),yearmonthScrollX+yearmonthScrollW/2+128,yearmonthY+48);}
   }
   else if (nowDragInPicker == 1) {
     text(yearPicker,yearPickerX,yearmonthY+set*4.8);  // 선택 년도
+    text(monthToString(monthPicker),yearmonthScrollX+yearmonthScrollW/2+128,yearmonthY); // 선택 달
+    fill(125);
     if (yearPicker > 0) {text(yearPicker-1,yearPickerX,yearmonthY-48+set*4.8);}
     if (yearPicker < 9999) {text(yearPicker+1,yearPickerX,yearmonthY+48+set*4.8);}
-    text(monthToString(monthPicker),yearmonthScrollX+yearmonthScrollW/2+128,yearmonthY); // 선택 달
     if (monthPicker > 0) {text(monthToString(monthPicker-1),yearmonthScrollX+yearmonthScrollW/2+128,yearmonthY-48);}
     if (monthPicker < 11) {text(monthToString(monthPicker+1),yearmonthScrollX+yearmonthScrollW/2+128,yearmonthY+48);}
   }
   else if (nowDragInPicker == 2) {
     text(yearPicker,yearPickerX,yearmonthY);  // 선택 년도
+    text(monthToString(monthPicker),yearmonthScrollX+yearmonthScrollW/2+128,yearmonthY+set*4.8); // 선택 달
+    fill(125);
     if (yearPicker > 0) {text(yearPicker-1,yearPickerX,yearmonthY-48);}
     if (yearPicker < 9999) {text(yearPicker+1,yearPickerX,yearmonthY+48);}
-    text(monthToString(monthPicker),yearmonthScrollX+yearmonthScrollW/2+128,yearmonthY+set*4.8); // 선택 달
     if (monthPicker > 0) {text(monthToString(monthPicker-1),yearmonthScrollX+yearmonthScrollW/2+128,yearmonthY-48+set*4.8);}
     if (monthPicker < 11) {text(monthToString(monthPicker+1),yearmonthScrollX+yearmonthScrollW/2+128,yearmonthY+48+set*4.8);}
   }
@@ -514,7 +520,7 @@ void handleYearMonthDrag() {  // 년도 설정창 드래그
       }
     }
     else if (nowDragInPicker == 2) {
-      if (monthPicker > 1) {
+      if (monthPicker > 0) {
       monthPicker--;
       }
     }
@@ -636,4 +642,30 @@ void mouseWheel(MouseEvent ev) {
       else {monthPicker = 11;}
     }
   }
+}
+
+void saveDiary() {
+  JSONObject diaryData = new JSONObject();
+
+  // 제목과 내용 저장
+  diaryData.setString("title", titleArea.getText());
+  diaryData.setString("content", textArea.getText());
+
+  // 스티커 저장
+  JSONArray stickerArray = new JSONArray();
+  for (Sticker s : placedStickers) {
+    JSONObject stickerData = new JSONObject();
+    stickerData.setFloat("x", s.x);
+    stickerData.setFloat("y", s.y);
+    stickerData.setFloat("size", s.size);
+    // 스티커 이미지 파일 이름 저장 (예시로 파일 이름을 "sticker_1.png" 형태로 저장)
+    // 실제 구현에서는 스티커 이미지를 저장하고 파일 이름을 얻어와야 함
+    stickerData.setString("imageName", "sticker_" + placedStickers.indexOf(s) + ".png");
+    stickerArray.append(stickerData);
+  }
+  diaryData.setJSONArray("stickers", stickerArray);
+
+  // JSON 파일로 저장
+  saveJSONObject(diaryData, "data/diary_" + diary_year + "_" + diary_month + "_" + diary_day + ".json");
+  println("Diary saved to data/diary_" + diary_year + "_" + diary_month + "_" + diary_day + ".json");
 }

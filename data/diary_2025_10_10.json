@@ -1,0 +1,18 @@
+{
+  "stickers": [
+    {
+      "imageName": "sticker_0.png",
+      "size": 214,
+      "x": 454,
+      "y": 292.6470642089844
+    },
+    {
+      "imageName": "sticker_1.png",
+      "size": 239.125,
+      "x": 957.5625,
+      "y": 224.4705810546875
+    }
+  ],
+  "title": "name",
+  "content": "fuck"
+}
