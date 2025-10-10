@@ -121,12 +121,6 @@ void handleDiaryMouse() { // 마우스를 처음 눌렀을 때 호출
   if (isDatePickerVisible != 0) {
     return;
   }
-  /*if (yearmonthOK != null) {
-    yearmonthOK.onPress((int)worldMouseX(), (int)worldMouseY());
-  }
-  if (yearmonthCancle != null) {
-    yearmonthCancle.onPress((int)worldMouseX(), (int)worldMouseY());
-  }*/
   // 스티커 위에서 마우스를 눌렀는지 확인
   isResizing = -1; // 리사이징 상태 초기화
   selectedSticker = null;
@@ -263,21 +257,6 @@ void handleDiaryRelease() {
     handleDatePickerMouseRelease();
     return;
   }
-  /*if (yearmonthOK != null) {
-    if (yearmonthOK.onRelease(mouseX, mouseY)) {
-      diary_month = monthPicker;
-      diary_year = yearPicker;
-      calendar.set(diary_year, diary_month - 1, diary_day);
-      closeDatePickerDialog();
-      return;
-    }
-  }
-  if (yearmonthCancle != null) {
-  if (yearmonthCancle.onRelease((int)worldMouseX(), (int)worldMouseY())) {
-      closeDatePickerDialog();
-      return;
-  }
-  }*/
   currentlyDraggedSticker = null; // 스티커 놓기
     isResizing = -1;
 
@@ -296,21 +275,6 @@ void handleDiaryRelease() {
       dateButton.position_x, dateButton.position_y,
       dateButton.width, dateButton.height)) { openDatePickerDialog(); }
 
-  /*if (yearmonthOKPressed && mouseHober(yearmonthOK.position_x, yearmonthOK.position_y,
-    yearmonthOK.width, yearmonthOK.height)) {
-      diary_month = monthPicker;
-      diary_year = yearPicker;
-      calendar.set(diary_year, diary_month - 1, diary_day);
-      closeDatePickerDialog();
-      return;
-    }
-
-
-  if (yearmonthCanclePressed && mouseHober(yearmonthCancle.position_x, yearmonthCancle.position_y,
-    yearmonthCancle.width, yearmonthCancle.height)) {
-      closeDatePickerDialog();
-      return;
-  }*/
   finishPressed = false;
   storagePressed = false;
   datePressed = false;
@@ -610,9 +574,7 @@ void handleDatePickerMouseRelease() { // 달력 마우스 떼기
     
     if (yearmonthOK != null &&
         mouseHober(yearmonthOK.position_x, yearmonthOK.position_y, yearmonthOK.width, yearmonthOK.height)) {
-      
-      diary_month = monthPicker;
-      diary_year = yearPicker;
+      datePickerCalendar.set(yearPicker,monthPicker -1, diary_day);
       calendar.set(diary_year, diary_month - 1, diary_day);
       closeDatePickerDialog();
       return;
@@ -668,7 +630,7 @@ void handleDatePickerMouseRelease() { // 달력 마우스 떼기
 
         // 메인 calendar 업데이트
         calendar.set(diary_year, diary_month - 1, diary_day);
-    closeDatePickerDialog();
+        closeDatePickerDialog();
         return;
       }
       day++;
@@ -686,11 +648,13 @@ if ((!mouseHober(yearmonthScrollX, yearmonthScrollY, yearmonthScrollW, yearmonth
 }
 
 void closeDatePickerDialog() {
-  isDatePickerVisible = 0;
+  isDatePickerVisible --;
+  if (isDatePickerVisible == 0) {
   textArea.setEnabled(true);
   textArea.setAlpha(255);
   titleArea.setEnabled(true);
   titleArea.setAlpha(255);
+  }
 }
 
 void handleYearMonthMouseRelease() {  // 년도 설정창 마우스 떼기
