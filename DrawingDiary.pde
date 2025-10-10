@@ -25,6 +25,8 @@ int yearmonthScrollW;
 int yearmonthScrollH;
 rectButton yearmonthOK;
 rectButton yearmonthCancle;
+boolean yearmonthOKPressed = false;
+boolean yearmonthCanclePressed = false;
 int yearmonthButtonA = 96; //  버튼 간격 
 
 float yearPickerX;  // 년도 텍스트 위치
@@ -119,12 +121,12 @@ void handleDiaryMouse() { // 마우스를 처음 눌렀을 때 호출
   if (isDatePickerVisible != 0) {
     return;
   }
-  if (yearmonthOK != null) {
+  /*if (yearmonthOK != null) {
     yearmonthOK.onPress((int)worldMouseX(), (int)worldMouseY());
   }
   if (yearmonthCancle != null) {
     yearmonthCancle.onPress((int)worldMouseX(), (int)worldMouseY());
-  }
+  }*/
   // 스티커 위에서 마우스를 눌렀는지 확인
   isResizing = -1; // 리사이징 상태 초기화
   selectedSticker = null;
@@ -168,13 +170,35 @@ void handleDiaryMouse() { // 마우스를 처음 눌렀을 때 호출
     }
   }
 
-  storagePressed = mouseHober(stickerStoreButton.position_x, stickerStoreButton.position_y,
-    stickerStoreButton.width, stickerStoreButton.height);
-  
-  finishPressed = mouseHober(
-    finishButton.position_x, finishButton.position_y,
-    finishButton.width, finishButton.height
-  );
+  if (stickerStoreButton != null) {
+    storagePressed = mouseHober(stickerStoreButton.position_x, stickerStoreButton.position_y,
+      stickerStoreButton.width, stickerStoreButton.height);
+  } else {
+    storagePressed = false;
+  }
+
+  if (finishButton != null) {
+    finishPressed = mouseHober(
+      finishButton.position_x, finishButton.position_y,
+      finishButton.width, finishButton.height
+    );
+  } else {
+    finishPressed = false;
+  }
+
+  if (yearmonthOK != null) {
+    yearmonthOKPressed = mouseHober(yearmonthOK.position_x, yearmonthOK.position_y,
+      yearmonthOK.width, yearmonthOK.height);
+  } else {
+    yearmonthOKPressed = false;
+  }
+
+  if (yearmonthCancle != null) {
+    yearmonthCanclePressed = mouseHober(yearmonthCancle.position_x, yearmonthCancle.position_y,
+      yearmonthCancle.width, yearmonthCancle.height);
+  } else {
+    yearmonthCanclePressed = false;
+  }
 
   if (dateButton != null) {
     datePressed = mouseHober(dateButton.position_x, dateButton.position_y, dateButton.width, dateButton.height
@@ -239,7 +263,7 @@ void handleDiaryRelease() {
     handleDatePickerMouseRelease();
     return;
   }
-  if (yearmonthOK != null) {
+  /*if (yearmonthOK != null) {
     if (yearmonthOK.onRelease(mouseX, mouseY)) {
       diary_month = monthPicker;
       diary_year = yearPicker;
@@ -253,7 +277,7 @@ void handleDiaryRelease() {
       closeDatePickerDialog();
       return;
   }
-  }
+  }*/
   currentlyDraggedSticker = null; // 스티커 놓기
     isResizing = -1;
 
@@ -272,6 +296,21 @@ void handleDiaryRelease() {
       dateButton.position_x, dateButton.position_y,
       dateButton.width, dateButton.height)) { openDatePickerDialog(); }
 
+  /*if (yearmonthOKPressed && mouseHober(yearmonthOK.position_x, yearmonthOK.position_y,
+    yearmonthOK.width, yearmonthOK.height)) {
+      diary_month = monthPicker;
+      diary_year = yearPicker;
+      calendar.set(diary_year, diary_month - 1, diary_day);
+      closeDatePickerDialog();
+      return;
+    }
+
+
+  if (yearmonthCanclePressed && mouseHober(yearmonthCancle.position_x, yearmonthCancle.position_y,
+    yearmonthCancle.width, yearmonthCancle.height)) {
+      closeDatePickerDialog();
+      return;
+  }*/
   finishPressed = false;
   storagePressed = false;
   datePressed = false;
@@ -301,7 +340,23 @@ String monthToString(int cal) {
   String[] monthStringList = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
   String mString = monthStringList[cal]; // 달 string으로
   return mString;
-  }
+}
+
+int clampMonth1to12(int m) {
+  return max(1, min(12, m));
+}
+
+int monthToIdx0(int month1to12) {
+  return clampMonth1to12(month1to12) - 1; // 0~11
+}
+
+int prevMonthIdx0(int month1to12) {
+  return (monthToIdx0(month1to12) + 11) % 12; // 0~11
+}
+
+int nextMonthIdx0(int month1to12) {
+  return (monthToIdx0(month1to12) + 1) % 12; // 0~11
+}
 
 void drawDatePicker() {
   pushStyle();
@@ -394,8 +449,10 @@ void drawDatePicker() {
   popStyle();
 }
 void openYearMonthPicker() {  // 년도 설정창 토글
-  yearPicker = calendar.get(Calendar.YEAR);
-  monthPicker = calendar.get(Calendar.MONTH)+1;
+  Calendar base = (datePickerCalendar != null) ? datePickerCalendar : calendar;
+  yearPicker  = base.get(Calendar.YEAR);
+  monthPicker = base.get(Calendar.MONTH) + 1;
+
   yearmonthScrollX = width/2;
   yearmonthScrollY = height/2;
 
@@ -439,31 +496,49 @@ void drawYearMonthPicker() {  // 년도 설정창 드로우
   fill(0);
   textAlign(CENTER,CENTER);
   if (nowDragInPicker == 0) {
-    text(yearPicker,yearPickerX,yearmonthY);  // 선택 년도
-    text(monthToString(monthPicker),yearmonthScrollX+yearmonthScrollW/2+128,yearmonthY); // 선택 달
-    fill(125);
-    if (yearPicker > 0) {text(yearPicker-1,yearPickerX,yearmonthY-48);}
-    if (yearPicker < 9999) {text(yearPicker+1,yearPickerX,yearmonthY+48);}
-    if (monthPicker > 0) {text(monthToString(monthPicker-1),yearmonthScrollX+yearmonthScrollW/2+128,yearmonthY-48);}
-    if (monthPicker < 11) {text(monthToString(monthPicker+1),yearmonthScrollX+yearmonthScrollW/2+128,yearmonthY+48);}
+
+    if (nowDragInPicker == 0) {
+
+      text(yearPicker, yearPickerX, yearmonthY);  
+
+      text(monthToString(monthToIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+128, yearmonthY);
+
+      fill(125);
+      text(monthToString(prevMonthIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+128, yearmonthY-48);
+      text(monthToString(nextMonthIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+128, yearmonthY+48);
+
+      if (yearPicker > 0)    { text(yearPicker-1, yearPickerX, yearmonthY-48); }
+      if (yearPicker < 9999) { text(yearPicker+1, yearPickerX, yearmonthY+48); }
+      
+    }
   }
   else if (nowDragInPicker == 1) {
-    text(yearPicker,yearPickerX,yearmonthY+set*4.8);  // 선택 년도
-    text(monthToString(monthPicker),yearmonthScrollX+yearmonthScrollW/2+128,yearmonthY); // 선택 달
+
+    text(yearPicker, yearPickerX, yearmonthY + set*4.8);  
+
+    text(monthToString(monthToIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+128, yearmonthY);
+
     fill(125);
-    if (yearPicker > 0) {text(yearPicker-1,yearPickerX,yearmonthY-48+set*4.8);}
-    if (yearPicker < 9999) {text(yearPicker+1,yearPickerX,yearmonthY+48+set*4.8);}
-    if (monthPicker > 0) {text(monthToString(monthPicker-1),yearmonthScrollX+yearmonthScrollW/2+128,yearmonthY-48);}
-    if (monthPicker < 11) {text(monthToString(monthPicker+1),yearmonthScrollX+yearmonthScrollW/2+128,yearmonthY+48);}
+    text(monthToString(prevMonthIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+128, yearmonthY-48);
+    text(monthToString(nextMonthIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+128, yearmonthY+48);
+
+    if (yearPicker > 0)    { text(yearPicker-1, yearPickerX, yearmonthY-48 + set*4.8); }
+    if (yearPicker < 9999) { text(yearPicker+1, yearPickerX, yearmonthY+48 + set*4.8); }
+
   }
   else if (nowDragInPicker == 2) {
-    text(yearPicker,yearPickerX,yearmonthY);  // 선택 년도
-    text(monthToString(monthPicker),yearmonthScrollX+yearmonthScrollW/2+128,yearmonthY+set*4.8); // 선택 달
+
+    text(yearPicker, yearPickerX, yearmonthY);  // 선택 년도
+
+    text(monthToString(monthToIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+128, yearmonthY + set*4.8);
+
     fill(125);
-    if (yearPicker > 0) {text(yearPicker-1,yearPickerX,yearmonthY-48);}
-    if (yearPicker < 9999) {text(yearPicker+1,yearPickerX,yearmonthY+48);}
-    if (monthPicker > 0) {text(monthToString(monthPicker-1),yearmonthScrollX+yearmonthScrollW/2+128,yearmonthY-48+set*4.8);}
-    if (monthPicker < 11) {text(monthToString(monthPicker+1),yearmonthScrollX+yearmonthScrollW/2+128,yearmonthY+48+set*4.8);}
+    text(monthToString(prevMonthIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+128, yearmonthY-48 + set*4.8);
+    text(monthToString(nextMonthIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+128, yearmonthY+48 + set*4.8);
+
+    if (yearPicker > 0)    { text(yearPicker-1, yearPickerX, yearmonthY-48); }
+    if (yearPicker < 9999) { text(yearPicker+1, yearPickerX, yearmonthY+48); }
+    
   }
   text("|",yearmonthScrollX+32+yearmonthScrollW/2,yearmonthY);
   fill(150);
@@ -507,36 +582,23 @@ void handleDatePickerDrag() { // 달력 드래그
 
 void handleYearMonthDrag() {  // 년도 설정창 드래그
   println(set);
-  if (mouseY > pmouseY) {
-    set+=2;
-  }
-  if (mouseY < pmouseY) {
-    set-=2;
-  }
+  if (mouseY > pmouseY) set += 2;
+  if (mouseY < pmouseY) set -= 2;
+
   if (set >= 10) {
-    if (nowDragInPicker == 1) {
-      if (yearPicker > 0) {
-      yearPicker--;
-      }
-    }
-    else if (nowDragInPicker == 2) {
-      if (monthPicker > 0) {
-      monthPicker--;
-      }
+    if (nowDragInPicker == 1) { // 년도
+      if (yearPicker > 0) yearPicker--;
+    } else if (nowDragInPicker == 2) { 
+      if (monthPicker > 1) monthPicker--;
     }
     set = 0;
   }
   if (set <= -10) {
-    if (nowDragInPicker == 1) {
-      if (yearPicker < 9999) {
-      yearPicker++;
+    if (nowDragInPicker == 1) { // 년도
+      if (yearPicker < 9999) yearPicker++;
+    } else if (nowDragInPicker == 2) {
+      if (monthPicker < 12) monthPicker++;
     }
-  }
-    else if (nowDragInPicker == 2) {
-      if (monthPicker < 11) {
-      monthPicker++;
-    }
-  }
     set = 0;
   }
 }
@@ -545,6 +607,24 @@ void handleYearMonthDrag() {  // 년도 설정창 드래그
 void handleDatePickerMouseRelease() { // 달력 마우스 떼기
   float cellWidth = datePickerWidth / 7.0;
   if ((isDatePickerVisible == 2)) {
+    
+    if (yearmonthOK != null &&
+        mouseHober(yearmonthOK.position_x, yearmonthOK.position_y, yearmonthOK.width, yearmonthOK.height)) {
+      
+      diary_month = monthPicker;
+      diary_year = yearPicker;
+      calendar.set(diary_year, diary_month - 1, diary_day);
+      closeDatePickerDialog();
+      return;
+
+    }
+
+    if (yearmonthCancle != null &&
+      mouseHober(yearmonthCancle.position_x, yearmonthCancle.position_y, yearmonthCancle.width, yearmonthCancle.height)) {
+      isDatePickerVisible = 1;
+      return;
+    }
+
     handleYearMonthMouseRelease();
     return;
   }
@@ -635,11 +715,8 @@ void mouseWheel(MouseEvent ev) {
       else {yearPicker = 11;}
     }
     if (mouseHober(yearmonthScrollX+yearmonthScrollW/2+64,yearmonthScrollY,192,yearmonthScrollH)) {
-      if ((monthPicker + ev.getCount() < 11)) {
-        if ((monthPicker + ev.getCount() > 0)) {monthPicker += ev.getCount();}
-        else {monthPicker = 0;}
-      }
-      else {monthPicker = 11;}
+      monthPicker += ev.getCount();
+      monthPicker = clampMonth1to12(monthPicker);
     }
   }
 }
