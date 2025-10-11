@@ -45,35 +45,39 @@ GTextField titleArea;  // 제목
 GTextArea textArea; // 내용
 float titlespace = 48;
 
-// 달력
+// 달력 
 Calendar calendar = Calendar.getInstance();
 
 
 // 메뉴 버튼 오브젝트를 한번씩만 만들어줘야 하는 이슈가 발생해서 center control 파일에 선언합니다.
 rectButton dsButton, slButton, ddButton, dlButton;
-// rectButton nameButton; // 기존 rectButton 주석 처리
-GImageButton nameEditButton; // G4P 이미지 버튼 선언 수정된 부분
+//rectButton nameButton;
+GImageButton nameEditButton; // G4P 이미지 버튼 선언
 rectButton dateButton;
 //설정 화면 내 버튼
 rectButton settings_goToMainButton;
+// 다이어리 보관함 버튼
+rectButton backToMenuButton;
+rectButton prevMonthButton;
+rectButton nextMonthButton;
 
 // 메뉴 스와이프 기능 관련 전역 변수입니다.
-final int PAGE_WIDTH = 1280;
-float menuScrollX = 0;
-float menuTargetScrollX = 0;
+final int PAGE_WIDTH = 1280;        
+float menuScrollX = 0;              
+float menuTargetScrollX = 0;        
 boolean isMenuDragging = false;
 float dragStartX = 0;
 float dragStartScroll = 0;
 float totalDragDist = 0;
 
-final int MENU_TOP = 200;
-final int PAGE_PADDING_X = 120;
-final int MENU_GUTTER_X = 80;
+final int MENU_TOP = 200;        
+final int PAGE_PADDING_X = 120;   
+final int MENU_GUTTER_X = 80;     
 final int NAME_X = 1100;
 final int NAME_Y = 50;
 
 final int BTN_W = (PAGE_WIDTH - PAGE_PADDING_X*2 - MENU_GUTTER_X) / 2;
-final int BTN_H = 360;
+final int BTN_H = 360;      
 
 final int NAME_W = 100;
 final int NAME_H = 50;
@@ -94,17 +98,20 @@ void textAreaUI() {
     titleArea.setFont(new Font("Dialog", Font.PLAIN, 24));
   }
 
-  if (textArea == null) {
+  if(textArea == null) {
 
     textArea = new GTextArea(this, 4, textFieldY + titlespace + 8, width-8, height - textFieldY - 8 - titlespace, G4P.SCROLLBARS_VERTICAL_ONLY);
     textArea.setOpaque(true);
     textArea.setVisible(false);
     textArea.setPromptText("Text");
     textArea.setFont(new Font("Dialog", Font.PLAIN, 24));
+
   }
+
 }
 
 void switchScreen(int next) {
+  int from = currentScreen;
 
   isMenuDragging = false;
   pressedOnNameBtn = false;
@@ -124,23 +131,24 @@ void switchScreen(int next) {
   if (nameEditButton != null) {
     nameEditButton.setVisible(next == menu_screen);
   }
+  if (next == diary_library) {
+    loadDiaryDates();
+  }
 }
 
 
 
-float worldMouseX() {
-  return mouseX + menuScrollX;
-}
-float worldMouseY() {
-  return mouseY;
-}
+float worldMouseX() { return mouseX + menuScrollX; }
+float worldMouseY() { return mouseY; } 
 
-// 메뉴 버튼 초기화 함수입니다. 프레임마다 버튼 오브젝트가 변하지 않게 하기 위함입니다.
+// 메뉴 버튼 초기화 함수
 void initMenuButtons() {
 
   int x1 = PAGE_PADDING_X;
   int x2 = PAGE_PADDING_X + BTN_W + MENU_GUTTER_X;
+  // int x_name = NAME_X;
   int y  = MENU_TOP;
+  // int y_name = NAME_Y;
 
   dsButton = new rectButton(x1, y, BTN_W, BTN_H, #FEFD48);
   dsButton.rectButtonText("Drawing\nSticker", 50);
@@ -153,10 +161,14 @@ void initMenuButtons() {
 
   dlButton = new rectButton(x2 + PAGE_WIDTH, y, BTN_W, BTN_H, #FEFD48);
   dlButton.rectButtonText("Diary\nLibrary", 50);
+
+  /*nameButton = new rectButton(NAME_X, NAME_Y, NAME_W, NAME_H, #3FE87F);
+  nameButton.rectButtonText("Name", 20);
+  nameButton.setShadow(false);*/
 }
 
 void ensureDiaryUI() {
-  if (stickerStoreButton == null) {
+  if(stickerStoreButton == null) {
     stickerStoreButton = new rectButton(1100, textFieldY - 120, 180, 60, #c8dcff);
     stickerStoreButton.rectButtonText("Sticker storage", 25);
     stickerStoreButton.setShadow(false);
@@ -167,34 +179,37 @@ void ensureDiaryUI() {
     finishButton.rectButtonText("Finish", 20);
     finishButton.setShadow(false);
   }
-  if (dateButton == null) {
+  if(dateButton == null) {
     dateButton = new rectButton(DATE_X, DATE_Y, DATE_W, DATE_H, #F6F7FB);
     dateButton.rectButtonText("Date", 15);
     dateButton.setShadow(false);
   }
+
 }
 
 void setup() {
-  size(1280, 720);
-  pixelDensity(1);
-  imageMode(CENTER);
-  stickerLibrary = new ArrayList<Sticker>();
-  placedStickers = new ArrayList<Sticker>();
-  setupCreator();
-  textAreaUI();
+    size(1280, 720);
+    pixelDensity(1);
+    imageMode(CENTER);
+    stickerLibrary = new ArrayList<Sticker>();
+    placedStickers = new ArrayList<Sticker>();
+    setupCreator();
+    textAreaUI();
+  
+    // 실행 창 이름 지정
+    surface.setTitle("MyStickerDiary");
 
-  // 실행 창 이름 지정
-  surface.setTitle("MyStickerDiary");
+    // 실행 창 사이즈 사용자가 임의 조정하지 못하게 설정
+    surface.setResizable(false);
 
-  // 실행 창 사이즈 사용자가 임의 조정하지 못하게 설정
-  surface.setResizable(false);
+    font = createFont("data/fonts/nanumHandWriting_babyLove.ttf", 24);
 
-  font = createFont("data/fonts/nanumHandWriting_babyLove.ttf", 24);
-
-  // 버튼 창 호버링 시 나오는 아이콘 로드입니다.
-  cursorImage = loadImage("data/images/name_edit.png");
+    // 버튼 창 호버링 시 나오는 아이콘 로드입니다.
+    cursorImage = loadImage("data/images/name_edit.png");
 
   initMenuButtons();
+
+  initDiaryLibrary();
   loadStickersFromFolder("sticker");
 
   // GImageButton 초기화 수정된 부분
@@ -231,17 +246,19 @@ void loadStickersFromFolder(String folderPath) {
           if (fileName.endsWith(".png") || fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") || fileName.endsWith(".gif")) {
             String filePath = file.getAbsolutePath();
             PImage img = loadImage(filePath);
-            stickerLibrary.add(new Sticker(0, 0, img, defaultStickerSize));
+            stickerLibrary.add(new Sticker(0, 0, img, defaultStickerSize, file.getName()));
             println("file load success :"+filePath);
           }
         }
       }
-    } else {
+    }
+    else {
       println("file load fail");
     }
-  } else {
-    println("Folder not found: " + folderPath);
   }
+  else {
+        println("Folder not found: " + folderPath);
+    }
 }
 
 // 설정 화면 그리기
@@ -250,68 +267,66 @@ void drawSettingsScreen() {
   fill(0, 180);
   noStroke();
   rect(0, 0, width, height);
-
+  
   // 설정 창 UI
-  rectMode(CENTER);
+  rectMode(CENTER); 
   fill(255);
   stroke(0);
-  rect(width/2, height/2, 600, 500, 15);
+  rect(width/2, height/2, 600, 500, 15); 
   rectMode(CORNER);
-
+  
   // 내부 내용
   fill(0);
   textAlign(CENTER, CENTER);
   textSize(40);
   text("설정 (Settings)", width/2, height/2 - 200);
 
-  settings_goToMainButton.render();
+  settings_goToMainButton.render(); 
   //아래에 계속해서 내부 내용 추가
 }
 
 void draw() {
+    // 디폴트 모드 세팅
+    imageMode(CORNER);
+    rectMode(CORNER);
+    ellipseMode(CENTER);
+    textAlign(LEFT, BASELINE);
+    // 현재 상태(currentScreen)에 따라 적절한 함수를 호출
+    switch (currentScreen) {
+      case start_screen:
+        drawStartScreen();
+        break;
+      case menu_screen:
+        drawMenuScreen();
+        break;
+      case making_sticker:
+        drawCreator();
+        break;
+      case sticker_library:
+          drawLibrary();
+          break;
+      case drawing_diary:
+        drawDiary();
+        break;
+      case diary_library:
+        drawDiaryLibrary();
+        break;
+      case name_screen:
+        drawNameScreen();
+        break;
+      default :
+      break;
+      }
 
-  // 디폴트 모드 세팅
-  imageMode(CORNER);
-  rectMode(CORNER);
-  ellipseMode(CENTER);
-  textAlign(LEFT, BASELINE);
-
-  // 현재 상태(currentScreen)에 따라 적절한 함수를 호출
-  switch (currentScreen) {
-  case start_screen:
-    drawStartScreen();
-    break;
-  case menu_screen:
-    drawMenuScreen();
-    break;
-  case making_sticker:
-    drawCreator();
-    break;
-  case sticker_library:
-    drawLibrary();
-    break;
-  case drawing_diary:
-    drawDiary();
-    break;
-  case diary_library:
-    drawDiaryLibrary();
-    break;
-  case name_screen:
-    drawNameScreen();
-    break;
-  default:
-    break;
+      if (isSettingsVisible) {
+        drawSettingsScreen();
+      }
   }
-
-  if (isSettingsVisible) {
-    drawSettingsScreen();
-  }
-}
 
 
 // 키보드 입력
 void keyPressed() {
-  if (key == ESC) { // ESC 키 -> 설정화면
+  if (key == ESC) { // ESC 키 -> 설정화면 
     isSettingsVisible = !isSettingsVisible;
     key = 0; // ESC 키가 프로그램 종료로 이어지지 않도록 방지
 
@@ -339,8 +354,8 @@ void mousePressed() {
   if (isSettingsVisible) {
     // 메인으로 가기 버튼 처리
     if (settings_goToMainButton.isMouseOverButton()) {
-      isSettingsVisible = false;
-      switchScreen(start_screen);
+      isSettingsVisible = false; 
+      switchScreen(start_screen);  
     }
     return; // 뒤 버튼 눌리지 않도록
   }
@@ -361,42 +376,43 @@ void mousePressed() {
   case making_sticker:
     handleCreatorMouse();
     break;
+  case diary_library:
+    handleDiaryLibraryMousePressed();
+    break;
   }
 }
-
 // 마우스 드래그
 void mouseDragged() {
 
   if (isSettingsVisible) {
     return;
   }
-
   switch (currentScreen) {
-  case start_screen:
-    //handleStartDrag();
-    break;
-  case menu_screen:
-    handleMenuDragged();
-    break;
-  case drawing_diary:
-    handleDiaryDrag();
-    break;
-  case sticker_library:
-    //handleLibraryDrag();
-    break;
-  case making_sticker:
-    handleCreatorDrag();
-    break;
+    case start_screen:
+      //handleStartDrag();
+      break;
+    case menu_screen:
+      handleMenuDragged();
+      break;
+    case drawing_diary:
+      handleDiaryDrag();
+      break;
+    case sticker_library:
+      //handleLibraryDrag();
+      break;
+    case making_sticker:
+      handleCreatorDrag();
+      break;
+    case diary_library:
+      handleDiaryLibraryDragged();
+      break;
   }
 }
-
 // 마우스 놓을때
 void mouseReleased() {
-
   if (isSettingsVisible) {
     return;
   }
-
   switch (currentScreen) {
   case start_screen:
     handleStartRelease();
@@ -413,5 +429,29 @@ void mouseReleased() {
   case making_sticker:
     handleCreatorRelease();
     break;
+  case diary_library:
+    handleDiaryLibraryMouseReleased();
+    break;
+  }
+}
+
+
+void mouseWheel(MouseEvent ev) {
+  switch (currentScreen) {
+    case drawing_diary:
+      if (isDatePickerVisible == 2) {
+        if (mouseHober(yearPickerX-64,yearmonthScrollY,192,yearmonthScrollH)) {
+          yearPicker -= ev.getCount();
+          yearPicker = constrain(yearPicker, 1, 9998);
+        }
+        if (mouseHober(yearmonthScrollX+yearmonthScrollW/2+64,yearmonthScrollY,192,yearmonthScrollH)) {
+          monthPicker -= ev.getCount();
+          monthPicker = clampMonth1to12(monthPicker);
+        }
+      }
+      break;
+    case diary_library:
+      handleDiaryLibraryMouseWheel(ev);
+      break;
   }
 }

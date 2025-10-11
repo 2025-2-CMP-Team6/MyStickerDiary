@@ -106,7 +106,7 @@ void drawLibrary() {
       }
   
       if (mouseHober(s.x-newW/2, s.y-newH/2, newW, newH)) {
-        Sticker newSticker = new Sticker(width/2, height/2, s.img, defaultStickerSize);
+        Sticker newSticker = new Sticker(width/2, height/2, s.img, defaultStickerSize, s.imageName);
         placedStickers.add(newSticker);
         switchScreen(drawing_diary);
         selectedSticker = newSticker;

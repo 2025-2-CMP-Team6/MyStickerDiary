@@ -241,10 +241,10 @@ void handleCreatorMouse() {
   if (mouseHober(width - SAVE_W, height - SAVE_H, SAVE_W, SAVE_H)) { // 저장
     PImage newStickerImg = stickerCanvas.get(); // 캔버스를 PImage로 변환
     cursor(ARROW);
-    String sticker_name = year() + month() + day() + "_" + hour() + minute() + second();
-    Sticker newSticker = new Sticker(0, 0, newStickerImg, defaultStickerSize);  // 스티커 객체 생성
+    String sticker_name = "sticker_" + year() + month() + day() + "_" + hour() + minute() + second() + ".png";
+    Sticker newSticker = new Sticker(0, 0, newStickerImg, defaultStickerSize, sticker_name);  // 스티커 객체 생성
     stickerLibrary.add(newSticker); // 라이브러리 ArrayList에 추가
-    newStickerImg.save("data/sticker/"+sticker_name +".png");
+    newStickerImg.save(dataPath("sticker/" + sticker_name));
 
     switchScreen(sticker_library);
     return;
@@ -386,4 +386,3 @@ void handleCreatorRelease() {
   }
   isDrawingShape = false; // 그리기 상태 초기화
 }
-

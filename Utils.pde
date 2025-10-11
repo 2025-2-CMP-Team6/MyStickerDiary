@@ -1,19 +1,43 @@
 // 마우스 호버링
-public boolean mouseHober(float x, float y, float w, float h) {
+boolean mouseHober(float x, float y, float w, float h) {
     return ((mouseY > y && mouseY < y+h) && (mouseX > x && mouseX < x+w));
 }
-public float median(float a, float b, float c) {
+boolean mouseHober(float sx, float sy, int x, int y, int w, int h) {
+  return (sx > x && sx < x + w && sy > y && sy < y + h);
+}
+
+// 중간값
+float median(float a, float b, float c) {
   return max(a, min(b,c));
 }
 
-
-
-
-
-boolean mouseHober(float mx, float my, float x, float y, float w, float h) {
-  return ((my > y && my < y+h) && (mx > x && mx < x+w));
+// 달 영어로
+String monthToString(int cal) {
+  String[] monthStringList = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+  if (cal >= 0 && cal < 12) {
+    return monthStringList[cal];
+  }
+  return "";
 }
 
+// 최소/최댓값 제한
+int clampMonth1to12(int m) {
+  return max(1, min(12, m));
+}
+
+int monthToIdx0(int month1to12) {
+  return clampMonth1to12(month1to12) - 1; // 0~11
+}
+
+int prevMonthIdx0(int month1to12) {
+  return (monthToIdx0(month1to12) + 11) % 12; // 0~11
+}
+
+int nextMonthIdx0(int month1to12) {
+  return (monthToIdx0(month1to12) + 1) % 12; // 0~11
+}
+
+// 버튼
 public class rectButton {
 
   int position_x, position_y, width, height, position_x_r, position_y_r;
@@ -138,7 +162,7 @@ public class rectButton {
 
 }
 
-
+// 색 팔래트 정렬
 void paletteCenter(int i, int[] outXY) {
 
   int col = (i > 5) ? 1 : 0;          
@@ -148,7 +172,7 @@ void paletteCenter(int i, int[] outXY) {
   outXY[1] = colorPos[1] + row * (int)colorGab;     
 
 }
-
+// 중점
 PVector midpoint(float x1, float y1, float x2, float y2) {
   return new PVector((x1 + x2) / 2, (y1 + y2) / 2);
 }

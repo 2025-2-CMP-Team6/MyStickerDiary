@@ -264,6 +264,7 @@ void handleDiaryRelease() {
       finishButton.position_x, finishButton.position_y,
       finishButton.width,      finishButton.height)) {
          switchScreen(diary_library);
+         loadDiaryDates();
          saveDiary();
        }
 
@@ -297,29 +298,6 @@ void openDatePickerDialog() { // 달력 토글
   datePickerX = DATE_X;
   datePickerY = DATE_Y+DATE_H;
   isDatePickerVisible = 1;
-}
-
-
-String monthToString(int cal) {
-  String[] monthStringList = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-  String mString = monthStringList[cal]; // 달 string으로
-  return mString;
-}
-
-int clampMonth1to12(int m) {
-  return max(1, min(12, m));
-}
-
-int monthToIdx0(int month1to12) {
-  return clampMonth1to12(month1to12) - 1; // 0~11
-}
-
-int prevMonthIdx0(int month1to12) {
-  return (monthToIdx0(month1to12) + 11) % 12; // 0~11
-}
-
-int nextMonthIdx0(int month1to12) {
-  return (monthToIdx0(month1to12) + 1) % 12; // 0~11
 }
 
 void drawDatePicker() {
@@ -668,23 +646,6 @@ void handleYearMonthMouseRelease() {  // 년도 설정창 마우스 떼기
     return;
   }
 }
-
-void mouseWheel(MouseEvent ev) {
-  if (isDatePickerVisible == 2) {
-    if (mouseHober(yearPickerX-64,yearmonthScrollY,192,yearmonthScrollH)) {
-      if ((yearPicker + ev.getCount() < 9999)) {
-        if ((yearPicker + ev.getCount() > 0)) {yearPicker += ev.getCount();}
-        else {yearPicker = 0;}
-      }
-      else {yearPicker = 11;}
-    }
-    if (mouseHober(yearmonthScrollX+yearmonthScrollW/2+64,yearmonthScrollY,192,yearmonthScrollH)) {
-      monthPicker += ev.getCount();
-      monthPicker = clampMonth1to12(monthPicker);
-    }
-  }
-}
-
 void saveDiary() {
   JSONObject diaryData = new JSONObject();
 
@@ -699,9 +660,7 @@ void saveDiary() {
     stickerData.setFloat("x", s.x);
     stickerData.setFloat("y", s.y);
     stickerData.setFloat("size", s.size);
-    // 스티커 이미지 파일 이름 저장 (예시로 파일 이름을 "sticker_1.png" 형태로 저장)
-    // 실제 구현에서는 스티커 이미지를 저장하고 파일 이름을 얻어와야 함
-    stickerData.setString("imageName", "sticker_" + placedStickers.indexOf(s) + ".png");
+    stickerData.setString("imageName", s.imageName);
     stickerArray.append(stickerData);
   }
   diaryData.setJSONArray("stickers", stickerArray);
@@ -709,4 +668,90 @@ void saveDiary() {
   // JSON 파일로 저장
   saveJSONObject(diaryData, "data/diaries/diary_" + diary_year + "_" + diary_month + "_" + diary_day + ".json");
   println("Diary saved to data/diaries/diary_" + diary_year + "_" + diary_month + "_" + diary_day + ".json");
+}
+
+// 불러오기
+void loadDiary(int year, int month, int day) {
+  String filePath = "data/diaries/diary_" + year + "_" + month + "_" + day + ".json";  
+  JSONObject diaryData = loadJSONObject(filePath);
+  
+  if (diaryData == null) {
+    // loadJSONObject는 파일이 없거나 유효한 JSON이 아니면 null을 반환합니다.
+    println("Diary file not found or is invalid: " + filePath);
+    return;
+  }
+  
+  // Clear current diary state
+  placedStickers.clear();
+  titleArea.setText(diaryData.getString("title", ""));
+  textArea.setText(diaryData.getString("content", ""));
+  
+  // Update diary date
+  diary_year = year;
+  diary_month = month;
+  diary_day = day;
+  calendar.set(diary_year, diary_month - 1, diary_day);
+  
+  // Load stickers
+  JSONArray stickerArray = diaryData.getJSONArray("stickers");
+  if (stickerArray != null) {
+    for (int i = 0; i < stickerArray.size(); i++) {
+      JSONObject stickerData = stickerArray.getJSONObject(i);
+      
+      String imageName = stickerData.getString("imageName");
+      float x = stickerData.getFloat("x");
+      float y = stickerData.getFloat("y");
+      float size = stickerData.getFloat("size");
+      
+      PImage stickerImg = null;
+      for (Sticker libSticker : stickerLibrary) {
+        if (libSticker.imageName.equals(imageName)) {
+          stickerImg = libSticker.img;
+          break;
+        }
+      }
+      
+      if (stickerImg == null) {
+        println("Sticker image not found in library: " + imageName + ". Trying to load from file.");
+        stickerImg = loadImage(dataPath("sticker/" + imageName));
+      }
+      
+      if (stickerImg != null) {
+        Sticker newSticker = new Sticker(x, y, stickerImg, size, imageName);
+        placedStickers.add(newSticker);
+      } else {
+        println("Failed to load sticker image: " + imageName);
+      }
+    }
+  }
+  
+  println("Diary loaded for " + year + "-" + month + "-" + day);
+}
+
+void resetDiary() {
+  // 1. 스티커 목록 초기화
+  if (placedStickers != null) {
+    placedStickers.clear();
+  }
+  
+  // 2. 텍스트 필드 초기화
+  if (titleArea != null) {
+    titleArea.setText("");
+  }
+  if (textArea != null) {
+    textArea.setText("");
+  }
+  
+  // 3. 날짜를 오늘 날짜로 초기화
+  calendar = Calendar.getInstance(); // 오늘 날짜로 새로고침
+  diary_year = calendar.get(Calendar.YEAR);
+  diary_month = calendar.get(Calendar.MONTH) + 1;
+  diary_day = calendar.get(Calendar.DAY_OF_MONTH);
+  
+  // 4. 선택된 스티커 및 상태 초기화
+  selectedSticker = null;
+  currentlyDraggedSticker = null;
+  isResizing = -1;
+  
+  println("Diary has been reset for a new entry.");
 }

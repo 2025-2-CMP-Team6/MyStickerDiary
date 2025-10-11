@@ -149,7 +149,7 @@ public void handleMenuReleased() {
 
       if (clickDS) { switchScreen(making_sticker);  return; }
       if (clickSL) { switchScreen(sticker_library); return; }
-      if (clickDD) { switchScreen(drawing_diary);   return; }
+      if (clickDD) { switchScreen(drawing_diary); resetDiary();  return; }
       if (clickDL) { switchScreen(diary_library);   return; }
       // if (clickNAME) { switchScreen(name_screen);   return; } // G4P 버튼으로 대체되어 제거
 
@@ -159,7 +159,7 @@ public void handleMenuReleased() {
 
 }
 
-private boolean hitScreen(rectButton b, float sx, float sy) {
+boolean hitScreen(rectButton b, float sx, float sy) {
   return (sx > b.position_x && sx < b.position_x + b.width &&
           sy > b.position_y && sy < b.position_y + b.height);
 }

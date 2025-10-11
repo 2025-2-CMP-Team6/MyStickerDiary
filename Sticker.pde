@@ -2,12 +2,14 @@ class Sticker { // 스티커 클래스
   float x, y;
   PImage img;
   float size; // 스티커의 크기 (가장 긴 쪽 기준)
+  String imageName;
   
-  Sticker(float tempX, float tempY, PImage tempImg, float tempSize) {
+  Sticker(float tempX, float tempY, PImage tempImg, float tempSize, String imgName) {
     x = tempX;
     y = tempY;
     img = tempImg;
     size = tempSize;
+    imageName = imgName;
   }
   
   void display() {
@@ -47,4 +49,3 @@ class Sticker { // 스티커 클래스
       return new float[]{0,0,0,0}; // 잘못된 인덱스
   }
 }
-
