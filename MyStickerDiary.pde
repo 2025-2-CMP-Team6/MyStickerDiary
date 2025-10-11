@@ -124,6 +124,7 @@ void switchScreen(int next) {
 }
 
 
+
 float worldMouseX() { return mouseX + menuScrollX; }
 float worldMouseY() { return mouseY; } 
 
@@ -299,8 +300,23 @@ void keyPressed() {
   if (key == ESC) { // ESC 키 -> 설정화면 
     isSettingsVisible = !isSettingsVisible;
     key = 0; // ESC 키가 프로그램 종료로 이어지지 않도록 방지
+
+    if (isSettingsVisible) {
+      // 설정 창이 켜졌을 때 둘 다 숨깁니다.
+      if (titleArea != null) {
+        titleArea.setVisible(false);
+      }
+      if (textArea != null) {
+        textArea.setVisible(false);
+      }
+    } else {
+      // 설정 창이 꺼졌을 때 원래 상태로 되돌립니다.
+      updateTextUIVisibility();
+    }
   }
 }
+
+
 
 // 여기에서 모든 pde 파일 마우스 클릭 이벤트를 switch로 받아서 상황별로 처리해주면 될듯?
 // 마우스 클릭
