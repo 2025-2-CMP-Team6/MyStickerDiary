@@ -16,6 +16,7 @@ class Sticker { // 스티커 클래스
     image(img, x, y, displaySize.x, displaySize.y);
   }
 
+  
   // 화면에 표시될 크기(displayW, displayH)를 계산하여 PVector로 반환
   PVector getDisplaySize() {
     float w = img.width;

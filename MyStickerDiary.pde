@@ -21,6 +21,7 @@ final int name_screen = 6;
 // 초기화면은 시작화면 (StartScreen)
 int currentScreen = start_screen;
 
+boolean isSettingsVisible = false; // 설정 화면 표시 여부
 boolean isMouseOverStartBtn = false; // 마우스가 버튼 위에 있는지 여부
 
 PFont myFont; // 폰트
@@ -52,6 +53,8 @@ Calendar calendar = Calendar.getInstance();
 rectButton dsButton, slButton, ddButton, dlButton;
 rectButton nameButton;
 rectButton dateButton;
+//설정 화면 내 버튼
+rectButton settings_goToMainButton;
 
 // 메뉴 스와이프 기능 관련 전역 변수입니다.
 final int PAGE_WIDTH = 1280;        
@@ -192,6 +195,12 @@ void setup() {
 
     initMenuButtons();
     loadStickersFromFolder("sticker");
+
+    //설정
+    // 설정 창의 '메인으로 가기' 버튼 초기화
+    settings_goToMainButton = new rectButton(width/2 - 100, height/2 + 100, 200, 50, color(100, 150, 255));
+    settings_goToMainButton.rectButtonText("Main", 24);
+  
 }
 
 void loadStickersFromFolder(String folderPath) {
@@ -222,6 +231,29 @@ void loadStickersFromFolder(String folderPath) {
     }
 }
 
+// 설정 화면 그리기
+void drawSettingsScreen() {
+  // 뒷배경 흐리게
+  fill(0, 180);
+  noStroke();
+  rect(0, 0, width, height);
+  
+  // 설정 창 UI
+  rectMode(CENTER); 
+  fill(255);
+  stroke(0);
+  rect(width/2, height/2, 600, 500, 15); 
+  rectMode(CORNER);
+  
+  // 내부 내용
+  fill(0);
+  textAlign(CENTER, CENTER);
+  textSize(40);
+  text("설정 (Settings)", width/2, height/2 - 200);
+
+  settings_goToMainButton.render(); 
+  //아래에 계속해서 내부 내용 추가
+}
 
 void draw() {
     // 디폴트 모드 세팅
@@ -255,11 +287,34 @@ void draw() {
       default :
       break;
       }
+
+      if (isSettingsVisible) {
+        drawSettingsScreen();
+      }
   }
+
+
+// 키보드 입력
+void keyPressed() {
+  if (key == ESC) { // ESC 키 -> 설정화면 
+    isSettingsVisible = !isSettingsVisible;
+    key = 0; // ESC 키가 프로그램 종료로 이어지지 않도록 방지
+  }
+}
 
 // 여기에서 모든 pde 파일 마우스 클릭 이벤트를 switch로 받아서 상황별로 처리해주면 될듯?
 // 마우스 클릭
 void mousePressed() {
+  // 설정 화면이 보이는 상태에선 설정 화면 내의 기능만 처리하도록 함
+  if (isSettingsVisible) {
+    // 메인으로 가기 버튼 처리
+    if (settings_goToMainButton.isMouseOverButton()) {
+      isSettingsVisible = false; 
+      switchScreen(start_screen);  
+    }
+    return; // 뒤 버튼 눌리지 않도록
+  }
+
     switch (currentScreen) {
       case start_screen:
         //handleStartMouse();
@@ -281,6 +336,11 @@ void mousePressed() {
   
 // 마우스 드래그
 void mouseDragged() {
+
+    if (isSettingsVisible) {
+          return; 
+    }
+
     switch (currentScreen) {
       case start_screen:
         //handleStartDrag();
