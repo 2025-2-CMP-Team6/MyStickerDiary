@@ -707,6 +707,6 @@ void saveDiary() {
   diaryData.setJSONArray("stickers", stickerArray);
 
   // JSON 파일로 저장
-  saveJSONObject(diaryData, "data/diary_" + diary_year + "_" + diary_month + "_" + diary_day + ".json");
-  println("Diary saved to data/diary_" + diary_year + "_" + diary_month + "_" + diary_day + ".json");
+  saveJSONObject(diaryData, "data/diaries/diary_" + diary_year + "_" + diary_month + "_" + diary_day + ".json");
+  println("Diary saved to data/diaries/diary_" + diary_year + "_" + diary_month + "_" + diary_day + ".json");
 }
