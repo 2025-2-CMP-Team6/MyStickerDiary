@@ -1,3 +1,5 @@
+// MenuScreen.pde
+
 GUIController c;
 IFButton b1;
 IFLabel l;
@@ -42,7 +44,7 @@ public void drawMenuScreen() {
 
     popMatrix();
 
-    // nameButton.render(); // 기존 render 호출 제거, G4P 버튼은 자동 렌더링 됩니다.
+    // nameButton.render(); // 기존 render 호출 제거, G4P 버튼은 자동 렌더링
 
     boolean hoverScrollable =
       mouseHober(worldMouseX(), worldMouseY(),
@@ -54,7 +56,7 @@ public void drawMenuScreen() {
       mouseHober(worldMouseX(), worldMouseY(),
                  dlButton.position_x, dlButton.position_y, dlButton.width, dlButton.height);
 
-    // 수정된 부분: GImageButton은 자체 호버 효과가 있으므로, 기존 호버 로직에서 제외합니다.
+    // 수정된 부분: GImageButton은 자체 호버 효과가 있으므로, 기존 호버 로직에서 제외.
     // boolean hoverFixed =
     //   mouseHober(mouseX, mouseY,
     //              nameButton.position_x, nameButton.position_y, nameButton.width, nameButton.height);
@@ -90,7 +92,7 @@ public void handleMenuMousePressed() {
   dlButton.onPress((int)worldMouseX(), (int)worldMouseY());
   // nameButton.onPress(mouseX, mouseY); // G4P 버튼으로 대체되어 제거
 
-  // 수정된 부분: G4P 버튼은 자체 이벤트 핸들러를 사용하므로 관련 로직을 제거합니다.
+  // 수정된 부분: G4P 버튼은 자체 이벤트 핸들러 사용, 관련 로직을 제거.
   // if (hitScreen(nameButton, mouseX, mouseY)) {
   // 
   //   pressedOnNameBtn = true;
@@ -99,7 +101,6 @@ public void handleMenuMousePressed() {
   //   return;
   // 
   // }
-  // 수정 끝
   
   pressedOnNameBtn = false;
   isMenuDragging = true;
@@ -140,7 +141,6 @@ public void handleMenuReleased() {
   //   return;
   // 
   // }
-  // 수정 끝
 
   if (!isMenuDragging) return;
   isMenuDragging = false;

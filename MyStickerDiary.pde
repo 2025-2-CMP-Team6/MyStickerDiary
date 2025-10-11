@@ -52,7 +52,7 @@ Calendar calendar = Calendar.getInstance();
 // 메뉴 버튼 오브젝트를 한번씩만 만들어줘야 하는 이슈가 발생해서 center control 파일에 선언합니다.
 rectButton dsButton, slButton, ddButton, dlButton;
 // rectButton nameButton; // 기존 rectButton 주석 처리
-GImageButton nameEditButton; // G4P 이미지 버튼 선언
+GImageButton nameEditButton; // G4P 이미지 버튼 선언 수정된 부분
 rectButton dateButton;
 //설정 화면 내 버튼
 rectButton settings_goToMainButton;
@@ -120,11 +120,10 @@ void switchScreen(int next) {
 
   updateTextUIVisibility();
 
-  // 수정된 부분: 화면이 전환될 때, 다음 화면이 메뉴 화면일 경우에만 nameEditButton을 보이게 합니다.
+  // 수정된 부분 : 화면이 전환될 때, 다음 화면이 메뉴 화면일 경우에만 nameEditButton을 보이도록 => 이거 어케 못하나
   if (nameEditButton != null) {
     nameEditButton.setVisible(next == menu_screen);
   }
-  // 수정 끝
 }
 
 
@@ -198,16 +197,13 @@ void setup() {
   initMenuButtons();
   loadStickersFromFolder("sticker");
 
-  // GImageButton 초기화
+  // GImageButton 초기화 수정된 부분
   String[] nameButtonImages = {
     "images/name_edit_off.png", "images/name_edit_over.png", "images/name_edit_down.png"
   };
-  // 우측 상단에 버튼을 위치시킵니다.
+  // 우측 상단에 버튼 위치
   nameEditButton = new GImageButton(this, width - 80, 30, nameButtonImages, "images/name_edit_masks.png");
-
-  // 수정된 부분: 프로그램 시작 시 버튼을 보이지 않게 설정합니다.
-  nameEditButton.setVisible(false);
-  // 수정 끝
+  nameEditButton.setVisible(false); // 프로그램 시작 시 버튼을 보이지 않게 설정
 
   //설정
   // 설정 창의 '메인으로 가기' 버튼 초기화
@@ -217,8 +213,7 @@ void setup() {
 
 // G4P 컨트롤 이벤트를 처리하는 핸들러
 void handleButtonEvents(GImageButton button, GEvent event) {
-  // nameEditButton이 클릭되었을 때 name_screen으로 전환합니다.
-  if (button == nameEditButton && event == GEvent.CLICKED) {
+  if (button == nameEditButton && event == GEvent.CLICKED) { // nameEditButton clicked -> name_screen으로 전환
     switchScreen(name_screen);
   }
 }
@@ -274,11 +269,13 @@ void drawSettingsScreen() {
 }
 
 void draw() {
+
   // 디폴트 모드 세팅
   imageMode(CORNER);
   rectMode(CORNER);
   ellipseMode(CENTER);
   textAlign(LEFT, BASELINE);
+
   // 현재 상태(currentScreen)에 따라 적절한 함수를 호출
   switch (currentScreen) {
   case start_screen:
@@ -395,6 +392,11 @@ void mouseDragged() {
 
 // 마우스 놓을때
 void mouseReleased() {
+
+  if (isSettingsVisible) {
+    return;
+  }
+
   switch (currentScreen) {
   case start_screen:
     handleStartRelease();
