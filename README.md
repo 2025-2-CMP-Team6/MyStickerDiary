@@ -16,7 +16,7 @@ MyStickerDiary/
     ├── fonts/                  // 사용할 폰트 파일(ttf)
     ├── images/                 // 사용할 이미지 파일(processing 상에서 그리기 어렵거나 디자인 상 활용할 이미지)
     ├── stickers/               // 그린 스티커들 로드하여 저장
-    └── diaries/                // DrawingLibrary 일기 텍스트 및 사용한 스티커 데이터 반영하여 저장
+    └── diaries/                // DrawingLibrary 일기 텍스트 및 사용한 스티커 데이터 반영하여 저장 (10.11 추가)
 ```
 ```
 Plan
@@ -27,6 +27,7 @@ Plan
 ```
 남은 기능 구현들 10.11 ver
 (생각나거나 더 좋은 기능 있으면 카톡이나 README에 추가 부탁드립니다)
+
 stickerLibrary
 - 만들어놓은 스티커 삭제 구현
 - 만들어놓은 스티커 수정 구현
