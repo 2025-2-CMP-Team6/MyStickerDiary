@@ -1,6 +1,7 @@
 // Library.pde
 
 void drawLibrary() {
+  
     background(220, 240, 220);
     imageMode(CENTER);
     rectMode(CENTER);
@@ -69,6 +70,8 @@ void drawLibrary() {
       }
       
     }
+
+    rectMode(CORNER); // rectMode를 다시 CORNER로 설정
   }
   
   void handleLibraryMouse() {
