@@ -31,6 +31,7 @@ ArrayList<Sticker> stickerLibrary; // 보관함에 있는 모든 스티커
 ArrayList<Sticker> placedStickers; // 일기장에 붙인 스티커
 
 Sticker currentlyDraggedSticker = null; // 현재 드래그 중인 스티커
+Sticker stickerToEdit = null; // 편집할 스티커
 float offsetX, offsetY; // 스티커를 잡은 지점과 스티커 중심 사이의 간격
 float defaultStickerSize = 100.0; // 스티커의 기본 크기
 
@@ -116,6 +117,10 @@ void switchScreen(int next) {
   isMenuDragging = false;
   pressedOnNameBtn = false;
   totalDragDist = 0;
+
+  if (from == making_sticker) {
+    stickerToEdit = null; // 스티커 편집기에서 나갈 때 편집 상태 초기화
+  }
 
   menuTargetScrollX = menuScrollX;
 

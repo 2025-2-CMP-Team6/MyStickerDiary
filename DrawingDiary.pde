@@ -11,6 +11,7 @@ rectButton stickerStoreButton;
 rectButton finishButton;
 boolean storagePressed = false;
 boolean finishPressed = false;
+boolean isStickerLibraryOverlayVisible = false;
 
 int isDatePickerVisible = 0;  // 0: 안보임, 1: 달력, 2: 년도
 Calendar datePickerCalendar; 
@@ -47,6 +48,8 @@ int diary_month = calendar.get(Calendar.MONTH) + 1;
 int diary_year = calendar.get(Calendar.YEAR);
 
 void drawDiary() {
+
+  updateTextUIVisibility();
 
   pushStyle();
   background(255, 250, 220);
@@ -99,19 +102,109 @@ void drawDiary() {
       drawYearMonthPicker();
     }
   }
+  
+  if (isStickerLibraryOverlayVisible) {
+    drawStickerLibraryOverlay();
+  }
+}
+
+void drawStickerLibraryOverlay() {
+  pushStyle();
+  // 뒷배경 어둡게
+  fill(0, 150);
+  rect(0, 0, width, height);
+
+  // 보관함 패널
+  rectMode(CORNER);
+  float panelX = 100, panelY = 100, panelW = width - 200, panelH = height - 200;
+  fill(220, 240, 220);
+  rect(panelX, panelY, panelW, panelH, 10);
+
+  // 제목
+  fill(0);
+  textAlign(CENTER, CENTER);
+  textSize(30);
+  text("스티커 보관함", panelX + panelW / 2, panelY + 40);
+
+  // 닫기 버튼
+  textSize(24);
+  fill(100);
+  if (mouseHober(panelX + panelW - 50, panelY + 10, 40, 40)) {
+    fill(0);
+  }
+  text("X", panelX + panelW - 30, panelY + 30);
+
+  // 스티커 목록 그리기
+  float boxSize = 100;
+  int spacing = 120;
+  int startX = (int)(panelX + 80);
+  int startY = (int)(panelY + 100);
+  int cols = floor((panelW - 160) / spacing);
+
+  for (int i = 0; i < stickerLibrary.size(); i++) {
+    Sticker s = stickerLibrary.get(i);
+    int c = i % cols;
+    int r = i / cols;
+
+    float stickerX = startX + c * spacing;
+    float stickerY = startY + r * spacing;
+
+    // 패널 범위를 벗어나는 스티커는 그리지 않음
+    if (stickerY + boxSize / 2 > panelY + panelH - 20) continue;
+
+    float w = s.img.width;
+    float h = s.img.height;
+    float newW, newH;
+
+    if (w > h) {
+      newW = boxSize;
+      newH = h * (boxSize / w);
+    } else {
+      newH = boxSize;
+      newW = w * (boxSize / h);
+    }
+
+    imageMode(CENTER);
+    image(s.img, stickerX, stickerY, newW, newH);
+
+    if (mouseHober(stickerX - newW / 2, stickerY - newH / 2, newW, newH)) {
+      stroke(0);
+      strokeWeight(3);
+      noFill();
+      rectMode(CENTER);
+      rect(stickerX, stickerY, newW, newH);
+      rectMode(CORNER);
+    }
+  }
+  popStyle();
 }
   
 void updateTextUIVisibility() {
   boolean onDiary = (currentScreen == drawing_diary);
   if (textArea != null) {
+    boolean isOverlayActive = isStickerLibraryOverlayVisible || isDatePickerVisible != 0;
+    
     titleArea.setVisible(onDiary);
-    titleArea.setEnabled(onDiary);
+    titleArea.setEnabled(onDiary && !isOverlayActive);
+    
     textArea.setVisible(onDiary);
-    textArea.setEnabled(onDiary);
+    textArea.setEnabled(onDiary && !isOverlayActive);
+    
+    if (isOverlayActive) {
+      titleArea.setAlpha(100);
+      textArea.setAlpha(100);
+    } else {
+      titleArea.setAlpha(255);
+      textArea.setAlpha(255);
+    }
   }
-  
 }
 void handleDiaryMouse() { // 마우스를 처음 눌렀을 때 호출
+
+  if (isStickerLibraryOverlayVisible) {
+    // 오버레이 활성 시 다른 상호작용 방지
+    return;
+  }
 
   if (isDatePickerVisible != 0) {
     handleDatePickerMouse();
@@ -201,6 +294,11 @@ void handleDiaryMouse() { // 마우스를 처음 눌렀을 때 호출
 }
   
 void handleDiaryDrag() {  // 드래그하는 동안 호출
+  if (isStickerLibraryOverlayVisible) {
+    // 오버레이 활성 시 다른 상호작용 방지
+    return;
+  }
+
   if (isDatePickerVisible != 0) {
     handleDatePickerDrag();
     return;
@@ -253,6 +351,11 @@ void handleDiaryDrag() {  // 드래그하는 동안 호출
 // 마우스를 놓을 때 호출
 void handleDiaryRelease() {
   
+  if (isStickerLibraryOverlayVisible) {
+    handleStickerLibraryOverlayRelease();
+    return;
+  }
+
   if (isDatePickerVisible != 0) {
     handleDatePickerMouseRelease();
     return;
@@ -270,7 +373,9 @@ void handleDiaryRelease() {
 
   if (storagePressed && mouseHober(
       stickerStoreButton.position_x, stickerStoreButton.position_y,
-      stickerStoreButton.width, stickerStoreButton.height)) { switchScreen(sticker_library); }
+      stickerStoreButton.width, stickerStoreButton.height)) {
+    isStickerLibraryOverlayVisible = true;
+  }
 
   if (datePressed && mouseHober(
       dateButton.position_x, dateButton.position_y,
@@ -282,6 +387,54 @@ void handleDiaryRelease() {
 
 }
 
+void handleStickerLibraryOverlayRelease() {
+  float panelX = 100, panelY = 100, panelW = width - 200, panelH = height - 200;
+
+  // 닫기 버튼 클릭
+  if (mouseHober(panelX + panelW - 50, panelY + 10, 40, 40)) {
+    isStickerLibraryOverlayVisible = false;
+    return;
+  }
+
+  // 스티커 클릭 시 일기장에 추가
+  float boxSize = 100;
+  int spacing = 120;
+  int startX = (int)(panelX + 80);
+  int startY = (int)(panelY + 100);
+  int cols = floor((panelW - 160) / spacing);
+
+  for (int i = 0; i < stickerLibrary.size(); i++) {
+    Sticker s = stickerLibrary.get(i);
+    int c = i % cols;
+    int r = i / cols;
+
+    float stickerX = startX + c * spacing;
+    float stickerY = startY + r * spacing;
+
+    if (stickerY + boxSize / 2 > panelY + panelH - 20) continue;
+
+    float w = s.img.width;
+    float h = s.img.height;
+    float newW, newH;
+
+    if (w > h) {
+      newW = boxSize;
+      newH = h * (boxSize / w);
+    } else {
+      newH = boxSize;
+      newW = w * (boxSize / h);
+    }
+
+    if (mouseHober(stickerX - newW / 2, stickerY - newH / 2, newW, newH)) {
+      Sticker newSticker = new Sticker(width / 2, textFieldY / 2, s.img, defaultStickerSize, s.imageName);
+      placedStickers.add(newSticker);
+      selectedSticker = newSticker;
+      isStickerLibraryOverlayVisible = false; // 스티커 추가 후 오버레이 닫기
+      return;
+    }
+  }
+}
+
 void openDatePickerDialog() { // 달력 토글
   if (datePickerCalendar == null) {
     datePickerCalendar = (Calendar) calendar.clone();
@@ -290,14 +443,13 @@ void openDatePickerDialog() { // 달력 토글
     datePickerCalendar.setTime(calendar.getTime());
   }
 
-  textArea.setEnabled(false);
-  textArea.setAlpha(50);
-  titleArea.setEnabled(false);
-  titleArea.setAlpha(50);
-
   datePickerX = DATE_X;
   datePickerY = DATE_Y+DATE_H;
   isDatePickerVisible = 1;
+}
+
+void closeDatePickerDialog() {
+  isDatePickerVisible --;
 }
 
 void drawDatePicker() {
@@ -624,17 +776,6 @@ if ((!mouseHober(yearmonthScrollX, yearmonthScrollY, yearmonthScrollW, yearmonth
     isDatePickerVisible = 1;
   }
 }
-
-void closeDatePickerDialog() {
-  isDatePickerVisible --;
-  if (isDatePickerVisible == 0) {
-  textArea.setEnabled(true);
-  textArea.setAlpha(255);
-  titleArea.setEnabled(true);
-  titleArea.setAlpha(255);
-  }
-}
-
 void handleYearMonthMouseRelease() {  // 년도 설정창 마우스 떼기
   if (nowDragInPicker != 0) {
       nowDragInPicker = 0;

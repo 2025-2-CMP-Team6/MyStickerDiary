@@ -13,7 +13,11 @@ void drawLibrary() {
     text("스티커 보관함", width/2, 60);
     
     // 일기장으로
-    fill(200);
+    if (mouseHober(width - 175, 25, 150, 50)) {
+      fill(220);
+    } else {
+      fill(200);
+    }
     rectMode(CENTER); // rectMode는 한 번만 설정해도 됩니다.
     rect(width - 100, 50, 150, 50);
     fill(0);
@@ -21,7 +25,11 @@ void drawLibrary() {
     text("일기장으로", width - 100, 50);
   
     // '새 스티커 만들기' 버튼
-    fill(220, 220, 150);
+    if (mouseHober(width/2 - 125, height - 110, 250, 60)) {
+      fill(230, 230, 160);
+    } else {
+      fill(220, 220, 150);
+    }
     rect(width/2, height - 80, 250, 60);
     fill(0);
     textSize(30);
@@ -106,10 +114,13 @@ void drawLibrary() {
       }
   
       if (mouseHober(s.x-newW/2, s.y-newH/2, newW, newH)) {
-        Sticker newSticker = new Sticker(width/2, height/2, s.img, defaultStickerSize, s.imageName);
-        placedStickers.add(newSticker);
-        switchScreen(drawing_diary);
-        selectedSticker = newSticker;
+        // 스티커를 클릭하면 편집 화면으로 이동
+        stickerToEdit = s;
+        stickerCanvas.beginDraw();
+        stickerCanvas.clear();
+        stickerCanvas.image(stickerToEdit.img, 0, 0, canvasSize, canvasSize);
+        stickerCanvas.endDraw();
+        switchScreen(making_sticker);
         break; 
       }
     }

@@ -136,6 +136,15 @@ void drawCreator() {
   
   // --- UI ---
   // 도구
+  rectMode(CORNER);
+  for (int i = 0; i < 6; i++) {
+    if (mouseHober(toolPos[0], toolPos[1] + i * toolGab, 64, 64)) {
+      fill(255, 50);
+      noStroke();
+      rect(toolPos[0], toolPos[1] + i * toolGab, 64, 64);
+    }
+  }
+
   imageMode(CORNER);
   image(brushImg, toolPos[0], toolPos[1]);
   image(paintImg, toolPos[0], toolPos[1] + toolGab);
@@ -228,8 +237,18 @@ void drawCreator() {
     }
   }
   // 저장
+  if (mouseHober(width - SAVE_W, height - SAVE_H, SAVE_W, SAVE_H)) {
+    fill(255, 50);
+    noStroke();
+    rect(width - SAVE_W, height - SAVE_H, SAVE_W, SAVE_H);
+  }
   image(saveImg, width - SAVE_W, height - SAVE_H, SAVE_W, SAVE_H);
   // 뒤로
+  if (mouseHober(BACK_X, BACK_Y, BACK_W, BACK_H)) {
+    fill(255, 50);
+    noStroke();
+    rect(BACK_X, BACK_Y, BACK_W, BACK_H);
+  }
   image(backImg, BACK_X, BACK_Y, BACK_W, BACK_H);
 
   popStyle();
@@ -237,14 +256,18 @@ void drawCreator() {
 }
 
 void handleCreatorMouse() {
-
   if (mouseHober(width - SAVE_W, height - SAVE_H, SAVE_W, SAVE_H)) { // 저장
     PImage newStickerImg = stickerCanvas.get(); // 캔버스를 PImage로 변환
     cursor(ARROW);
-    String sticker_name = "sticker_" + year() + month() + day() + "_" + hour() + minute() + second() + ".png";
-    Sticker newSticker = new Sticker(0, 0, newStickerImg, defaultStickerSize, sticker_name);  // 스티커 객체 생성
-    stickerLibrary.add(newSticker); // 라이브러리 ArrayList에 추가
-    newStickerImg.save(dataPath("sticker/" + sticker_name));
+    if (stickerToEdit != null) {
+      stickerToEdit.img = newStickerImg;
+      newStickerImg.save(dataPath("sticker/" + stickerToEdit.imageName));
+    } else {
+      String sticker_name = "sticker_" + year() + month() + day() + "_" + hour() + minute() + second() + ".png";
+      Sticker newSticker = new Sticker(0, 0, newStickerImg, defaultStickerSize, sticker_name);  // 스티커 객체 생성
+      stickerLibrary.add(newSticker); // 라이브러리 ArrayList에 추가
+      newStickerImg.save(dataPath("sticker/" + sticker_name));
+    }
 
     switchScreen(sticker_library);
     return;

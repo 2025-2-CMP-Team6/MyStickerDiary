@@ -53,6 +53,7 @@ public class rectButton {
 
   private boolean armed = false;
   private boolean pressedInside = false;
+  private boolean isHovering = false;
 
   private float pressAnim = 0.0f;
 
@@ -99,12 +100,13 @@ public class rectButton {
   }
 
   public void render() {
+    isHovering = !armed && hit(mouseX, mouseY);
+
     // 부드러운 보간 (가볍게, 과도한 진동 방지)
     float target = (armed && pressedInside) ? 1.0f : 0.0f;
     // 선형 보간 사용 — overshoot 줄이고 깜빡임 완화
     pressAnim = pressAnim + (target - pressAnim) * 0.20f;
     pressAnim = constrain(pressAnim, 0, 1);
-
     // 시각 파라미터
     int baseShadow = 16;
     int minShadowOffset = 2;       // 완전 눌려도 최소한 남길 그림자 거리
@@ -119,7 +121,8 @@ public class rectButton {
     int shadowAlpha = (int) lerp(110, 40, pressAnim);
 
     // 버튼 면 색도 살짝 어둡게
-    color faceColor = lerpColor(cl, color(0), 0.12f * pressAnim);
+    color baseColor = isHovering ? lerpColor(cl, color(255), 0.2) : cl;
+    color faceColor = lerpColor(baseColor, color(0), 0.12f * pressAnim);
 
     pushStyle();
     rectMode(CORNER);
