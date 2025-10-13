@@ -1,5 +1,10 @@
 {
-  "stickers": [],
-  "title": "",
+  "stickers": [{
+    "imageName": "sad.png",
+    "size": 241.25,
+    "x": 710.625,
+    "y": 306.4705810546875
+  }],
+  "title": " ",
   "content": " "
 }

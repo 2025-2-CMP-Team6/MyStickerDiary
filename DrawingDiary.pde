@@ -93,13 +93,22 @@ void drawDiary() {
   ensureDiaryUI();
   finishButton.render();
   stickerStoreButton.render();
-  dateButton.render();
 
   if(diary_year != -1 && diary_month != -1 && diary_day != -1) {
     pushStyle();
     textSize(30);
+    String dateString = "Date : " + diary_year + ". " + diary_month + ". " + diary_day;
+    float dateTextX = 200;
+    float dateTextY = 5;
+    float dateTextW = textWidth(dateString);
+    float dateTextH = 30;
+    if (isDatePickerVisible == 0 && !isStickerLibraryOverlayVisible && mouseHober(dateTextX, dateTextY, dateTextW, dateTextH)) {
+      fill(150,100);
+      noStroke();
+      rect(dateTextX-4, dateTextY+4, dateTextW+8, dateTextH,8);
+    }
     fill(0);
-    text("Date : " + diary_year + ". " + diary_month + ". " + diary_day, 200, 30);
+    text(dateString, 200, 30);
     popStyle();
   }
 
@@ -349,10 +358,16 @@ void handleDiaryMouse() { // 마우스를 처음 눌렀을 때 호출
     yearmonthCanclePressed = false;
   }
 
-  if (dateButton != null) {
-    datePressed = mouseHober(dateButton.position_x, dateButton.position_y, dateButton.width, dateButton.height
-    );
-  }
+  // 날짜 텍스트 클릭 확인
+  pushStyle();
+  textSize(30);
+  String dateString = "Date : " + diary_year + ". " + diary_month + ". " + diary_day;
+  float dateTextX = 200;
+  float dateTextY = 5;
+  float dateTextW = textWidth(dateString);
+  float dateTextH = 30;
+  popStyle();
+  datePressed = mouseHober(dateTextX, dateTextY, dateTextW, dateTextH);
 }
   
 void handleDiaryDrag() {  // 드래그하는 동안 호출
@@ -381,8 +396,8 @@ void handleDiaryDrag() {  // 드래그하는 동안 호출
   if (isResizing == -1) { // 크기 핸들이 아니면 스티커 이동
     PVector displaySize = s.getDisplaySize();
     // 스티커의 위치를 마우스 위치로 업데이트
-    s.x = median(0, mouseX - offsetX, width);
-    s.y = median(0, mouseY - offsetY, textFieldY - displaySize.y/2);
+    s.x = constrain(mouseX - offsetX, 0, width);
+    s.y = constrain(mouseY - offsetY, 0, textFieldY - displaySize.y/2);
   } else {  // 크기 조절
   PVector anchor = resizeAnchor;
   // 크기 계산
@@ -460,15 +475,21 @@ void handleDiaryRelease() {
       stickerStoreButton.width, stickerStoreButton.height)) {
     isStickerLibraryOverlayVisible = true;
   }
-
-  if (datePressed && mouseHober(
-      dateButton.position_x, dateButton.position_y,
-      dateButton.width, dateButton.height)) { openDatePickerDialog(); }
-
+  
+  // 날짜 텍스트 클릭 시 달력 열기
+  pushStyle();
+  textSize(30);
+  String dateString = "Date : " + diary_year + ". " + diary_month + ". " + diary_day;
+  float dateTextX = 200;
+  float dateTextY = 5;
+  float dateTextW = textWidth(dateString);
+  float dateTextH = 30;
+  popStyle();
+  if (datePressed && mouseHober(dateTextX, dateTextY, dateTextW, dateTextH)) { openDatePickerDialog(); }
+  
   finishPressed = false;
   storagePressed = false;
   datePressed = false;
-
 }
 
 void handleStickerLibraryOverlayRelease() {
@@ -485,7 +506,7 @@ void handleStickerLibraryOverlayRelease() {
   int spacing = 120;
   int startX = (int)(panelX + 80);   // drawStickerLibraryOverlay와 동일한 값 사용
   int startY = (int)(panelY + 130);  // drawStickerLibraryOverlay와 동일한 값 사용
-  int cols = floor((panelW - 160) / spacing);
+  int cols = floor((panelW - 100) / spacing);
   
   for (int i = 0; i < stickerLibrary.size(); i++) {
     Sticker s = stickerLibrary.get(i);
@@ -604,26 +625,26 @@ void drawDatePicker() {
           strokeWeight(1);
           rect(x+2, y+2, cellWidth-4, cellHeight-4, 4);
         }
-        else if (mouseHober(datePickerX, datePickerY, 60, 60)) {
-          stroke(1);
-          noFill();
-          rect(datePickerX, datePickerY, 60, 60, 4);
-        }
-        else if (mouseHober(datePickerX + datePickerWidth - 60, datePickerY, 60, 60)) {
-          stroke(1);
-          noFill();
-          rect(datePickerX + datePickerWidth - 60, datePickerY, 60, 60, 4);
-        }
-        if (mouseHober(datePickerX + datePickerWidth / 2 - 60, datePickerY, 128, 64)) {
-          stroke(1);
-          noFill();
-          rect(datePickerX + datePickerWidth / 2 - 60, datePickerY, 128, 64);
-        }
       }
       fill(col == 0 ? color(200, 0, 0) : 0); // 일요일 날짜는 빨간색
       text(day, x + cellWidth / 2, y + cellHeight / 2);
       day++;
     }
+  }
+  if (mouseHober(datePickerX, datePickerY, 60, 60)) {
+    noStroke();
+    fill(150,100);
+    rect(datePickerX, datePickerY, 60, 60, 4);
+  }
+  else if (mouseHober(datePickerX + datePickerWidth - 60, datePickerY, 60, 60)) {
+    noStroke();
+    fill(150,100);
+    rect(datePickerX + datePickerWidth - 60, datePickerY, 60, 60, 4);
+  }
+  if (mouseHober(datePickerX + datePickerWidth / 2 - 60, datePickerY, 128, 64)) {
+    noStroke();
+    fill(150,100);
+    rect(datePickerX + datePickerWidth / 2 - 58, datePickerY+8, 128, 48, 12);
   }
   popStyle();
 }

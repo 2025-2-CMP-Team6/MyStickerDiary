@@ -54,7 +54,6 @@ Calendar calendar = Calendar.getInstance();
 rectButton dsButton, slButton, ddButton, dlButton;
 //rectButton nameButton;
 GImageButton nameEditButton; // G4P 이미지 버튼 선언
-rectButton dateButton;
 //설정 화면 내 버튼
 rectButton settings_goToMainButton;
 // 다이어리 보관함 버튼
@@ -108,7 +107,6 @@ void textAreaUI() {
     textArea.setFont(new Font("Dialog", Font.PLAIN, 24));
 
   }
-
 }
 
 void switchScreen(int next) {
@@ -184,12 +182,6 @@ void ensureDiaryUI() {
     finishButton.rectButtonText("Finish", 20);
     finishButton.setShadow(false);
   }
-  if(dateButton == null) {
-    dateButton = new rectButton(DATE_X, DATE_Y, DATE_W, DATE_H, #F6F7FB);
-    dateButton.rectButtonText("Date", 15);
-    dateButton.setShadow(false);
-  }
-
 }
 
 void setup() {
@@ -339,9 +331,11 @@ void keyPressed() {
       // 설정 창이 켜졌을 때 둘 다 숨깁니다.
       if (titleArea != null) {
         titleArea.setVisible(false);
+        titleArea.setAlpha(0);
       }
       if (textArea != null) {
         textArea.setVisible(false);
+        textArea.setAlpha(0);
       }
     } else {
       // 설정 창이 꺼졌을 때 원래 상태로 되돌립니다.
