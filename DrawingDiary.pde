@@ -12,6 +12,14 @@ rectButton finishButton;
 boolean storagePressed = false;
 boolean finishPressed = false;
 boolean isStickerLibraryOverlayVisible = false;
+float overlayScrollY = 0;
+float minOverlayScrollY = 0;
+// 스크롤바
+boolean isDraggingScrollbar = false;
+float scrollbarDragStartY;
+float scrollbarDragStartScrollY;
+float scrollbarX, scrollbarY, scrollbarW, scrollbarH;
+float thumbY, thumbH;
 
 int isDatePickerVisible = 0;  // 0: 안보임, 1: 달력, 2: 년도
 Calendar datePickerCalendar; 
@@ -124,7 +132,7 @@ void drawStickerLibraryOverlay() {
   fill(0);
   textAlign(CENTER, CENTER);
   textSize(30);
-  text("스티커 보관함", panelX + panelW / 2, panelY + 40);
+  text("Sticker Library", panelX + panelW / 2, panelY + 40);
 
   // 닫기 버튼
   textSize(24);
@@ -133,13 +141,35 @@ void drawStickerLibraryOverlay() {
     fill(0);
   }
   text("X", panelX + panelW - 30, panelY + 30);
+  //
+  rectMode(CORNER);
+  noFill();
+  stroke(0);
+  strokeWeight(1);
+  rect(panelX + 30, panelY + 80 - 16, panelW - 30 - 40, panelH - 80);
+  popStyle();
 
   // 스티커 목록 그리기
+
+  pushStyle();
   float boxSize = 100;
   int spacing = 120;
   int startX = (int)(panelX + 80);
-  int startY = (int)(panelY + 100);
-  int cols = floor((panelW - 160) / spacing);
+  int startY = (int)(panelY + 130);
+  int cols = floor((panelW - 100) / spacing);
+  rectMode(CORNER);
+
+  // 스크롤 범위
+  if (stickerLibrary.size() > 0) {
+    int numRows = (stickerLibrary.size() - 1) / cols + 1;
+    float contentHeight = (numRows - 1) * spacing + boxSize;
+    float viewHeight = panelH - (startY - panelY);
+    minOverlayScrollY = max(0, contentHeight - viewHeight);
+  } else {
+    minOverlayScrollY = 0;
+  }
+
+  clip(startX - boxSize/2, startY - boxSize/2 - 16, panelW + boxSize/2 - 40, panelH - boxSize/2 - 32);
 
   for (int i = 0; i < stickerLibrary.size(); i++) {
     Sticker s = stickerLibrary.get(i);
@@ -147,11 +177,7 @@ void drawStickerLibraryOverlay() {
     int r = i / cols;
 
     float stickerX = startX + c * spacing;
-    float stickerY = startY + r * spacing;
-
-    // 패널 범위를 벗어나는 스티커는 그리지 않음
-    if (stickerY + boxSize / 2 > panelY + panelH - 20) continue;
-
+    float stickerY = startY + r * spacing - overlayScrollY;
     float w = s.img.width;
     float h = s.img.height;
     float newW, newH;
@@ -176,6 +202,37 @@ void drawStickerLibraryOverlay() {
       rectMode(CORNER);
     }
   }
+  noClip();
+  // 스크롤바 그리기
+  if (minOverlayScrollY > 0) {
+    scrollbarW = 12;
+    float scrollbarMargin = 20;
+    scrollbarX = panelX + panelW - scrollbarMargin - scrollbarW;
+    scrollbarY = panelY + 80;
+    scrollbarH = panelH - 120;
+
+    // 스크롤바 트랙
+    fill(200, 180);
+    noStroke();
+    rect(scrollbarX, scrollbarY, scrollbarW, scrollbarH, 6);
+
+    // 스크롤바 섬
+    float viewHeight = panelH - (startY - panelY);
+    int numRows = (stickerLibrary.size() - 1) / cols + 1;
+    float contentHeight = (numRows - 1) * spacing + boxSize;
+    thumbH = scrollbarH * (viewHeight / contentHeight);
+    thumbH = max(thumbH, 25); // 최소 높이
+    float scrollableDist = scrollbarH - thumbH;
+    float scrollRatio = overlayScrollY / minOverlayScrollY;
+    thumbY = scrollbarY + scrollableDist * scrollRatio;
+    // 마우스가 섬 위에 있거나 드래그 중이면 색상 변경
+    if (isDraggingScrollbar || mouseHober(scrollbarX, thumbY, scrollbarW, thumbH)) {
+      fill(120);
+    } else {
+      fill(170);
+    }
+    rect(scrollbarX, thumbY, scrollbarW, thumbH, 6);
+  }
   popStyle();
 }
   
@@ -191,8 +248,8 @@ void updateTextUIVisibility() {
     textArea.setEnabled(onDiary && !isOverlayActive);
     
     if (isOverlayActive) {
-      titleArea.setAlpha(100);
-      textArea.setAlpha(100);
+      titleArea.setAlpha(0);
+      textArea.setAlpha(0);
     } else {
       titleArea.setAlpha(255);
       textArea.setAlpha(255);
@@ -202,7 +259,12 @@ void updateTextUIVisibility() {
 void handleDiaryMouse() { // 마우스를 처음 눌렀을 때 호출
 
   if (isStickerLibraryOverlayVisible) {
-    // 오버레이 활성 시 다른 상호작용 방지
+    // 오버레이 활성 시 스크롤바 드래그 확인
+    if (minOverlayScrollY > 0 && mouseHober(scrollbarX, thumbY, scrollbarW, thumbH)) {
+      isDraggingScrollbar = true;
+      scrollbarDragStartY = mouseY;
+      scrollbarDragStartScrollY = overlayScrollY;
+    }
     return;
   }
 
@@ -295,7 +357,16 @@ void handleDiaryMouse() { // 마우스를 처음 눌렀을 때 호출
   
 void handleDiaryDrag() {  // 드래그하는 동안 호출
   if (isStickerLibraryOverlayVisible) {
-    // 오버레이 활성 시 다른 상호작용 방지
+    // 스크롤바 드래그 처리
+    if (isDraggingScrollbar) {
+      float dy = mouseY - scrollbarDragStartY;
+      float scrollablePixelRange = scrollbarH - thumbH;
+      if (scrollablePixelRange > 0) {
+        float scrollRatio = dy / scrollablePixelRange;
+        float scrollDelta = scrollRatio * minOverlayScrollY;
+        overlayScrollY = constrain(scrollbarDragStartScrollY + scrollDelta, 0, minOverlayScrollY);
+      }
+    }
     return;
   }
 
@@ -352,6 +423,19 @@ void handleDiaryDrag() {  // 드래그하는 동안 호출
 void handleDiaryRelease() {
   
   if (isStickerLibraryOverlayVisible) {
+    if (isDraggingScrollbar) {
+      isDraggingScrollbar = false;
+      return;
+    }
+    
+    // 스크롤바 트랙 클릭
+    if (minOverlayScrollY > 0 && mouseHober(scrollbarX, scrollbarY, scrollbarW, scrollbarH) && !mouseHober(scrollbarX, thumbY, scrollbarW, thumbH)) {
+      // 스크롤 이동
+      float clickRatio = (mouseY - scrollbarY - thumbH / 2) / (scrollbarH - thumbH);
+      clickRatio = constrain(clickRatio, 0, 1);
+      overlayScrollY = clickRatio * minOverlayScrollY;
+      return;
+    }
     handleStickerLibraryOverlayRelease();
     return;
   }
@@ -399,20 +483,17 @@ void handleStickerLibraryOverlayRelease() {
   // 스티커 클릭 시 일기장에 추가
   float boxSize = 100;
   int spacing = 120;
-  int startX = (int)(panelX + 80);
-  int startY = (int)(panelY + 100);
+  int startX = (int)(panelX + 80);   // drawStickerLibraryOverlay와 동일한 값 사용
+  int startY = (int)(panelY + 130);  // drawStickerLibraryOverlay와 동일한 값 사용
   int cols = floor((panelW - 160) / spacing);
-
+  
   for (int i = 0; i < stickerLibrary.size(); i++) {
     Sticker s = stickerLibrary.get(i);
     int c = i % cols;
     int r = i / cols;
 
     float stickerX = startX + c * spacing;
-    float stickerY = startY + r * spacing;
-
-    if (stickerY + boxSize / 2 > panelY + panelH - 20) continue;
-
+    float stickerY = startY + r * spacing - overlayScrollY; // 스크롤 위치 반영
     float w = s.img.width;
     float h = s.img.height;
     float newW, newH;
@@ -425,7 +506,10 @@ void handleStickerLibraryOverlayRelease() {
       newW = w * (boxSize / h);
     }
 
-    if (mouseHober(stickerX - newW / 2, stickerY - newH / 2, newW, newH)) {
+    // 스티커가 보이는 영역(패널) 안에 있을 때만 클릭 처리
+    boolean isStickerVisible = (stickerY + newH/2 > panelY + 80) && (stickerY - newH/2 < panelY + panelH);
+
+    if (isStickerVisible && mouseHober(stickerX - newW / 2, stickerY - newH / 2, newW, newH)) {
       Sticker newSticker = new Sticker(width / 2, textFieldY / 2, s.img, defaultStickerSize, s.imageName);
       placedStickers.add(newSticker);
       selectedSticker = newSticker;
@@ -434,6 +518,7 @@ void handleStickerLibraryOverlayRelease() {
     }
   }
 }
+
 
 void openDatePickerDialog() { // 달력 토글
   if (datePickerCalendar == null) {
@@ -776,6 +861,29 @@ if ((!mouseHober(yearmonthScrollX, yearmonthScrollY, yearmonthScrollW, yearmonth
     isDatePickerVisible = 1;
   }
 }
+void handleDrawingDiaryMouseWheel(MouseEvent ev) {
+  if (isStickerLibraryOverlayVisible) {
+    if (mouseHober(130, 164, width - 270, height - 280)) {
+      float scrollAmount = ev.getCount() * 10; // 스크롤 속도
+      overlayScrollY = constrain(overlayScrollY - scrollAmount, 0, minOverlayScrollY);
+    }
+  }
+
+
+  if (isDatePickerVisible == 2) {
+    if (mouseHober(yearPickerX-64,yearmonthScrollY,192,yearmonthScrollH)) {
+      yearPicker -= ev.getCount();
+      yearPicker = constrain(yearPicker, 1, 9998);
+    }
+    if (mouseHober(yearmonthScrollX+yearmonthScrollW/2+64,yearmonthScrollY,192,yearmonthScrollH)) {
+      monthPicker -= ev.getCount();
+      monthPicker = clampMonth1to12(monthPicker);
+    }
+  }
+}
+
+
+
 void handleYearMonthMouseRelease() {  // 년도 설정창 마우스 떼기
   if (nowDragInPicker != 0) {
       nowDragInPicker = 0;

@@ -376,7 +376,7 @@ void mousePressed() {
     handleDiaryMouse();
     break;
   case sticker_library:
-    handleLibraryMouse();
+  handleLibraryMouse();
     break;
   case making_sticker:
     handleCreatorMouse();
@@ -403,7 +403,7 @@ void mouseDragged() {
       handleDiaryDrag();
       break;
     case sticker_library:
-      //handleLibraryDrag();
+      handleLibraryDrag();
       break;
     case making_sticker:
       handleCreatorDrag();
@@ -429,7 +429,7 @@ void mouseReleased() {
     handleDiaryRelease();
     break;
   case sticker_library:
-    //handleLibraryRelease();
+    handleLibraryMouseReleased();
     break;
   case making_sticker:
     handleCreatorRelease();
@@ -444,16 +444,10 @@ void mouseReleased() {
 void mouseWheel(MouseEvent ev) {
   switch (currentScreen) {
     case drawing_diary:
-      if (isDatePickerVisible == 2) {
-        if (mouseHober(yearPickerX-64,yearmonthScrollY,192,yearmonthScrollH)) {
-          yearPicker -= ev.getCount();
-          yearPicker = constrain(yearPicker, 1, 9998);
-        }
-        if (mouseHober(yearmonthScrollX+yearmonthScrollW/2+64,yearmonthScrollY,192,yearmonthScrollH)) {
-          monthPicker -= ev.getCount();
-          monthPicker = clampMonth1to12(monthPicker);
-        }
-      }
+      handleDrawingDiaryMouseWheel(ev);
+      break;
+    case sticker_library:
+      handleLibraryMouseWheel(ev);
       break;
     case diary_library:
       handleDiaryLibraryMouseWheel(ev);
