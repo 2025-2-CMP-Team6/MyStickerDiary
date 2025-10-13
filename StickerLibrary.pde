@@ -56,7 +56,7 @@ void drawLibrary() {
     // 스크롤 범위
     if (stickerLibrary.size() > 0) {
       int numRows = (stickerLibrary.size() - 1) / cols + 1;
-      float contentHeight = (numRows - 1) * spacing + boxSize;
+      float contentHeight = (numRows - 1) * spacing + boxSize*2;
       float viewHeight = height - (startY);
       minLibraryScrollY = max(0, contentHeight - viewHeight);
     } else {
