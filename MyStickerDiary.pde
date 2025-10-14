@@ -7,6 +7,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.awt.Font;
 import g4p_controls.*;
+import processing.sound.*;
 
 // 저장해야 할 변수
 String username;
@@ -54,13 +55,18 @@ float titlespace = 48;
 // 달력 
 Calendar calendar = Calendar.getInstance();
 
+// 사운드
+SoundFile song;
+float currentVolume = 0.5; // 볼륨 설정 (0.0 ~ 1.0)
+
 
 // 메뉴 버튼 오브젝트를 한번씩만 만들어줘야 하는 이슈가 발생해서 center control 파일에 선언합니다.
 rectButton dsButton, slButton, ddButton, dlButton;
 //rectButton nameButton;
 GImageButton nameEditButton; // G4P 이미지 버튼 선언
 //설정 화면 내 버튼
-rectButton settings_goToMainButton;
+rectButton settings_goToMainButton; // 메인으로
+GSlider sdr; // 슬라이더
 // 다이어리 보관함 버튼
 rectButton backToMenuButton;
 rectButton prevMonthButton;
@@ -202,6 +208,7 @@ void setup() {
     initializeSetting();
     setupCreator();
     textAreaUI();
+    thread("loadSong");
   
     // 실행 창 이름 지정
     surface.setTitle("MyStickerDiary");
@@ -214,23 +221,28 @@ void setup() {
     // 버튼 창 호버링 시 나오는 아이콘 로드입니다.
     cursorImage = loadImage("data/images/name_edit.png");
 
-  initMenuButtons();
+    initMenuButtons();
 
-  initDiaryLibrary();
-  loadStickersFromFolder("sticker");
+    initDiaryLibrary();
+    loadStickersFromFolder("sticker");
 
-  // GImageButton 초기화 수정된 부분
-  String[] nameButtonImages = {
-    "images/name_edit_off.png", "images/name_edit_over.png", "images/name_edit_down.png"
-  };
-  // 우측 상단에 버튼 위치
-  nameEditButton = new GImageButton(this, width - 80, 30, nameButtonImages, "images/name_edit_masks.png");
-  nameEditButton.setVisible(false); // 프로그램 시작 시 버튼을 보이지 않게 설정
+    // GImageButton 초기화 수정된 부분
+    String[] nameButtonImages = {
+      "images/name_edit_off.png", "images/name_edit_over.png", "images/name_edit_down.png"
+    };
+    // 우측 상단에 버튼 위치
+    nameEditButton = new GImageButton(this, width - 80, 30, nameButtonImages, "images/name_edit_masks.png");
+    nameEditButton.setVisible(false); // 프로그램 시작 시 버튼을 보이지 않게 설정
 
-  //설정
-  // 설정 창의 '메인으로 가기' 버튼 초기화
-  settings_goToMainButton = new rectButton(width/2 - 100, height/2 + 100, 200, 50, color(100, 150, 255));
-  settings_goToMainButton.rectButtonText("Main", 24);
+    //설정
+    // 설정 창의 '메인으로 가기' 버튼 초기화
+    settings_goToMainButton = new rectButton(width/2 - 100, height/2 + 100, 200, 50, color(100, 150, 255));
+    settings_goToMainButton.rectButtonText("Main", 24);
+
+    // 슬라이더 초기화
+    G4P.setCursor(CROSS);
+    sdr = new GSlider(this, 400, 250, 200, 100, 15);
+    sdr.setVisible(false);
 }
 
 // G4P 컨트롤 이벤트를 처리하는 핸들러
@@ -238,6 +250,18 @@ void handleButtonEvents(GImageButton button, GEvent event) {
   if (button == nameEditButton && event == GEvent.CLICKED) { // nameEditButton clicked -> name_screen으로 전환
     switchScreen(name_screen);
   }
+}
+
+void loadSong() {
+  song = new SoundFile(this, "cutebgm.mp3");
+
+  if (song == null) {
+    println("Sound file failed to load.");
+    return;
+  }
+
+  song.loop();
+  song.amp(currentVolume);
 }
 
 void loadStickersFromFolder(String folderPath) {
@@ -288,8 +312,17 @@ void drawSettingsScreen() {
   textSize(40);
   text("설정 (Settings)", width/2, height/2 - 200);
 
+    // 메인으로 가기 버튼
   settings_goToMainButton.render(); 
   //아래에 계속해서 내부 내용 추가
+    // 슬라이더 테스트
+}
+
+public void handleSliderEvents(GValueControl slider, GEvent event) { 
+  if (slider == sdr)  // The slider being configured?
+    currentVolume = sdr.getValueF();
+    println(sdr.getValueS()+ "    " +  currentVolume + "    " + event);    
+    song.amp(currentVolume);    
 }
 
 void draw() {
@@ -335,6 +368,7 @@ void draw() {
 void keyPressed() {
   if (key == ESC) { // ESC 키 -> 설정화면 
     isSettingsVisible = !isSettingsVisible;
+    sdr.setVisible(isSettingsVisible);
     key = 0; // ESC 키가 프로그램 종료로 이어지지 않도록 방지
 
     if (isSettingsVisible) {
@@ -351,6 +385,8 @@ void keyPressed() {
       // 설정 창이 꺼졌을 때 원래 상태로 되돌립니다.
       updateTextUIVisibility();
     }
+
+  
   }
 }
 
@@ -364,6 +400,7 @@ void mousePressed() {
     // 메인으로 가기 버튼 처리
     if (settings_goToMainButton.isMouseOverButton()) {
       isSettingsVisible = false; 
+      sdr.setVisible(false);
       switchScreen(start_screen);  
     }
     return; // 뒤 버튼 눌리지 않도록
