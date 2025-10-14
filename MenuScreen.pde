@@ -163,3 +163,9 @@ boolean hitScreen(rectButton b, float sx, float sy) {
   return (sx > b.position_x && sx < b.position_x + b.width &&
           sy > b.position_y && sy < b.position_y + b.height);
 }
+
+void nameForced() {
+  if (username == null) {
+    switchScreen(name_screen);
+  }
+}

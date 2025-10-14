@@ -215,6 +215,6 @@ void drawLibrary() {
 void handleLibraryMouseWheel(MouseEvent ev) {
   if (mouseHober(130, 164, width - 270, height - 280)) {
     float scrollAmount = ev.getCount() * 10; // 스크롤 속도
-    libraryScrollY = constrain(libraryScrollY - scrollAmount, 0, minLibraryScrollY);
+    libraryScrollY = constrain(libraryScrollY + scrollAmount, 0, minLibraryScrollY);
   }
 }

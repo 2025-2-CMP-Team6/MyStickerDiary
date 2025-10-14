@@ -8,6 +8,11 @@ import java.util.Date;
 import java.awt.Font;
 import g4p_controls.*;
 
+// 저장해야 할 변수
+String username;
+int[] volume;
+
+
 // 화면 통제 변수 선언
 final int start_screen = 0;
 final int menu_screen = 1;
@@ -190,6 +195,7 @@ void setup() {
     imageMode(CENTER);
     stickerLibrary = new ArrayList<Sticker>();
     placedStickers = new ArrayList<Sticker>();
+    initializeSetting();
     setupCreator();
     textAreaUI();
   
@@ -447,4 +453,44 @@ void mouseWheel(MouseEvent ev) {
       handleDiaryLibraryMouseWheel(ev);
       break;
   }
+}
+
+void initializeSetting() {
+  String filePath = "data/user_setting.json";  
+  JSONObject settingData = loadJSONObject(filePath);
+  if (settingData == null) {
+    println("settingData file not found or is invalid: " + filePath);
+    username = "";
+    isNameEntered = false;
+    volume = new int[]{100, 100, 100}; // 기본 볼륨 값 (예: 마스터, BGM, 효과음)
+    return;
+  }
+  
+  // 이름
+  username = settingData.getString("Name", "");
+  isNameEntered = !username.isEmpty();
+  
+  // 볼륨 데이터
+  JSONArray volumeArray = settingData.getJSONArray("Volume");
+  if (volumeArray != null) {
+    volume = volumeArray.getIntArray();
+  } else {
+    volume = new int[]{100, 100, 100};
+  }
+}
+
+
+void dispose() {  // 종료될때 실행 함수
+  // 설정 저장
+    JSONObject settingData = new JSONObject();
+    // 이름
+    settingData.setString("Name", username);
+    // 볼륨 데이터
+    JSONArray volumeArray = new JSONArray();
+    for (int i = 0; i < volume.length; i++) {
+      volumeArray.append(volume[i]);
+    }
+    settingData.setJSONArray("Volume", volumeArray);
+  
+    saveJSONObject(settingData, "data/user_setting.json");
 }

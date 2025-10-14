@@ -886,7 +886,7 @@ void handleDrawingDiaryMouseWheel(MouseEvent ev) {
   if (isStickerLibraryOverlayVisible) {
     if (mouseHober(130, 164, width - 270, height - 280)) {
       float scrollAmount = ev.getCount() * 10; // 스크롤 속도
-      overlayScrollY = constrain(overlayScrollY - scrollAmount, 0, minOverlayScrollY);
+      overlayScrollY = constrain(overlayScrollY + scrollAmount, 0, minOverlayScrollY);
     }
   }
 

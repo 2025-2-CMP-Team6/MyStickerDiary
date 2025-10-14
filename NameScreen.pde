@@ -1,5 +1,4 @@
 UiBooster booster;
-String username;
 boolean isNameEntered = false;
 
 void drawNameScreen() {
