@@ -254,7 +254,7 @@ void drawStickerLibraryOverlay() {
 void updateTextUIVisibility() {
   boolean onDiary = (currentScreen == drawing_diary);
   if (textArea != null) {
-    boolean isOverlayActive = isStickerLibraryOverlayVisible || isDatePickerVisible != 0;
+    boolean isOverlayActive = (isStickerLibraryOverlayVisible || isSettingsVisible) || (isDatePickerVisible != 0);
     
     titleArea.setVisible(onDiary);
     titleArea.setEnabled(onDiary && !isOverlayActive);
