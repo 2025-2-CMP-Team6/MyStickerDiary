@@ -66,6 +66,10 @@ rectButton backToMenuButton;
 rectButton prevMonthButton;
 rectButton nextMonthButton;
 
+rectButton diaryColorPicker;
+rectButton diaryWeather;
+rectButton diaryEmotion;
+
 // 메뉴 스와이프 기능 관련 전역 변수입니다.
 final int PAGE_WIDTH = 1280;        
 float menuScrollX = 0;              

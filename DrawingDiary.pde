@@ -1,6 +1,8 @@
 // DrawingDiary.pde
 
 int textFieldY = 480;
+int navigationBarY = 64;
+
 Sticker selectedSticker;
 int handleSize = 16; // 조절점 크기
 // -1: 조절중x, 0: 왼쪽 위, 1: 왼쪽 아래, 2: 오른쪽 위, 3: 오른쪽 아래
@@ -12,6 +14,7 @@ rectButton finishButton;
 boolean storagePressed = false;
 boolean finishPressed = false;
 boolean isStickerLibraryOverlayVisible = false;
+
 float overlayScrollY = 0;
 float minOverlayScrollY = 0;
 // 스크롤바
@@ -62,13 +65,15 @@ void drawDiary() {
   pushStyle();
   background(255, 250, 220);
   rectMode(CORNER);
-  fill(125,125,125);
-  rect(0, textFieldY, width, height);
+  fill(#FBDAB0);
+  rect(0, 0, width, navigationBarY);
+  rect(0, textFieldY, width, height); 
 
   pushStyle();
   fill(0);
   textSize(30);
-  text("Name : " + username, 20, 30);
+  textAlign(LEFT,CENTER);
+  text("Name : " + username, 72, 30);
   popStyle();
   
   // 일기장에 붙여진 스티커들을 모두 그리기
@@ -98,17 +103,18 @@ void drawDiary() {
     pushStyle();
     textSize(30);
     String dateString = "Date : " + diary_year + ". " + diary_month + ". " + diary_day;
-    float dateTextX = 200;
-    float dateTextY = 5;
     float dateTextW = textWidth(dateString);
     float dateTextH = 30;
+    float dateTextX = width/2 - dateTextW/2;
+    float dateTextY = 12;
     if (isDatePickerVisible == 0 && !isStickerLibraryOverlayVisible && mouseHober(dateTextX, dateTextY, dateTextW, dateTextH)) {
       fill(150,100);
       noStroke();
       rect(dateTextX-4, dateTextY+4, dateTextW+8, dateTextH,8);
     }
     fill(0);
-    text(dateString, 200, 30);
+    textAlign(CENTER,CENTER);
+    text(dateString, width/2, 30);
     popStyle();
   }
 
@@ -362,10 +368,10 @@ void handleDiaryMouse() { // 마우스를 처음 눌렀을 때 호출
   pushStyle();
   textSize(30);
   String dateString = "Date : " + diary_year + ". " + diary_month + ". " + diary_day;
-  float dateTextX = 200;
-  float dateTextY = 5;
   float dateTextW = textWidth(dateString);
   float dateTextH = 30;
+  float dateTextX = width/2 - dateTextW/2;
+  float dateTextY = 12;
   popStyle();
   datePressed = mouseHober(dateTextX, dateTextY, dateTextW, dateTextH);
 }
@@ -392,6 +398,7 @@ void handleDiaryDrag() {  // 드래그하는 동안 호출
   if (currentlyDraggedSticker == null) {
     return;
   }
+  
   Sticker s = currentlyDraggedSticker;
   if (isResizing == -1) { // 크기 핸들이 아니면 스티커 이동
     PVector displaySize = s.getDisplaySize();
@@ -480,10 +487,10 @@ void handleDiaryRelease() {
   pushStyle();
   textSize(30);
   String dateString = "Date : " + diary_year + ". " + diary_month + ". " + diary_day;
-  float dateTextX = 200;
-  float dateTextY = 5;
   float dateTextW = textWidth(dateString);
   float dateTextH = 30;
+  float dateTextX = width/2 - dateTextW/2;
+  float dateTextY = 12;
   popStyle();
   if (datePressed && mouseHober(dateTextX, dateTextY, dateTextW, dateTextH)) { openDatePickerDialog(); }
   
@@ -549,7 +556,7 @@ void openDatePickerDialog() { // 달력 토글
     datePickerCalendar.setTime(calendar.getTime());
   }
 
-  datePickerX = DATE_X;
+  datePickerX = DATE_X+width/2-datePickerWidth;
   datePickerY = DATE_Y+DATE_H;
   isDatePickerVisible = 1;
 }

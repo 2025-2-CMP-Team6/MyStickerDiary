@@ -47,4 +47,5 @@ diaryLibrary
   (startScreen -> main Menu -> 주요 기능 4가지 -> 한 기능에서 다른 기능으로 어떻게 넘어가게 할지 등등 
   예를 들어 drawingDiary를 누르지 않은 상태에서 stickerLibrary의 '일기장으로'는 활성화하지 않는다던지 등등?)
 - drawingDiary에서 추가로 그림을 그릴 수 있게 할건지 아니면 그렸던 스티커로만 그림을 그리게 할건지?
+- drawingDiary 상단바 : 우측상단 저장버튼, 
 ```
