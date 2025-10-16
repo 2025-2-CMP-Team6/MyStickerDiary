@@ -47,6 +47,9 @@ PFont font;
 // 호버링 이펙트 아이콘 이미지 변수 선언
 PImage cursorImage;
 
+// 표정 아이콘
+PImage happyIcon;
+
 // 텍스트UI 변수 선언
 GTextField titleArea;  // 제목
 GTextArea textArea; // 내용
@@ -226,6 +229,9 @@ void setup() {
 
     // 버튼 창 호버링 시 나오는 아이콘 로드입니다.
     cursorImage = loadImage("data/images/name_edit.png");
+
+    // 표정 아이콘 로드
+    happyIcon = loadImage("images/icon_face_happy.png");
 
     initMenuButtons();
 

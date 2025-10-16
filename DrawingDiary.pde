@@ -159,6 +159,26 @@ void drawDiary() {
   if (isStickerLibraryOverlayVisible) {
     drawStickerLibraryOverlay();
   }
+
+
+  //표정아이콘 넣기
+  if (happyIcon != null) {
+    pushStyle();
+    imageMode(CENTER);
+    int iconCount = 5;
+    float iconSize = 40; // 아이콘 크기
+    float rightMargin = 20; // 오른쪽 끝에서의 여백
+    float iconSpacing = 10; // 아이콘 사이의 간격
+
+    for (int i = 0; i < iconCount; i++) {
+      // 아이콘 x 좌표 계산 (오른쪽부터 왼쪽으로)
+      float x = width - rightMargin - (iconSize / 2) - (i * (iconSize + iconSpacing));
+      // 아이콘 y 좌표 계산 (상단 바의 중앙)
+      float y = navigationBarY / 2;
+      image(happyIcon, x, y, iconSize, iconSize);
+    }
+    popStyle();
+  }
 }
 
 void drawStickerLibraryOverlay() {
