@@ -1,5 +1,14 @@
 import java.util.HashSet;
 
+color lerpSentimentColor(float t) {
+  t = constrain(t, 0, 1);
+  color cNeg = color(230, 70, 60);   // 빨강
+  color cNeu = color(255, 204, 0);   // 노랑
+  color cPos = color(60, 190, 100);  // 초록
+  if (t < 0.5f) return lerpColor(cNeg, cNeu, t/0.5f);
+  return lerpColor(cNeu, cPos, (t-0.5f)/0.5f);
+}
+
 Calendar libraryCalendar;
 HashSet<String> diaryDates;
 
@@ -205,11 +214,29 @@ void drawCalendarGrid() {
 
       String dateKey = tempCal.get(Calendar.YEAR) + "-" + (tempCal.get(Calendar.MONTH) + 1) + "-" + day;
       if (diaryDates != null && diaryDates.contains(dateKey)) {
-        fill(#FFCA1A);
         noStroke();
-        ellipse(x + cellWidth - 20, y + 20, 15, 15);
-      }
+        Float s = (diarySentiments != null) ? diarySentiments.get(dateKey) : null;
+        if (s == null) {
+          // 점수 아직 없으면 기본 점
+          fill(#FFCA1A);
+          ellipse(x + cellWidth - 20, y + 20, 15, 15);
+        } else {
+          fill(lerpSentimentColor(s));
+          float r = map(s, 0, 1, 12, 18);     // 부정 작게, 긍정 크게
+          ellipse(x + cellWidth - 20, y + 20, r, r);
 
+          // 짧은 라벨 텍스트
+          String shortLabel =
+            (s < 0.2f) ? "V-" :
+            (s < 0.4f) ? "Neg" :
+            (s < 0.6f) ? "Neu" :
+            (s < 0.8f) ? "Pos" : "V+";
+          fill(0);
+          textSize(10);
+          textAlign(RIGHT, TOP);
+          text(shortLabel, x + cellWidth - 6, y + 4);
+        }
+      }
       textAlign(LEFT, TOP);
       fill(col == 0 ? color(200, 0, 0) : 0);
       textSize(18);

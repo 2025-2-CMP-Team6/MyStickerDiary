@@ -197,6 +197,12 @@ void ensureDiaryUI() {
     finishButton.rectButtonText("Finish", 20);
     finishButton.setShadow(false);
   }
+
+  if (analyzeButton == null) {
+    analyzeButton = new rectButton(1100, textFieldY - 180, 180, 60, #B4F0C2);
+    analyzeButton.rectButtonText("Analyze", 22);
+    analyzeButton.setShadow(false);
+  }
 }
 
 void setup() {

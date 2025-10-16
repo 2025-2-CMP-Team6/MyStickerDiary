@@ -1,5 +1,14 @@
 // DrawingDiary.pde
 
+// === Sentiment UI ===
+rectButton analyzeButton;
+boolean analyzePressed = false;
+boolean isAnalyzing = false;
+float analyzeAnim = 0;
+float lastSentimentScore = -1;     // 0~1
+String lastSentimentLabel = "";    // 표시용
+
+
 int textFieldY = 480;
 int navigationBarY = 64;
 
@@ -98,6 +107,27 @@ void drawDiary() {
   ensureDiaryUI();
   finishButton.render();
   stickerStoreButton.render();
+
+  analyzeButton.render();
+
+  // 로딩/결과 UI
+  pushStyle();
+  textAlign(LEFT, CENTER);
+  textSize(16);
+  if (isAnalyzing) {
+    analyzeAnim = (analyzeAnim + 2) % 100;
+    fill(0); text("Analyzing sentiment...", 1100, textFieldY - 210);
+    noStroke();
+    fill(230); rect(1100, textFieldY - 200, 180, 8, 4);
+    fill(80,160,255);
+    rect(1100, textFieldY - 200, map(analyzeAnim, 0, 100, 0, 180), 8, 4);
+  } else if (lastSentimentScore >= 0) {
+    fill(0);
+    text("Sentiment: " + lastSentimentLabel + String.format(" (%.2f)", lastSentimentScore),
+        1100, textFieldY - 210);
+  }
+  popStyle();
+
 
   if(diary_year != -1 && diary_month != -1 && diary_day != -1) {
     pushStyle();
@@ -273,6 +303,11 @@ void updateTextUIVisibility() {
 }
 void handleDiaryMouse() { // 마우스를 처음 눌렀을 때 호출
 
+  if (analyzeButton != null) {
+    analyzePressed = mouseHober(analyzeButton.position_x, analyzeButton.position_y,
+                                analyzeButton.width, analyzeButton.height);
+  } else analyzePressed = false;
+
   if (isStickerLibraryOverlayVisible) {
     // 오버레이 활성 시 스크롤바 드래그 확인
     if (minOverlayScrollY > 0 && mouseHober(scrollbarX, thumbY, scrollbarW, thumbH)) {
@@ -443,6 +478,14 @@ void handleDiaryDrag() {  // 드래그하는 동안 호출
   
 // 마우스를 놓을 때 호출
 void handleDiaryRelease() {
+
+  if (analyzePressed && mouseHober(
+        analyzeButton.position_x, analyzeButton.position_y,
+        analyzeButton.width, analyzeButton.height)) {
+    startDiarySentimentAnalysis();
+  }
+  analyzePressed = false;
+
   
   if (isStickerLibraryOverlayVisible) {
     if (isDraggingScrollbar) {
@@ -1031,4 +1074,26 @@ void resetDiary() {
   isResizing = -1;
   
   println("Diary has been reset for a new entry.");
+}
+
+void startDiarySentimentAnalysis() {
+  if (isAnalyzing) return;
+  isAnalyzing = true;
+  analyzeAnim = 0;
+
+  final String text = (textArea != null) ? textArea.getText() : "";
+
+  new Thread(new Runnable() {
+    public void run() {
+      SentimentResult r = EA_analyzeText(text);         // ← EmotionAnalysisAPI.pde
+      lastSentimentScore = r.score01;
+      lastSentimentLabel = r.label;
+
+      String key = makeDateKey(diary_year, diary_month, diary_day);
+      diarySentiments.put(key, lastSentimentScore);     // 달력에 전달
+
+      isAnalyzing = false;
+      println("[Sentiment] " + key + " -> " + r.label + " (" + nf(lastSentimentScore,1,2) + ")");
+    }
+  }).start();
 }
