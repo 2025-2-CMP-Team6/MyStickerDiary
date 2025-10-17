@@ -3,13 +3,12 @@
 // === Sentiment UI ===
 rectButton analyzeButton;
 boolean analyzePressed = false;
-boolean isAnalyzing = false;
-float analyzeAnim = 0;
+boolean isAnalyzing = false; // 감정 분석 API 호출 중인지 여부
 float lastSentimentScore = -1;     // 0~1
 String lastSentimentLabel = "";    // 표시용
 
 // Weather
-int todayWeather = -1;
+int todayWeather;
 
 
 int textFieldY = 480;
@@ -118,13 +117,24 @@ void drawDiary() {
   textAlign(LEFT, CENTER);
   textSize(16);
   if (isAnalyzing) {
-    analyzeAnim = (analyzeAnim + 2) % 100;
-    fill(0); text("Analyzing sentiment...", 1100, textFieldY - 210);
-    noStroke();
-    fill(230); rect(1100, textFieldY - 200, 180, 8, 4);
-    fill(80,160,255);
-    rect(1100, textFieldY - 200, map(analyzeAnim, 0, 100, 0, 180), 8, 4);
-  } else if (lastSentimentScore >= 0) {
+    // 로딩 텍스트
+    fill(0);
+    text("Analyzing sentiment...", 1120, textFieldY - 210);
+    pushMatrix();
+    pushStyle();
+    float iconX = 1140 + textWidth("Analyzing sentiment...");
+    float iconY = textFieldY - 210;
+    translate(iconX, iconY);
+    float angle = frameCount * 0.1;
+    rotate(angle);
+    stroke(50, 50, 200);
+    strokeWeight(3);
+    noFill();
+    arc(0, 0, 19, 19, 0, PI + HALF_PI);
+    popStyle();
+    popMatrix();
+  }
+   else if (lastSentimentScore >= 0) {
     fill(0);
     text("Sentiment: " + lastSentimentLabel + String.format(" (%.2f)", lastSentimentScore),
         1100, textFieldY - 210);
@@ -133,7 +143,6 @@ void drawDiary() {
 
   // 날씨아이콘 넣기
   if (weatherIcon != null) {
-    todayWeather = getWeather(calendar);
     pushStyle();
     imageMode(CENTER);
     int iconCount = weatherIcon.length;
@@ -1190,7 +1199,6 @@ void resetDiary() {
 void startDiarySentimentAnalysis() {
   if (isAnalyzing) return;
   isAnalyzing = true;
-  analyzeAnim = 0;
 
   final String text = (textArea != null) ? textArea.getText() : "";
 

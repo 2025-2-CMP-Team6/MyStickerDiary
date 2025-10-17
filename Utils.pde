@@ -178,9 +178,33 @@ PVector midpoint(float x1, float y1, float x2, float y2) {
 
 // 날씨
 
-int getWeather(Calendar date) {
+int getWeather() {
   int weather = 0;
-  // 0: 맑음, 1: 바람, 2: 흐림, 3: 비, 4: 눈, 5: 바람
-  // API를 통해 date 날짜의 날씨를 불러오는 부분.
-  return weather;
-}
+  // 0: 맑음, 1: 바람, 2: 흐림, 3: 비, 4: 눈, 5: 폭풍
+  String des = setupWeather();
+  switch(des) {
+    case "clear sky":
+    case "few clouds":
+      weather = 0; // 맑음
+      case "scattered clouds":
+      case "broken clouds":
+      case "overcast clouds":
+        weather = 2; // 흐림
+        break;
+      case "shower rain":
+      case "rain":
+      case "light rain":
+      case "moderate rain":
+        weather = 3; // 비
+        break;
+      case "thunderstorm":
+        weather = 5; // 폭풍
+        break;
+      case "snow":
+      case "light snow":
+        weather = 4; // 눈
+        break;
+    }
+    return weather;
+  }
+  

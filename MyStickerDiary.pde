@@ -240,7 +240,7 @@ void setup() {
     emotIcon[3] = loadImage("images/icon_face_neutral.png");
     emotIcon[4] = loadImage("images/icon_face_happy.png");
 
-    // 날씨 아이콘 로드 0: 맑음, 1: 바람, 2: 흐림, 3: 비, 4: 눈, 5: 바람
+    // 날씨 아이콘 로드 0: 맑음, 1: 바람, 2: 흐림, 3: 비, 4: 눈, 5: 폭풍
     weatherIcon = new PImage[6];
     weatherIcon[0] = loadImage("images/icon_weather_sunny.png");
     weatherIcon[1] = loadImage("images/icon_weather_windy.png");
@@ -271,6 +271,8 @@ void setup() {
     G4P.setCursor(CROSS);
     sdr = new GSlider(this, 400, 250, 200, 100, 15);
     sdr.setVisible(false);
+
+    todayWeather = getWeather();
 }
 
 // G4P 컨트롤 이벤트를 처리하는 핸들러
