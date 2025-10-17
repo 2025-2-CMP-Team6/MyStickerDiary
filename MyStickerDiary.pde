@@ -48,7 +48,9 @@ PFont font;
 PImage cursorImage;
 
 // 표정 아이콘
-PImage happyIcon;
+PImage[] emotIcon;
+// 날씨 아이콘
+PImage[] weatherIcon;
 
 // 텍스트UI 변수 선언
 GTextField titleArea;  // 제목
@@ -230,8 +232,22 @@ void setup() {
     // 버튼 창 호버링 시 나오는 아이콘 로드입니다.
     cursorImage = loadImage("data/images/name_edit.png");
 
-    // 표정 아이콘 로드
-    happyIcon = loadImage("images/icon_face_happy.png");
+    // 표정 아이콘 로드 0: 분노, 1: 화남, 2: 울음, 3: 중립, 4: 행복
+    emotIcon = new PImage[5];
+    emotIcon[0] = loadImage("images/icon_face_angry.png");
+    emotIcon[1] = loadImage("images/icon_face_anger.png");
+    emotIcon[2] = loadImage("images/icon_face_crying.png");
+    emotIcon[3] = loadImage("images/icon_face_neutral.png");
+    emotIcon[4] = loadImage("images/icon_face_happy.png");
+
+    // 날씨 아이콘 로드 0: 맑음, 1: 바람, 2: 흐림, 3: 비, 4: 눈, 5: 바람
+    weatherIcon = new PImage[6];
+    weatherIcon[0] = loadImage("images/icon_weather_sunny.png");
+    weatherIcon[1] = loadImage("images/icon_weather_windy.png");
+    weatherIcon[2] = loadImage("images/icon_weather_cloudy.png");
+    weatherIcon[3] = loadImage("images/icon_weather_rainy.png");
+    weatherIcon[4] = loadImage("images/icon_weather_snow.png");
+    weatherIcon[5] = loadImage("images/icon_weather_storm.png");
 
     initMenuButtons();
 
@@ -290,7 +306,6 @@ void loadStickersFromFolder(String folderPath) {
             String filePath = file.getAbsolutePath();
             PImage img = loadImage(filePath);
             stickerLibrary.add(new Sticker(0, 0, img, defaultStickerSize, file.getName()));
-            println("file load success :"+filePath);
           }
         }
       }

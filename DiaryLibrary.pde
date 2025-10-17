@@ -11,6 +11,7 @@ color lerpSentimentColor(float t) {
 
 Calendar libraryCalendar;
 HashSet<String> diaryDates;
+HashMap<String, Float> diaryEmots;
 
 int libraryPickerState = 0; // 0: hidden, 1: year/month picker visible
 int libYearPicker, libMonthPicker;
@@ -40,8 +41,10 @@ void initDiaryLibrary() {
 void loadDiaryDates() {
   if (diaryDates == null) {
     diaryDates = new HashSet<String>();
+    diaryEmots = new HashMap<String, Float>();
   }
   diaryDates.clear();
+  diaryEmots.clear();
   File diaryFolder = new File(dataPath("diaries"));
   
   if (!diaryFolder.exists()) {
@@ -52,11 +55,19 @@ void loadDiaryDates() {
   if (files != null) {
     for (File file : files) {
       String name = file.getName();
-      if (name.startsWith("diary_") && name.endsWith(".json")) {
-        String[] parts = name.substring(6, name.length() - 5).split("_");
-        if (parts.length == 3) {
+      if (name.startsWith("diary_") && name.endsWith(".json")) { // diary_YYYY_M_D_<score>.json
+        String namePart = name.substring(6, name.length() - 5); // YYYY_M_D_<score>
+        String[] parts = namePart.split("_");
+        if (parts.length >= 4 && parts[3].startsWith("<")) {
           String dateKey = parts[0] + "-" + Integer.parseInt(parts[1]) + "-" + Integer.parseInt(parts[2]);
           diaryDates.add(dateKey);
+          try {
+            float score = Float.parseFloat(parts[3].substring(1,parts[3].indexOf('>'))); // '<>' 제거
+            diaryEmots.put(dateKey, score / 10.0f); // 0~1 범위로 변환
+          } catch (NumberFormatException e) {
+            // 점수 파싱 실패 시 기본값 사용
+            diaryEmots.put(dateKey, -1.0f);
+          }
         }
       }
     }
@@ -215,16 +226,14 @@ void drawCalendarGrid() {
       String dateKey = tempCal.get(Calendar.YEAR) + "-" + (tempCal.get(Calendar.MONTH) + 1) + "-" + day;
       if (diaryDates != null && diaryDates.contains(dateKey)) {
         noStroke();
-        Float s = (diarySentiments != null) ? diarySentiments.get(dateKey) : null;
-        if (s == null) {
+        Float s = (diaryEmots != null) ? diaryEmots.get(dateKey) : null;
+        if ((s == null)||(s == -1.0f)) {
           // 점수 아직 없으면 기본 점
           fill(#FFCA1A);
           ellipse(x + cellWidth - 20, y + 20, 15, 15);
         } else {
           fill(lerpSentimentColor(s));
-          float r = map(s, 0, 1, 12, 18);     // 부정 작게, 긍정 크게
-          ellipse(x + cellWidth - 20, y + 20, r, r);
-
+          image(emotIcon[round(s * 5)], x + cellWidth/3 , y + cellHeight/3);
           // 짧은 라벨 텍스트
           String shortLabel =
             (s < 0.2f) ? "V-" :

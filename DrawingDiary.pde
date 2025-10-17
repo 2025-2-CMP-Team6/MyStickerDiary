@@ -8,6 +8,9 @@ float analyzeAnim = 0;
 float lastSentimentScore = -1;     // 0~1
 String lastSentimentLabel = "";    // 표시용
 
+// Weather
+int todayWeather = -1;
+
 
 int textFieldY = 480;
 int navigationBarY = 64;
@@ -128,6 +131,62 @@ void drawDiary() {
   }
   popStyle();
 
+  // 날씨아이콘 넣기
+  if (weatherIcon != null) {
+    todayWeather = getWeather(calendar);
+    pushStyle();
+    imageMode(CENTER);
+    int iconCount = weatherIcon.length;
+    float iconSize = 40; // 아이콘 크기
+    float rightMargin = 300; // 오른쪽 끝에서의 여백
+    float iconSpacing = 10; // 아이콘 사이의 간격
+    for (int i = 0; i < iconCount; i++) {
+      iconSize = 40;
+      // 아이콘 x 좌표 계산 (오른쪽부터 왼쪽으로)
+      float x = width - rightMargin - (iconSize / 2) - (i * (iconSize + iconSpacing));
+      // 아이콘 y 좌표 계산 (상단 바의 중앙)
+      float y = navigationBarY / 2;
+      PImage drawEmotIcon;
+      if (todayWeather == i) {
+        drawEmotIcon = weatherIcon[i];
+      }
+      else {
+        drawEmotIcon = weatherIcon[i].get();
+        drawEmotIcon.filter(GRAY);
+        iconSize = 30;
+      }
+      image(drawEmotIcon, x, y, iconSize, iconSize);
+    }
+    popStyle();
+  }
+
+  //표정아이콘 넣기
+  if (emotIcon != null) {
+    pushStyle();
+    imageMode(CENTER);
+    int iconCount = emotIcon.length;
+    float iconSize = 40; // 아이콘 크기
+    float rightMargin = 20; // 오른쪽 끝에서의 여백
+    float iconSpacing = 10; // 아이콘 사이의 간격
+    for (int i = 0; i < iconCount; i++) {
+      iconSize = 40;
+      // 아이콘 x 좌표 계산 (오른쪽부터 왼쪽으로)
+      float x = width - rightMargin - (iconSize / 2) - (i * (iconSize + iconSpacing));
+      // 아이콘 y 좌표 계산 (상단 바의 중앙)
+      float y = navigationBarY / 2;
+      PImage drawEmotIcon;
+      if (round(lastSentimentScore * 5) == i) {
+        drawEmotIcon = emotIcon[i];
+      }
+      else {
+        drawEmotIcon = emotIcon[i].get();
+        drawEmotIcon.filter(GRAY);
+        iconSize = 30;
+      }
+      image(drawEmotIcon, x, y, iconSize, iconSize);
+    }
+    popStyle();
+  }
 
   if(diary_year != -1 && diary_month != -1 && diary_day != -1) {
     pushStyle();
@@ -135,7 +194,7 @@ void drawDiary() {
     String dateString = "Date : " + diary_year + ". " + diary_month + ". " + diary_day;
     float dateTextW = textWidth(dateString);
     float dateTextH = 30;
-    float dateTextX = width/2 - dateTextW/2;
+    float dateTextX = width/2 - dateTextW/2- 120;
     float dateTextY = 12;
     if (isDatePickerVisible == 0 && !isStickerLibraryOverlayVisible && mouseHober(dateTextX, dateTextY, dateTextW, dateTextH)) {
       fill(150,100);
@@ -144,7 +203,7 @@ void drawDiary() {
     }
     fill(0);
     textAlign(CENTER,CENTER);
-    text(dateString, width/2, 30);
+    text(dateString, width/2 - 120, 30);
     popStyle();
   }
 
@@ -158,26 +217,6 @@ void drawDiary() {
   
   if (isStickerLibraryOverlayVisible) {
     drawStickerLibraryOverlay();
-  }
-
-
-  //표정아이콘 넣기
-  if (happyIcon != null) {
-    pushStyle();
-    imageMode(CENTER);
-    int iconCount = 5;
-    float iconSize = 40; // 아이콘 크기
-    float rightMargin = 20; // 오른쪽 끝에서의 여백
-    float iconSpacing = 10; // 아이콘 사이의 간격
-
-    for (int i = 0; i < iconCount; i++) {
-      // 아이콘 x 좌표 계산 (오른쪽부터 왼쪽으로)
-      float x = width - rightMargin - (iconSize / 2) - (i * (iconSize + iconSpacing));
-      // 아이콘 y 좌표 계산 (상단 바의 중앙)
-      float y = navigationBarY / 2;
-      image(happyIcon, x, y, iconSize, iconSize);
-    }
-    popStyle();
   }
 }
 
@@ -425,7 +464,7 @@ void handleDiaryMouse() { // 마우스를 처음 눌렀을 때 호출
   String dateString = "Date : " + diary_year + ". " + diary_month + ". " + diary_day;
   float dateTextW = textWidth(dateString);
   float dateTextH = 30;
-  float dateTextX = width/2 - dateTextW/2;
+  float dateTextX = width/2 - dateTextW/2 - 120;
   float dateTextY = 12;
   popStyle();
   datePressed = mouseHober(dateTextX, dateTextY, dateTextW, dateTextH);
@@ -536,8 +575,8 @@ void handleDiaryRelease() {
       finishButton.position_x, finishButton.position_y,
       finishButton.width,      finishButton.height)) {
          switchScreen(diary_library);
-         loadDiaryDates();
          saveDiary();
+         loadDiaryDates();
        }
 
   if (storagePressed && mouseHober(
@@ -552,7 +591,7 @@ void handleDiaryRelease() {
   String dateString = "Date : " + diary_year + ". " + diary_month + ". " + diary_day;
   float dateTextW = textWidth(dateString);
   float dateTextH = 30;
-  float dateTextX = width/2 - dateTextW/2;
+  float dateTextX = width/2 - dateTextW/2 - 120;
   float dateTextY = 12;
   popStyle();
   if (datePressed && mouseHober(dateTextX, dateTextY, dateTextW, dateTextH)) { openDatePickerDialog(); }
@@ -975,7 +1014,7 @@ void handleDrawingDiaryMouseWheel(MouseEvent ev) {
 
 
 
-void handleYearMonthMouseRelease() {  // 년도 설정창 마우스 떼기
+void handleYearMonthMouseRelease() {
   if (nowDragInPicker != 0) {
       nowDragInPicker = 0;
       set = 0;
@@ -987,13 +1026,29 @@ void handleYearMonthMouseRelease() {  // 년도 설정창 마우스 떼기
   }
 }
 void saveDiary() {
+  // Delete Same Date Diary
+  File diaryFolder = new File(dataPath("diaries"));
+  String filePrefix = "diary_" + diary_year + "_" + diary_month + "_" + diary_day + "_";
+
+  if (diaryFolder.exists() && diaryFolder.isDirectory()) {
+    File[] files = diaryFolder.listFiles();
+    if (files != null) {
+      for (File file : files) {
+        if (file.getName().startsWith(filePrefix) && file.getName().endsWith(".json")) {
+          println("Deleting old diary file: " + file.getName());
+          if (!file.delete()) {
+            println("Warning: Failed to delete old diary file: " + file.getName());
+          }
+        }
+      }
+    }
+  }
+
   JSONObject diaryData = new JSONObject();
 
-  // 제목과 내용 저장
   diaryData.setString("title", titleArea.getText());
   diaryData.setString("content", textArea.getText());
 
-  // 스티커 저장
   JSONArray stickerArray = new JSONArray();
   for (Sticker s : placedStickers) {
     JSONObject stickerData = new JSONObject();
@@ -1005,19 +1060,32 @@ void saveDiary() {
   }
   diaryData.setJSONArray("stickers", stickerArray);
 
-  // JSON 파일로 저장
-  saveJSONObject(diaryData, "data/diaries/diary_" + diary_year + "_" + diary_month + "_" + diary_day + ".json");
-  println("Diary saved to data/diaries/diary_" + diary_year + "_" + diary_month + "_" + diary_day + ".json");
+  String newFileName = "diary_" + diary_year + "_" + diary_month + "_" + diary_day + "_<" + (lastSentimentScore * 10) + ">.json";
+  saveJSONObject(diaryData, "data/diaries/" + newFileName);
+  println("Diary saved to data/diaries/" + newFileName);
 }
 
-// 불러오기
+// Load Diary
 void loadDiary(int year, int month, int day) {
-  String filePath = "data/diaries/diary_" + year + "_" + month + "_" + day + ".json";  
-  JSONObject diaryData = loadJSONObject(filePath);
+  File diaryFolder = new File(dataPath("diaries"));
+  String filePrefix = "diary_" + year + "_" + month + "_" + day;
+  String foundFilePath = null;
+
+  if (diaryFolder.exists() && diaryFolder.isDirectory()) {
+    File[] files = diaryFolder.listFiles();
+    if (files != null) {
+      for (File file : files) {
+        if (file.getName().startsWith(filePrefix) && file.getName().endsWith(".json")) {
+          foundFilePath = file.getAbsolutePath();
+          break;
+        }
+      }
+    }
+  }
   
+  JSONObject diaryData = loadJSONObject(foundFilePath);
   if (diaryData == null) {
-    // loadJSONObject는 파일이 없거나 유효한 JSON이 아니면 null을 반환합니다.
-    println("Diary file not found or is invalid: " + filePath);
+    println("Failed to load or parse diary file: " + foundFilePath);
     return;
   }
   
@@ -1031,6 +1099,25 @@ void loadDiary(int year, int month, int day) {
   diary_month = month;
   diary_day = day;
   calendar.set(diary_year, diary_month - 1, diary_day);
+
+  // Load Emotion
+
+  lastSentimentScore = -1.0f;
+  lastSentimentLabel = "";
+  if (foundFilePath != null && foundFilePath.contains("<") && foundFilePath.contains(">")) {
+    int startIndex = foundFilePath.indexOf('<') + 1;
+    int endIndex = foundFilePath.lastIndexOf('>');
+
+    if (startIndex > 0 && endIndex > startIndex) {
+      try {
+        String scoreStr = foundFilePath.substring(startIndex, endIndex);
+        lastSentimentScore = Float.parseFloat(scoreStr) / 10.0f;
+        lastSentimentLabel = labelFromScore(lastSentimentScore);
+      } catch (NumberFormatException e) {
+        println("Warning: Could not parse sentiment score from filename: " + foundFilePath);
+      }
+    }
+  }
   
   // Load stickers
   JSONArray stickerArray = diaryData.getJSONArray("stickers");
@@ -1092,6 +1179,10 @@ void resetDiary() {
   selectedSticker = null;
   currentlyDraggedSticker = null;
   isResizing = -1;
+
+  // 감정 분석 상태 초기화
+  lastSentimentScore = -1;
+  lastSentimentLabel = "";    // 표시용
   
   println("Diary has been reset for a new entry.");
 }

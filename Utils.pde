@@ -176,20 +176,11 @@ PVector midpoint(float x1, float y1, float x2, float y2) {
 }
 // API 관련 함수
 
-// 감정분석
-int analyzingEmotion(String text) { // 여기에 API를 통해 감정을 분석하는 기능을 넣으면 될듯? 일단은 임시로 만들어놓음.
-  int emot;
-  emot = text.length();
-  // text의 내용을 통해 감정을 분석하고 분석한 감정에 따라 emot 값을 바꿈,
-  // 0: 기쁨, 1: 즐거움, 2: 행복함, 3: 화남, 4: 슬픔...
-  return emot;  
-}
-
 // 날씨
 
 int getWeather(Calendar date) {
   int weather = 0;
-  // 0: 맑음, 1: 흐림, 2: 비, 3: 눈, 4: 바람...
+  // 0: 맑음, 1: 바람, 2: 흐림, 3: 비, 4: 눈, 5: 바람
   // API를 통해 date 날짜의 날씨를 불러오는 부분.
   return weather;
 }
