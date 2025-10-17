@@ -1069,7 +1069,7 @@ void saveDiary() {
   }
   diaryData.setJSONArray("stickers", stickerArray);
 
-  String newFileName = "diary_" + diary_year + "_" + diary_month + "_" + diary_day + "_<" + (lastSentimentScore * 10) + ">.json";
+  String newFileName = "diary_" + diary_year + "_" + diary_month + "_" + diary_day + "_(" + (lastSentimentScore * 10) + ").json";
   saveJSONObject(diaryData, "data/diaries/" + newFileName);
   println("Diary saved to data/diaries/" + newFileName);
 }
@@ -1113,11 +1113,11 @@ void loadDiary(int year, int month, int day) {
 
   lastSentimentScore = -1.0f;
   lastSentimentLabel = "";
-  if (foundFilePath != null && foundFilePath.contains("<") && foundFilePath.contains(">")) {
-    int startIndex = foundFilePath.indexOf('<') + 1;
-    int endIndex = foundFilePath.lastIndexOf('>');
+  if (foundFilePath != null && foundFilePath.contains("(") && foundFilePath.contains(")")) {
+    int startIndex = foundFilePath.indexOf('(') + 1;
+    int endIndex = foundFilePath.lastIndexOf(')');
 
-    if (startIndex > 0 && endIndex > startIndex) {
+	if (startIndex > 0 && endIndex > startIndex) {
       try {
         String scoreStr = foundFilePath.substring(startIndex, endIndex);
         lastSentimentScore = Float.parseFloat(scoreStr) / 10.0f;
