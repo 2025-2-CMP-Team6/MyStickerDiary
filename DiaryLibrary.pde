@@ -58,11 +58,11 @@ void loadDiaryDates() {
       if (name.startsWith("diary_") && name.endsWith(".json")) { // diary_YYYY_M_D_<score>.json
         String namePart = name.substring(6, name.length() - 5); // YYYY_M_D_<score>
         String[] parts = namePart.split("_");
-        if (parts.length >= 4 && parts[3].startsWith("<")) {
+        if (parts.length >= 4 && parts[3].startsWith("(")) {
           String dateKey = parts[0] + "-" + Integer.parseInt(parts[1]) + "-" + Integer.parseInt(parts[2]);
           diaryDates.add(dateKey);
           try {
-            float score = Float.parseFloat(parts[3].substring(1,parts[3].indexOf('>'))); // '<>' 제거
+            float score = Float.parseFloat(parts[3].substring(1,parts[3].indexOf(')'))); // '()' 제거
             diaryEmots.put(dateKey, score / 10.0f); // 0~1 범위로 변환
           } catch (NumberFormatException e) {
             // 점수 파싱 실패 시 기본값 사용
