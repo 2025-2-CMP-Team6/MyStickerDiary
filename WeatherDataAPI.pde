@@ -20,6 +20,7 @@ void setupLocation() {
       // 위도, 경도 정보 파싱
       lat = locationData.getFloat("lat");
       lon = locationData.getFloat("lon");
+      println("Latitude: " + lat + ", Longitude: " + lon);
       
     } catch (Exception e) {
       println("Fail to load location data.");

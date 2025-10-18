@@ -162,7 +162,15 @@ void drawDiary() {
       else {
         drawEmotIcon = weatherIcon[i].get();
         drawEmotIcon.filter(GRAY);
-        iconSize = 30;
+        if (mouseHober(x-iconSize/2,y-iconSize/2,iconSize,iconSize)) {
+          iconSize = 35;
+          if (mousePressed) {
+            todayWeather = i;
+          }
+        }
+        else {
+          iconSize = 30;
+        }
       }
       image(drawEmotIcon, x, y, iconSize, iconSize);
     }
