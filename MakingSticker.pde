@@ -1,8 +1,8 @@
 // MakingSticker.pde
 
 PGraphics stickerCanvas; // 캔버스 
-int canvasSize = 680; // 정사각형 캔버스 크기
-int canvasX, canvasY; // 캔버스가 그려질 화면상의 위치
+float canvasSize; // 정사각형 캔버스 크기
+float canvasX, canvasY; // 캔버스가 그려질 화면상의 위치
 
 // 기능 아이콘
 PImage saveImg;  // 저장 이미지
@@ -10,8 +10,8 @@ PImage backImg;  // 뒤로가기 이미지
 
 // 그리기 도구
 String tool = ""; // 현재 선택된 도구
-float toolGab = 72; // 도구 간격
-int toolPos[] = {128,104};  // 도구 좌표
+float toolGab; // 도구 간격
+float toolPos[] = new float[2];  // 도구 좌표
 String posTool;  // 이전 도구
 
 PImage brushImg;  // 브러쉬 이미지
@@ -28,7 +28,7 @@ color selectedColor = color(0); // 현재 선택된 그리기 색상
 // 브러쉬
 float brushSize = 20; // 브러시 크기
 boolean isBrushSizeChange = false; // 브러쉬 크기 변경 여부
-int brushPos[] = {160,600};  // 브러쉬 사이즈 스크롤 좌표
+float brushPos[] = new float[2];  // 브러쉬 사이즈 스크롤 좌표
 PGraphics sizeCursor; // 브러쉬 크기 커서
 
 // 도형
@@ -44,20 +44,23 @@ int[] rectPos = new int[2];
 
 // 컬러 팔레트
 boolean isPalleteOpen = true;  //  팔레트 열림
-int[] colorPos = {1128,104}; // 색의 좌표
-int colorSize = 64; // 색의 크기
-float colorGab = 72; // 색의 간격
-color[] palleteColor = {color(255, 0, 0),color(0, 255, 0),color(0, 0, 255), color(255, 255, 0), color(255, 0, 255), color(0, 255, 255), color(128, 128, 128), color(0, 0, 0), color(255, 255, 255)}; // 팔레트 저장 색
+float[] colorPos = new float[2]; // 색의 좌표
+float colorSize; // 색의 크기
+float colorGab_palette; // 색의 간격
+color[] palleteColor = {color(0, 0, 0), color(255, 0, 0), color(255, 165, 0), color(255, 255, 0), color(0, 255, 0), color(0, 255, 255), color(0, 0, 255), color(255, 0, 255), color(139, 69, 19), color(128, 128, 128), color(211, 211, 211), color(255, 255, 255)}; // 팔레트 저장 색
 boolean colorToggle = false;
 
 // 뒤로 가기 버튼, 세이브 버튼 전역 변수로 설정해서 버튼 클릭 인식 최적화했습니다.
-final int SAVE_W = 64, SAVE_H = 64;
-final int BACK_W = 64, BACK_H = 64;
-final int BACK_X = 24, BACK_Y = 24;
+float SAVE_W, SAVE_H;
+float BACK_W, BACK_H;
+float BACK_X, BACK_Y;
 
 void setupCreator() {
+  // 해상도에 따라 크기/위치 조정
+  canvasSize = height * (680.0f / 720.0f);
+
   // 정사각형 크기의 그래픽 버퍼를 생성
-  stickerCanvas = createGraphics(canvasSize, canvasSize);
+  stickerCanvas = createGraphics(round(canvasSize), round(canvasSize));
   canvasX = (width - canvasSize) / 2; 
   canvasY = (height - canvasSize) / 2; 
   strokeJoin(ROUND); // 선이 만나는 부분을 둥글게
@@ -66,6 +69,24 @@ void setupCreator() {
   stickerCanvas.beginDraw();
   stickerCanvas.clear();
   stickerCanvas.endDraw();
+
+  toolGab = height * (72.0f / 720.0f);
+  toolPos[0] = width * (48.0f / 1280.0f);
+  toolPos[1] = height * (104.0f / 720.0f);
+
+  brushPos[0] = width * (80.0f / 1280.0f);
+  brushPos[1] = height * (600.0f / 720.0f);
+
+  colorPos[0] = width * (1128.0f / 1280.0f);
+  colorPos[1] = height * (104.0f / 720.0f);
+  colorSize = width * (64.0f / 1280.0f);
+  colorGab_palette = height * (72.0f / 720.0f);
+
+  SAVE_W = BACK_W = width * (64.0f / 1280.0f);
+  SAVE_H = BACK_H = height * (64.0f / 720.0f);
+  BACK_X = width * (24.0f / 1280.0f);
+  BACK_Y = height * (24.0f / 720.0f);
+
   // 버튼 아이콘
 saveImg = loadImage("data/images/saveIcon.png");
 backImg = loadImage("data/images/backIcon.png");
@@ -137,32 +158,48 @@ void drawCreator() {
   // --- UI ---
   // 도구
   rectMode(CORNER);
+  float toolIconSize = width * (64.0f/1280.0f);
   for (int i = 0; i < 6; i++) {
-    if (mouseHober(toolPos[0], toolPos[1] + i * toolGab, 64, 64)) {
+    if (mouseHober(toolPos[0], toolPos[1] + i * toolGab, toolIconSize, toolIconSize)) {
       fill(255, 50);
       noStroke();
-      rect(toolPos[0], toolPos[1] + i * toolGab, 64, 64);
+      rect(toolPos[0], toolPos[1] + i * toolGab, toolIconSize, toolIconSize);
     }
   }
 
   imageMode(CORNER);
-  image(brushImg, toolPos[0], toolPos[1]);
-  image(paintImg, toolPos[0], toolPos[1] + toolGab);
-  image(eraserImg, toolPos[0], toolPos[1] + toolGab*2);
+  PImage[] toolIcons = {brushImg, paintImg, eraserImg};
+  for (int i = 0; i < toolIcons.length; i++) {
+    PImage icon = toolIcons[i];
+    float w = icon.width;
+    float h = icon.height;
+    float newW, newH;
+    if (w > h) {
+      newW = toolIconSize;
+      newH = h * (toolIconSize / w);
+    } else {
+      newH = toolIconSize;
+      newW = w * (toolIconSize / h);
+    }
+    float x = toolPos[0] + (toolIconSize - newW) / 2;
+    float y = toolPos[1] + i * toolGab + (toolIconSize - newH) / 2;
+    image(icon, x, y, newW, newH);
+  }
   fill(255);
   stroke(0);
   strokeWeight(3);
   rectMode(CENTER);
-  line(toolPos[0]+8, toolPos[1]+toolGab*3+8,toolPos[0]+48,toolPos[1]+toolGab*3+48); // 선
-  rect(toolPos[0]+32, toolPos[1]+toolGab*4+32, 48, 48); // 사각형
-  circle(toolPos[0]+32, toolPos[1]+toolGab*5+32, 48); // 원
+  line(toolPos[0]+toolIconSize*0.125, toolPos[1]+toolGab*3+toolIconSize*0.125,toolPos[0]+toolIconSize*0.75,toolPos[1]+toolGab*3+toolIconSize*0.75); // 선
+  rect(toolPos[0]+toolIconSize/2, toolPos[1]+toolGab*4+toolIconSize/2, toolIconSize*0.75, toolIconSize*0.75); // 사각형
+  circle(toolPos[0]+toolIconSize/2, toolPos[1]+toolGab*5+toolIconSize/2, toolIconSize*0.75); // 원
  // 브러쉬 크기 조절
   noFill();
   stroke(0);
   strokeWeight(1);
+  float brushAreaRadius = width * (64.0f/1280.0f);
   float d = dist(brushPos[0],brushPos[1],mouseX,mouseY);
-  if (d < 66) {circle(brushPos[0], brushPos[1], 132);}
-  else {circle(brushPos[0], brushPos[1], 128);}
+  if (d < brushAreaRadius + 2) {circle(brushPos[0], brushPos[1], (brushAreaRadius+2)*2);}
+  else {circle(brushPos[0], brushPos[1], brushAreaRadius*2);}
   fill(selectedColor);
   circle(brushPos[0], brushPos[1], brushSize);
 
@@ -195,7 +232,7 @@ void drawCreator() {
   rectMode(CORNER);
   ellipseMode(CENTER);
   // 팔레트
-  if (isPalleteOpen) {
+  if (isPalleteOpen) { 
 
     int[] p = new int[2];
 
@@ -208,7 +245,7 @@ void drawCreator() {
 
     }
 
-    if (mouseHober(colorPos[0]-(colorGab/2), colorPos[1]-(colorGab/2), 2*colorGab, colorGab*6)) {
+    if (mouseHober(colorPos[0]-(colorGab_palette/2), colorPos[1]-(colorGab_palette/2), 2*colorGab_palette, colorGab_palette*6)) {
       cursor(spoideCursor,0,30);
     }
     else {
@@ -237,26 +274,49 @@ void drawCreator() {
     }
   }
   // 저장
-  if (mouseHober(width - SAVE_W, height - SAVE_H, SAVE_W, SAVE_H)) {
+  if (mouseHober(width - SAVE_W - BACK_X, height - SAVE_H - BACK_Y, SAVE_W, SAVE_H)) { // Use BACK_X/Y as margin
     fill(255, 50);
     noStroke();
-    rect(width - SAVE_W, height - SAVE_H, SAVE_W, SAVE_H);
+    rect(width - SAVE_W - BACK_X, height - SAVE_H - BACK_Y, SAVE_W, SAVE_H);
   }
-  image(saveImg, width - SAVE_W, height - SAVE_H, SAVE_W, SAVE_H);
+  // image(saveImg, width - SAVE_W - BACK_X, height - SAVE_H - BACK_Y, SAVE_W, SAVE_H);
+  float saveImgRatio = (float)saveImg.width / saveImg.height;
+  float saveBoxRatio = SAVE_W / SAVE_H;
+  float saveNewW, saveNewH;
+  if (saveBoxRatio > saveImgRatio) {
+    saveNewH = SAVE_H;
+    saveNewW = saveNewH * saveImgRatio;
+  } else {
+    saveNewW = SAVE_W;
+    saveNewH = saveNewW / saveImgRatio;
+  }
+  image(saveImg, width - SAVE_W - BACK_X + (SAVE_W - saveNewW) / 2, height - SAVE_H - BACK_Y + (SAVE_H - saveNewH) / 2, saveNewW, saveNewH);
+
   // 뒤로
   if (mouseHober(BACK_X, BACK_Y, BACK_W, BACK_H)) {
     fill(255, 50);
     noStroke();
     rect(BACK_X, BACK_Y, BACK_W, BACK_H);
   }
-  image(backImg, BACK_X, BACK_Y, BACK_W, BACK_H);
+  // image(backImg, BACK_X, BACK_Y, BACK_W, BACK_H);
+  float backImgRatio = (float)backImg.width / backImg.height;
+  float backBoxRatio = BACK_W / BACK_H;
+  float backNewW, backNewH;
+  if (backBoxRatio > backImgRatio) {
+    backNewH = BACK_H;
+    backNewW = backNewH * backImgRatio;
+  } else {
+    backNewW = BACK_W;
+    backNewH = backNewW / backImgRatio;
+  }
+  image(backImg, BACK_X + (BACK_W - backNewW) / 2, BACK_Y + (BACK_H - backNewH) / 2, backNewW, backNewH);
 
   popStyle();
 
 }
 
 void handleCreatorMouse() {
-  if (mouseHober(width - SAVE_W, height - SAVE_H, SAVE_W, SAVE_H)) { // 저장
+  if (mouseHober(width - SAVE_W - BACK_X, height - SAVE_H - BACK_Y, SAVE_W, SAVE_H)) { // 저장
     PImage newStickerImg = stickerCanvas.get(); // 캔버스를 PImage로 변환
     cursor(ARROW);
     if (stickerToEdit != null) {
@@ -278,8 +338,9 @@ void handleCreatorMouse() {
     return;
   }
   // 도구 선택
+    float toolIconSize = width * (64.0f/1280.0f);
     for (int i = 0; i < 6; i++) {
-      if (mouseHober(toolPos[0], toolPos[1] + i * toolGab, 64, 64)) {
+      if (mouseHober(toolPos[0], toolPos[1] + i * toolGab, toolIconSize, toolIconSize)) {
         switch (i) {
           case 0:
             tool = "brush";
@@ -366,12 +427,14 @@ void handleCreatorDrag() {
   }
   
   float d = dist(brushPos[0],brushPos[1],mouseX,mouseY);
-  if (d<132) {
+  float brushAreaRadius = width * (66.0f/1280.0f);
+  if (d < brushAreaRadius) {
     brushSize += mouseX - pmouseX;
     cursor(sizeCursor.get());
     isBrushSizeChange = true;
-    if (brushSize > 128) {
-      brushSize = 128;
+    float maxBrushSize = width * (128.0f/1280.0f);
+    if (brushSize > maxBrushSize) {
+      brushSize = maxBrushSize;
     }
     if (brushSize < 1) {
       brushSize = 1;
@@ -382,7 +445,7 @@ void handleCreatorDrag() {
 void handleCreatorRelease() {
   // 도형 그리기가 활성화된 상태에서 마우스를 놓았을 때
   if (isDrawingShape && mouseHober(canvasX, canvasY, canvasSize, canvasSize)) {
-    // 화면 좌표를 캔버스 좌표로 변환
+    // 화면 좌표를 캔버스 좌표로 변환 
     float startX = pmousePos[0] - canvasX;
     float startY = pmousePos[1] - canvasY;
     float endX = mouseX - canvasX;
@@ -410,3 +473,12 @@ void handleCreatorRelease() {
   isDrawingShape = false; // 그리기 상태 초기화
 }
  
+void paletteCenter(int i, int[] outXY) {
+
+  int col = (i > 5) ? 1 : 0;          
+  int row = (i > 5) ? (i - 6) : i;    
+
+  outXY[0] = round(colorPos[0] + col * colorGab_palette);                
+  outXY[1] = round(colorPos[1] + row * colorGab_palette);     
+
+}

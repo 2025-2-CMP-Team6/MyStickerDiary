@@ -160,16 +160,6 @@ public class rectButton {
 
 }
 
-// 색 팔래트 정렬
-void paletteCenter(int i, int[] outXY) {
-
-  int col = (i > 5) ? 1 : 0;          
-  int row = (i > 5) ? (i - 6) : i;    
-
-  outXY[0] = colorPos[0] + col * 72;                
-  outXY[1] = colorPos[1] + row * (int)colorGab;     
-
-}
 // 중점
 PVector midpoint(float x1, float y1, float x2, float y2) {
   return new PVector((x1 + x2) / 2, (y1 + y2) / 2);

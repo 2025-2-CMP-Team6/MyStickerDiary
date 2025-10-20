@@ -11,7 +11,6 @@ float libScrollbarX, libScrollbarY, libScrollbarW, libScrollbarH;
 float libThumbY, libThumbH;
 
 void drawLibrary() {
-  
     background(220, 240, 220);
     imageMode(CENTER);
     rectMode(CENTER);
@@ -23,48 +22,52 @@ void drawLibrary() {
     text("Sticker Library", width/2, 60);
     
     // 일기장으로
-    if (mouseHober(width - 175, 25, 150, 50)) {
+    if (mouseHober(width - width*(175.0f/1280.0f), height*(25.0f/720.0f), width*(150.0f/1280.0f), height*(50.0f/720.0f))) {
       fill(220);
     } else {
       fill(200);
     }
-    rect(width - 100, 50, 150, 50);
+    rect(width - width*(100.0f/1280.0f), height*(50.0f/720.0f), width*(150.0f/1280.0f), height*(50.0f/720.0f));
     fill(0);
     textSize(20);
-    text("Back to diary", width - 100, 50);
+    text("Back to diary", width - width*(100.0f/1280.0f), height*(50.0f/720.0f));
   
     // '새 스티커 만들기' 버튼
-    if (mouseHober(width/2 - 125, height - 110, 250, 60)) {
+    if (mouseHober(width/2 - width*(125.0f/1280.0f), height - height*(110.0f/720.0f), width*(250.0f/1280.0f), height*(60.0f/720.0f))) {
       fill(230, 230, 160);
     } else {
       fill(220, 220, 150);
     }
-    rect(width/2, height - 80, 250, 60);
+    rect(width/2, height - height*(80.0f/720.0f), width*(250.0f/1280.0f), height*(60.0f/720.0f));
     fill(0);
     textSize(30);
-    text("+ Making new Sticker!", width/2, height - 80);
+    text("+ Making new Sticker!", width/2, height - height*(80.0f/720.0f));
   
     // 스티커 목록 그리기
 
     pushStyle();
     rectMode(CORNER);
-    float boxSize = 150;   // 스티커가 들어갈 칸의 최대 크기
-    int spacing = 180;  // 스티커 간격
-    int startX = 200; // X좌표
-    int startY = 200; // Y좌표
+    float boxSize = width * (150.0f/1280.0f);   // 스티커가 들어갈 칸의 최대 크기
+    float spacing = width * (180.0f/1280.0f);  // 스티커 간격
+    float startX = width * (200.0f/1280.0f); // X좌표
+    float startY = height * (200.0f/720.0f); // Y좌표
     int cols = 6; // 한 줄당 개수
+
+    // 보이는 영역과 전체 콘텐츠 영역의 높이를 일관되게 계산합니다.
+    float viewHeight = height - startY - height*(120.0f/720.0f); // 스티커가 보이는 영역의 높이
+    float contentHeight = 0;
+
     // 스크롤 범위
     if (stickerLibrary.size() > 0) {
       int numRows = (stickerLibrary.size() - 1) / cols + 1;
-      float contentHeight = (numRows - 1) * spacing + boxSize*2;
-      float viewHeight = height - (startY);
+      contentHeight = (numRows - 1) * spacing + boxSize;
       minLibraryScrollY = max(0, contentHeight - viewHeight);
     } else {
-      minOverlayScrollY = 0;
+      minLibraryScrollY = 0;
     }
     //clip(startX - boxSize/2, startY - boxSize/2 - 16, width + boxSize/2 - 40, height - boxSize/2 - 32);
     rectMode(CORNER);
-    clip(0, startY + spacing - 32, width*2, height - boxSize - 48);
+    clip(0, startY + spacing, width*2, height - boxSize - 128);
   
     for (int i = 0; i < stickerLibrary.size(); i++) {
       Sticker s = stickerLibrary.get(i);
@@ -98,6 +101,25 @@ void drawLibrary() {
         noFill();
         rect(s.x-newW/2, s.y-newH/2, newW, newH);
         strokeWeight(1);
+
+        // 삭제 버튼 그리기
+        float deleteBtnRadius = max(10, width * (8.0f / 1280.0f)); // 최소 10px
+        float deleteBtnX = s.x + newW/2;
+        float deleteBtnY = s.y - newH/2;
+
+        pushStyle();
+        if (dist(mouseX, mouseY, deleteBtnX, deleteBtnY) < deleteBtnRadius) {
+            fill(255, 50, 50); // Hover color
+        } else {
+            fill(200, 0, 0);
+        }
+        stroke(255);
+        strokeWeight(1.5);
+        circle(deleteBtnX, deleteBtnY, deleteBtnRadius * 2);
+        line(deleteBtnX - deleteBtnRadius/2, deleteBtnY - deleteBtnRadius/2, deleteBtnX + deleteBtnRadius/2, deleteBtnY + deleteBtnRadius/2);
+        line(deleteBtnX + deleteBtnRadius/2, deleteBtnY - deleteBtnRadius/2, deleteBtnX - deleteBtnRadius/2, deleteBtnY + deleteBtnRadius/2);
+        popStyle();
+
         fill(0);
       }
       
@@ -105,11 +127,11 @@ void drawLibrary() {
     noClip();
     // 스크롤바 그리기
     if (minLibraryScrollY > 0) {
-      libScrollbarW = 12;
-      float scrollbarMargin = 20;
+      libScrollbarW = width * (12.0f/1280.0f);
+      float scrollbarMargin = width * (20.0f/1280.0f);
       libScrollbarX = width - scrollbarMargin - libScrollbarW;
-      libScrollbarY = 80;
-      libScrollbarH = height - 120;
+      libScrollbarY = height * (80.0f/720.0f);
+      libScrollbarH = height - height * (120.0f/720.0f);
   
       // 스크롤바 트랙
       fill(200, 180);
@@ -117,9 +139,6 @@ void drawLibrary() {
       rect(libScrollbarX, libScrollbarY, libScrollbarW, libScrollbarH, 6);
   
       // 스크롤바 섬
-      float viewHeight = height;
-      int numRows = (stickerLibrary.size() - 1) / cols + 1;
-      float contentHeight = (numRows - 1) * spacing + boxSize;
       thumbH = libScrollbarH * (viewHeight / contentHeight);
       thumbH = max(thumbH, 25); // 최소 높이
       float scrollableDist = libScrollbarH - thumbH;
@@ -138,46 +157,18 @@ void drawLibrary() {
   
   void handleLibraryMouse() {
     // 일기장으로 버튼
-    if (mouseX > width - 175 && mouseX < width - 25 && mouseY > 25 && mouseY < 75) {
+    if (mouseHober(width - width*(175.0f/1280.0f), height*(25.0f/720.0f), width*(150.0f/1280.0f), height*(50.0f/720.0f))) {
       switchScreen(drawing_diary);
       return;
     }
     
     // 새 스티커 만들기 버튼
-    if (mouseX > width/2 - 125 && mouseX < width/2 + 125 && 
-        mouseY > height - 110 && mouseY < height - 50) {
+    if (mouseHober(width/2 - width*(125.0f/1280.0f), height - height*(110.0f/720.0f), width*(250.0f/1280.0f), height*(60.0f/720.0f))) {
       setupCreator(); 
       switchScreen(making_sticker);
       return;
     }
     
-    // 스티커 클릭
-    float boxSize = 150.0;
-    for (Sticker s : stickerLibrary) {
-      float w = s.img.width;
-      float h = s.img.height;
-      float newW, newH;
-      
-      if (w > h) {
-        newW = boxSize;
-        newH = h * (boxSize / w);
-      }
-      else {
-        newH = boxSize;
-        newW = w * (boxSize / h);
-      }
-  
-      if (mouseHober(s.x-newW/2, s.y-newH/2, newW, newH)) {
-        // 스티커를 클릭하면 편집 화면으로 이동
-        stickerToEdit = s;
-        stickerCanvas.beginDraw();
-        stickerCanvas.clear();
-        stickerCanvas.image(stickerToEdit.img, 0, 0, canvasSize, canvasSize);
-        stickerCanvas.endDraw();
-        switchScreen(making_sticker);
-        break; 
-      }
-    }
     // 스크롤바 드래그 확인
     if (minLibraryScrollY > 0 && mouseHober(libScrollbarX, thumbY, libScrollbarW, thumbH)) {
       isDraggingLibScrollbar = true;
@@ -189,11 +180,10 @@ void drawLibrary() {
     // 스크롤바 드래그 처리
     if (isDraggingLibScrollbar) {
       float dy = mouseY - libScrollbarDragStartY;
-      float libScrollablePixelRange = libScrollbarH - thumbH;
-      if (libScrollablePixelRange > 0) {
-        float libScrollRatio = dy / libScrollablePixelRange;
-        float libScrollDelta = libScrollRatio * minLibraryScrollY;
-        libraryScrollY = constrain(libScrollbarDragStartScrollY + libScrollDelta, 0, minLibraryScrollY);
+      float scrollablePixelRange = libScrollbarH - thumbH;
+      if (scrollablePixelRange > 0) {
+        float scrollAmount = dy * (minLibraryScrollY / scrollablePixelRange);
+        libraryScrollY = constrain(libScrollbarDragStartScrollY + scrollAmount, 0, minLibraryScrollY);
       }
     }
   }
@@ -203,6 +193,53 @@ void drawLibrary() {
       isDraggingLibScrollbar = false;
       return;
     }
+
+    // 스티커 클릭/삭제 확인
+    float boxSize = width * (150.0f/1280.0f);
+    // Iterate backwards to safely remove items
+    for (int i = stickerLibrary.size() - 1; i >= 0; i--) {
+        Sticker s = stickerLibrary.get(i);
+        float w = s.img.width;
+        float h = s.img.height;
+        float newW, newH;
+        if (w > h) {
+          newW = boxSize;
+          newH = h * (boxSize / w);
+        } else {
+          newH = boxSize;
+          newW = w * (boxSize / h);
+        }
+
+        if (mouseHober(s.x-newW/2, s.y-newH/2, newW, newH)) {
+            // 삭제 버튼 클릭 확인
+            float deleteBtnRadius = max(10, width * (8.0f / 1280.0f));
+            float deleteBtnX = s.x + newW/2;
+            float deleteBtnY = s.y - newH/2;
+
+            if (dist(mouseX, mouseY, deleteBtnX, deleteBtnY) < deleteBtnRadius) {
+                // 파일 삭제
+                File stickerFile = new File(dataPath("sticker/" + s.imageName));
+                if (stickerFile.exists()) {
+                    if (!stickerFile.delete()) {
+                        println("Failed to delete sticker file: " + s.imageName);
+                    }
+                }
+                // 라이브러리에서 스티커 제거
+                stickerLibrary.remove(i);
+                return; // 한 번에 하나만 삭제
+            }
+
+            // 스티커를 클릭하면 편집 화면으로 이동 (삭제가 아닐 경우)
+            stickerToEdit = s;
+            stickerCanvas.beginDraw();
+            stickerCanvas.clear();
+            stickerCanvas.image(stickerToEdit.img, 0, 0, canvasSize, canvasSize);
+            stickerCanvas.endDraw();
+            switchScreen(making_sticker);
+            return;
+        }
+    }
+
     // 스크롤바 트랙 클릭
     if ((minLibraryScrollY > 0) && mouseHober(libScrollbarX, libScrollbarY, libScrollbarW, libScrollbarH) && !mouseHober(libScrollbarX, thumbY, libScrollbarW, thumbH)) {
       // 스크롤 이동
@@ -213,7 +250,7 @@ void drawLibrary() {
 }
 
 void handleLibraryMouseWheel(MouseEvent ev) {
-  if (mouseHober(130, 164, width - 270, height - 280)) {
+  if (mouseHober(width*(130.0f/1280.0f), height*(164.0f/720.0f), width - width*(270.0f/1280.0f), height - height*(280.0f/720.0f))) {
     float scrollAmount = ev.getCount() * 10; // 스크롤 속도
     libraryScrollY = constrain(libraryScrollY + scrollAmount, 0, minLibraryScrollY);
   }

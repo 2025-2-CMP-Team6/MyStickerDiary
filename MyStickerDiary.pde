@@ -44,18 +44,18 @@ float defaultStickerSize = 100.0; // 스티커의 기본 크기
 // 폰트 변수 선언
 PFont font;
 
-// 호버링 이펙트 아이콘 이미지 변수 선언
-PImage cursorImage;
-
 // 표정 아이콘
 PImage[] emotIcon;
 // 날씨 아이콘
 PImage[] weatherIcon;
+PImage trashClosedIcon, trashOpenIcon; // 휴지통 아이콘
 
 // 텍스트UI 변수 선언
 GTextField titleArea;  // 제목
 GTextArea textArea; // 내용
-float titlespace = 48;
+float titlespace;
+float textFieldY;
+float navigationBarY;
 
 // 달력 
 Calendar calendar = Calendar.getInstance();
@@ -82,31 +82,12 @@ rectButton diaryWeather;
 rectButton diaryEmotion;
 
 // 메뉴 스와이프 기능 관련 전역 변수입니다.
-final int PAGE_WIDTH = 1280;        
 float menuScrollX = 0;              
 float menuTargetScrollX = 0;        
 boolean isMenuDragging = false;
 float dragStartX = 0;
 float dragStartScroll = 0;
 float totalDragDist = 0;
-
-final int MENU_TOP = 200;        
-final int PAGE_PADDING_X = 120;   
-final int MENU_GUTTER_X = 80;     
-final int NAME_X = 1100;
-final int NAME_Y = 50;
-
-final int BTN_W = (PAGE_WIDTH - PAGE_PADDING_X*2 - MENU_GUTTER_X) / 2;
-final int BTN_H = 360;      
-
-final int NAME_W = 100;
-final int NAME_H = 50;
-
-final int DATE_W = 50;
-final int DATE_H = 30;
-
-final int DATE_X = 140;
-final int DATE_Y = 45;
 
 
 void textAreaUI() {
@@ -166,57 +147,60 @@ float worldMouseY() { return mouseY; }
 
 // 메뉴 버튼 초기화 함수
 void initMenuButtons() {
+  float pagePaddingX = width * (120.0f / 1280.0f);
+  float menuGutterX = width * (80.0f / 1280.0f);
+  float btnW = (width - pagePaddingX * 2 - menuGutterX) / 2;
+  float btnH = height * (360.0f / 720.0f);
+  float menuTop = height * (200.0f / 720.0f);
 
-  int x1 = PAGE_PADDING_X;
-  int x2 = PAGE_PADDING_X + BTN_W + MENU_GUTTER_X;
-  // int x_name = NAME_X;
-  int y  = MENU_TOP;
-  // int y_name = NAME_Y;
+  int x1 = round(pagePaddingX);
+  int x2 = round(pagePaddingX + btnW + menuGutterX);
+  int y  = round(menuTop);
 
-  dsButton = new rectButton(x1, y, BTN_W, BTN_H, #FEFD48);
+  dsButton = new rectButton(x1, y, round(btnW), round(btnH), #FEFD48);
   dsButton.rectButtonText("Drawing\nSticker", 50);
 
-  slButton = new rectButton(x2, y, BTN_W, BTN_H, #FEFD48);
+  slButton = new rectButton(x2, y, round(btnW), round(btnH), #FEFD48);
   slButton.rectButtonText("Sticker\nLibrary", 50);
 
-  ddButton = new rectButton(x1 + PAGE_WIDTH, y, BTN_W, BTN_H, #FEFD48);
+  ddButton = new rectButton(x1 + width, y, round(btnW), round(btnH), #FEFD48);
   ddButton.rectButtonText("drawing\nDiary", 50);
 
-  dlButton = new rectButton(x2 + PAGE_WIDTH, y, BTN_W, BTN_H, #FEFD48);
+  dlButton = new rectButton(x2 + width, y, round(btnW), round(btnH), #FEFD48);
   dlButton.rectButtonText("Diary\nLibrary", 50);
 
-  /*nameButton = new rectButton(NAME_X, NAME_Y, NAME_W, NAME_H, #3FE87F);
-  nameButton.rectButtonText("Name", 20);
-  nameButton.setShadow(false);*/
 }
 
 void ensureDiaryUI() {
   if(stickerStoreButton == null) {
-    stickerStoreButton = new rectButton(1100, textFieldY - 120, 180, 60, #c8dcff);
+    stickerStoreButton = new rectButton(round(width * (1100.0f/1280.0f)), round(textFieldY - height*(120.0f/720.0f)), round(width*(180.0f/1280.0f)), round(height*(60.0f/720.0f)), #c8dcff);
     stickerStoreButton.rectButtonText("Sticker storage", 25);
     stickerStoreButton.setShadow(false);
   }
 
   if (finishButton == null) {
-    finishButton = new rectButton(1100, textFieldY - 60, 180, 60, #F9E4B7);
+    finishButton = new rectButton(round(width * (1100.0f/1280.0f)), round(textFieldY - height*(60.0f/720.0f)), round(width*(180.0f/1280.0f)), round(height*(60.0f/720.0f)), #F9E4B7);
     finishButton.rectButtonText("Finish", 20);
     finishButton.setShadow(false);
   }
 
   if (analyzeButton == null) {
-    analyzeButton = new rectButton(1100, textFieldY - 180, 180, 60, #B4F0C2);
+    analyzeButton = new rectButton(round(width * (1100.0f/1280.0f)), round(textFieldY - height*(180.0f/720.0f)), round(width*(180.0f/1280.0f)), round(height*(60.0f/720.0f)), #B4F0C2);
     analyzeButton.rectButtonText("Analyze", 22);
     analyzeButton.setShadow(false);
   }
 }
 
 void setup() {
-    size(1280, 720);
+    size(1200, 840);
     pixelDensity(1);
     imageMode(CENTER);
     stickerLibrary = new ArrayList<Sticker>();
     placedStickers = new ArrayList<Sticker>();
     initializeSetting();
+    titlespace = height * (48.0f / 720.0f);
+    textFieldY = height * (480.0f / 720.0f);
+    navigationBarY = height * (64.0f / 720.0f);
     setupCreator();
     textAreaUI();
     thread("loadSong");
@@ -228,9 +212,6 @@ void setup() {
     surface.setResizable(false);
 
     font = createFont("data/fonts/nanumHandWriting_babyLove.ttf", 24);
-
-    // 버튼 창 호버링 시 나오는 아이콘 로드입니다.
-    cursorImage = loadImage("data/images/name_edit.png");
 
     // 표정 아이콘 로드 0: 분노, 1: 화남, 2: 울음, 3: 중립, 4: 행복
     emotIcon = new PImage[5];
@@ -249,6 +230,9 @@ void setup() {
     weatherIcon[4] = loadImage("images/icon_weather_snow.png");
     weatherIcon[5] = loadImage("images/icon_weather_storm.png");
 
+    trashClosedIcon = loadImage("images/trash_closed.png");
+    trashOpenIcon = loadImage("images/trash_open.png");
+
     initMenuButtons();
 
     initDiaryLibrary();
@@ -259,7 +243,7 @@ void setup() {
       "images/name_edit_off.png", "images/name_edit_over.png", "images/name_edit_down.png"
     };
     // 우측 상단에 버튼 위치
-    nameEditButton = new GImageButton(this, width - 80, 30, nameButtonImages, "images/name_edit_masks.png");
+    nameEditButton = new GImageButton(this, round(width - width*(80.0f/1280.0f)), round(height*(30.0f/720.0f)), nameButtonImages, "images/name_edit_masks.png");
     nameEditButton.setVisible(false); // 프로그램 시작 시 버튼을 보이지 않게 설정
 
     //설정
@@ -269,7 +253,7 @@ void setup() {
 
     // 슬라이더 초기화
     G4P.setCursor(CROSS);
-    sdr = new GSlider(this, 400, 250, 200, 100, 15);
+    sdr = new GSlider(this, round(width*(400.0f/1280.0f)), round(height*(250.0f/720.0f)), round(width*(200.0f/1280.0f)), round(height*(100.0f/720.0f)), 15);
     sdr.setVisible(false);
 
     todayWeather = getWeather();
@@ -331,8 +315,8 @@ void drawSettingsScreen() {
   // 설정 창 UI
   rectMode(CENTER); 
   fill(255);
-  stroke(0);
-  rect(width/2, height/2, 600, 500, 15); 
+  stroke(0); 
+  rect(width/2, height/2, width*(600.0f/1280.0f), height*(500.0f/720.0f), 15); 
   rectMode(CORNER);
   
   // 내부 내용

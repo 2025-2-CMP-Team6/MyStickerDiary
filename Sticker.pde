@@ -36,7 +36,7 @@ class Sticker { // 스티커 클래스
   }
 
   // 특정 인덱스의 조절 핸들 사각형 정보를 [x, y, w, h] 배열로 반환
-  float[] getHandleRect(int index, int handleSize) {
+  float[] getHandleRect(int index, float handleSize) {
       PVector s = getDisplaySize();
       float halfW = s.x / 2;
       float halfH = s.y / 2;

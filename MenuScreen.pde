@@ -63,7 +63,9 @@ public void drawMenuScreen() {
     
     // if (hoverScrollable || hoverFixed) {
     if (hoverScrollable) { // nameButton에 대한 hoverFixed 조건 제거
-      image(cursorImage, mouseX, mouseY, 50, 50);
+      cursor(HAND);
+    } else {
+      cursor(ARROW);
     }
     // 수정 끝
 
@@ -116,7 +118,7 @@ public void handleMenuDragged() {
   if (!isMenuDragging) return;
   float dx = mouseX - dragStartX;
   totalDragDist = max(totalDragDist, abs(dx));
-  menuScrollX = constrain(dragStartScroll - dx, 0, PAGE_WIDTH);
+  menuScrollX = constrain(dragStartScroll - dx, 0, width);
 
   dsButton.onDrag((int)worldMouseX(), (int)worldMouseY());
   slButton.onDrag((int)worldMouseX(), (int)worldMouseY());
@@ -154,7 +156,7 @@ public void handleMenuReleased() {
       // if (clickNAME) { switchScreen(name_screen);   return; } // G4P 버튼으로 대체되어 제거
 
   } else {
-      menuTargetScrollX = (menuScrollX > PAGE_WIDTH * 0.5f) ? PAGE_WIDTH : 0;
+      menuTargetScrollX = (menuScrollX > width * 0.5f) ? width : 0;
   }
 
 }

@@ -26,14 +26,25 @@ public void drawMeow() {
     }
 
     // 캐릭터 이미지 위치 변수 선언
-    float imageX = 100;
-    float imageY = height - 150;
+    float imageX = width * (100.0f / 1280.0f);
+    float imageY = height - height * (150.0f / 720.0f);
 
     // 캐릭터 사이즈 변수 선언
-    float imageSizeX = 200;
-    float imageSizeY = 200;
+    float imageSizeX = width * (200.0f / 1280.0f);
+    float imageSizeY = height * (200.0f / 720.0f);
 
-    image(meow, imageX, imageY, imageSizeX, imageSizeY);
+    // image(meow, imageX, imageY, imageSizeX, imageSizeY);
+    float w = meow.width;
+    float h = meow.height;
+    float newW, newH;
+    float wRatio = imageSizeX / w;
+    float hRatio = imageSizeY / h;
+    float ratio = min(wRatio, hRatio);
+
+    newW = w * ratio;
+    newH = h * ratio;
+
+    image(meow, imageX, imageY, newW, newH);
 }
 
 public void drawTitle() {

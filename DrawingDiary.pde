@@ -10,12 +10,8 @@ String lastSentimentLabel = "";    // 표시용
 // Weather
 int todayWeather;
 
-
-int textFieldY = 480;
-int navigationBarY = 64;
-
 Sticker selectedSticker;
-int handleSize = 16; // 조절점 크기
+float handleSize; // 조절점 크기
 // -1: 조절중x, 0: 왼쪽 위, 1: 왼쪽 아래, 2: 오른쪽 위, 3: 오른쪽 아래
 int isResizing = -1; // 크기 조절 중인지 확인
 PVector resizeAnchor = new PVector(); // 크기 조절 시 고정점
@@ -37,10 +33,10 @@ float thumbY, thumbH;
 
 int isDatePickerVisible = 0;  // 0: 안보임, 1: 달력, 2: 년도
 Calendar datePickerCalendar; 
-int datePickerWidth = 300;
-int datePickerHeight = 280;
-int datePickerX;
-int datePickerY;
+float datePickerWidth;
+float datePickerHeight;
+float datePickerX;
+float datePickerY;
 // 년도 설정 좌표
 int yearmonthScrollX;
 int yearmonthScrollY;
@@ -49,7 +45,7 @@ int yearmonthScrollH;
 rectButton yearmonthOK;
 rectButton yearmonthCancle;
 boolean yearmonthOKPressed = false;
-boolean yearmonthCanclePressed = false;
+boolean yearmonthCanclePressed = false; 
 int yearmonthButtonA = 96; //  버튼 간격 
 
 float yearPickerX;  // 년도 텍스트 위치
@@ -71,6 +67,12 @@ int diary_year = calendar.get(Calendar.YEAR);
 
 void drawDiary() {
 
+  handleSize = width * (16.0f / 1280.0f);
+  datePickerWidth = width * (300.0f / 1280.0f);
+  datePickerHeight = height * (280.0f / 720.0f);
+  yearmonthButtonA = round(width * (96.0f / 1280.0f));
+
+
   updateTextUIVisibility();
 
   pushStyle();
@@ -84,15 +86,15 @@ void drawDiary() {
   fill(0);
   textSize(30);
   textAlign(LEFT,CENTER);
-  text("Name : " + username, 72, 30);
+  text("Name : " + username, width * (72.0f/1280.0f), height * (30.0f/720.0f));
   popStyle();
   
   // 일기장에 붙여진 스티커들을 모두 그리기
   for (Sticker s : placedStickers) {
     s.display();
   }
-  // 선택된 스티커가 있으면 조절 핸들을 그린다
-  if (selectedSticker != null) {
+  // 스티커가 선택되었고, 이동 드래그 중이 아닐 때만 핸들을 그립니다.
+  if (selectedSticker != null && !(isResizing == -1 && currentlyDraggedSticker != null)) {
     pushStyle();
     fill(255);
     stroke(0);
@@ -101,6 +103,28 @@ void drawDiary() {
     for (int i = 0; i < 4; i++) {
       float[] handle = selectedSticker.getHandleRect(i, handleSize);
       rect(handle[0], handle[1], handle[2], handle[3]);
+    }
+    popStyle();
+  }
+
+  // 스티커를 드래그하여 이동 중일 때 삭제 존을 표시합니다.
+  if (currentlyDraggedSticker != null && isResizing == -1) { // 이동 중에만
+    float deleteZoneSize = 128;
+    float deleteZoneX = 0;
+    float deleteZoneY = textFieldY - deleteZoneSize;
+
+    pushStyle();
+    fill(255, 0, 0, 100); // 반투명한 붉은색
+    noStroke();
+    rectMode(CORNER);
+    rect(deleteZoneX, deleteZoneY, deleteZoneSize, deleteZoneSize);
+    imageMode(CENTER);
+
+    boolean isHoveringDelete = mouseHober(deleteZoneX, deleteZoneY, deleteZoneSize, deleteZoneSize);
+    if (isHoveringDelete) {
+      image(trashOpenIcon, deleteZoneX + deleteZoneSize / 2 - 7, deleteZoneY + deleteZoneSize / 2 - 7, deleteZoneSize * 0.725, deleteZoneSize * 0.84);
+    } else {
+      image(trashClosedIcon, deleteZoneX + deleteZoneSize / 2, deleteZoneY + deleteZoneSize / 2, deleteZoneSize * 0.7, deleteZoneSize * 0.7);
     }
     popStyle();
   }
@@ -119,11 +143,11 @@ void drawDiary() {
   if (isAnalyzing) {
     // 로딩 텍스트
     fill(0);
-    text("Analyzing sentiment...", 1120, textFieldY - 210);
+    text("Analyzing sentiment...", width * (1120.0f/1280.0f), textFieldY - height * (210.0f/720.0f));
     pushMatrix();
     pushStyle();
-    float iconX = 1140 + textWidth("Analyzing sentiment...");
-    float iconY = textFieldY - 210;
+    float iconX = width * (1120.0f/1280.0f) + textWidth("Analyzing sentiment...") + width * (20.0f/1280.0f);
+    float iconY = textFieldY - height * (210.0f/720.0f);
     translate(iconX, iconY);
     float angle = frameCount * 0.1;
     rotate(angle);
@@ -137,7 +161,7 @@ void drawDiary() {
    else if (lastSentimentScore >= 0) {
     fill(0);
     text("Sentiment: " + lastSentimentLabel + String.format(" (%.2f)", lastSentimentScore),
-        1100, textFieldY - 210);
+        width * (1100.0f/1280.0f), textFieldY - height * (210.0f/720.0f));
   }
   popStyle();
 
@@ -146,13 +170,13 @@ void drawDiary() {
     pushStyle();
     imageMode(CENTER);
     int iconCount = weatherIcon.length;
-    float iconSize = 40; // 아이콘 크기
-    float rightMargin = 300; // 오른쪽 끝에서의 여백
-    float iconSpacing = 10; // 아이콘 사이의 간격
+    float iconSize = width * (40.0f / 1280.0f); // 아이콘 크기
+    float rightMargin = width * (300.0f / 1280.0f); // 오른쪽 끝에서의 여백
+    float iconSpacing = width * (10.0f / 1280.0f); // 아이콘 사이의 간격
     for (int i = 0; i < iconCount; i++) {
-      iconSize = 40;
+      float currentIconSize = iconSize;
       // 아이콘 x 좌표 계산 (오른쪽부터 왼쪽으로)
-      float x = width - rightMargin - (iconSize / 2) - (i * (iconSize + iconSpacing));
+      float x = width - rightMargin - (currentIconSize / 2) - (i * (currentIconSize + iconSpacing));
       // 아이콘 y 좌표 계산 (상단 바의 중앙)
       float y = navigationBarY / 2;
       PImage drawEmotIcon;
@@ -162,17 +186,28 @@ void drawDiary() {
       else {
         drawEmotIcon = weatherIcon[i].get();
         drawEmotIcon.filter(GRAY);
-        if (mouseHober(x-iconSize/2,y-iconSize/2,iconSize,iconSize)) {
-          iconSize = 35;
+        if (mouseHober(x-currentIconSize/2,y-currentIconSize/2,currentIconSize,currentIconSize)) {
+          currentIconSize *= 0.875f; // 35/40
           if (mousePressed) {
             todayWeather = i;
           }
         }
         else {
-          iconSize = 30;
+          currentIconSize *= 0.75f; // 30/40
         }
       }
-      image(drawEmotIcon, x, y, iconSize, iconSize);
+      // image(drawEmotIcon, x, y, currentIconSize, currentIconSize);
+      float w = drawEmotIcon.width;
+      float h = drawEmotIcon.height;
+      float newW, newH;
+      if (w > h) {
+        newW = currentIconSize;
+        newH = h * (currentIconSize / w);
+      } else {
+        newH = currentIconSize;
+        newW = w * (currentIconSize / h);
+      }
+      image(drawEmotIcon, x, y, newW, newH);
     }
     popStyle();
   }
@@ -182,13 +217,13 @@ void drawDiary() {
     pushStyle();
     imageMode(CENTER);
     int iconCount = emotIcon.length;
-    float iconSize = 40; // 아이콘 크기
-    float rightMargin = 20; // 오른쪽 끝에서의 여백
-    float iconSpacing = 10; // 아이콘 사이의 간격
+    float iconSize = width * (40.0f / 1280.0f); // 아이콘 크기
+    float rightMargin = width * (20.0f / 1280.0f); // 오른쪽 끝에서의 여백
+    float iconSpacing = width * (10.0f / 1280.0f); // 아이콘 사이의 간격
     for (int i = 0; i < iconCount; i++) {
-      iconSize = 40;
+      float currentIconSize = iconSize;
       // 아이콘 x 좌표 계산 (오른쪽부터 왼쪽으로)
-      float x = width - rightMargin - (iconSize / 2) - (i * (iconSize + iconSpacing));
+      float x = width - rightMargin - (currentIconSize / 2) - (i * (currentIconSize + iconSpacing));
       // 아이콘 y 좌표 계산 (상단 바의 중앙)
       float y = navigationBarY / 2;
       PImage drawEmotIcon;
@@ -198,9 +233,20 @@ void drawDiary() {
       else {
         drawEmotIcon = emotIcon[i].get();
         drawEmotIcon.filter(GRAY);
-        iconSize = 30;
+        currentIconSize *= 0.75f; // 30/40
       }
-      image(drawEmotIcon, x, y, iconSize, iconSize);
+      // image(drawEmotIcon, x, y, currentIconSize, currentIconSize);
+      float w = drawEmotIcon.width;
+      float h = drawEmotIcon.height;
+      float newW, newH;
+      if (w > h) {
+        newW = currentIconSize;
+        newH = h * (currentIconSize / w);
+      } else {
+        newH = currentIconSize;
+        newW = w * (currentIconSize / h);
+      }
+      image(drawEmotIcon, x, y, newW, newH);
     }
     popStyle();
   }
@@ -211,16 +257,16 @@ void drawDiary() {
     String dateString = "Date : " + diary_year + ". " + diary_month + ". " + diary_day;
     float dateTextW = textWidth(dateString);
     float dateTextH = 30;
-    float dateTextX = width/2 - dateTextW/2- 120;
-    float dateTextY = 12;
+    float dateTextX = width/2 - dateTextW/2 - width * (120.0f/1280.0f);
+    float dateTextY = height * (12.0f/720.0f);
     if (isDatePickerVisible == 0 && !isStickerLibraryOverlayVisible && mouseHober(dateTextX, dateTextY, dateTextW, dateTextH)) {
       fill(150,100);
       noStroke();
       rect(dateTextX-4, dateTextY+4, dateTextW+8, dateTextH,8);
     }
     fill(0);
-    textAlign(CENTER,CENTER);
-    text(dateString, width/2 - 120, 30);
+    textAlign(CENTER, CENTER);
+    text(dateString, width/2 - width * (120.0f/1280.0f), height * (30.0f/720.0f));
     popStyle();
   }
 
@@ -245,7 +291,10 @@ void drawStickerLibraryOverlay() {
 
   // 보관함 패널
   rectMode(CORNER);
-  float panelX = 100, panelY = 100, panelW = width - 200, panelH = height - 200;
+  float panelX = width * (100.0f/1280.0f);
+  float panelY = height * (100.0f/720.0f);
+  float panelW = width - 2 * panelX;
+  float panelH = height - 2 * panelY;
   fill(220, 240, 220);
   rect(panelX, panelY, panelW, panelH, 10);
 
@@ -253,30 +302,32 @@ void drawStickerLibraryOverlay() {
   fill(0);
   textAlign(CENTER, CENTER);
   textSize(30);
-  text("Sticker Library", panelX + panelW / 2, panelY + 40);
+  text("Sticker Library", panelX + panelW / 2, panelY + height*(40.0f/720.0f));
 
   // 닫기 버튼
   textSize(24);
   fill(100);
-  if (mouseHober(panelX + panelW - 50, panelY + 10, 40, 40)) {
+  if (mouseHober(panelX + panelW - width*(50.0f/1280.0f), panelY + height*(10.0f/720.0f), width*(40.0f/1280.0f), height*(40.0f/720.0f))) {
     fill(0);
   }
-  text("X", panelX + panelW - 30, panelY + 30);
+  text("X", panelX + panelW - width*(30.0f/1280.0f), panelY + height*(30.0f/720.0f));
   //
   rectMode(CORNER);
-  noFill();
-  stroke(0);
-  strokeWeight(1);
-  rect(panelX + 30, panelY + 80 - 16, panelW - 30 - 40, panelH - 80);
+  fill(255);
+  noStroke();
+  float contentPaddingX = width * (30.0f/1280.0f);
+  float contentPaddingY = height * (80.0f/720.0f);
+  float scrollbarAreaWidth = width * (40.0f/1280.0f);
+  rect(panelX + contentPaddingX - 16, panelY + contentPaddingY - 20, panelW - contentPaddingX - scrollbarAreaWidth + 42, panelH - contentPaddingY + 8, 4);
   popStyle();
 
   // 스티커 목록 그리기
 
   pushStyle();
-  float boxSize = 100;
-  int spacing = 120;
-  int startX = (int)(panelX + 80);
-  int startY = (int)(panelY + 130);
+  float boxSize = width * (100.0f/1280.0f);
+  float spacing = width * (120.0f/1280.0f);
+  float startX = panelX + width * (80.0f/1280.0f);
+  float startY = panelY + height * (130.0f/720.0f);
   int cols = floor((panelW - 100) / spacing);
   rectMode(CORNER);
 
@@ -290,7 +341,7 @@ void drawStickerLibraryOverlay() {
     minOverlayScrollY = 0;
   }
 
-  clip(startX - boxSize/2, startY - boxSize/2 - 16, panelW + boxSize/2 - 40, panelH - boxSize/2 - 32);
+  clip(startX - boxSize/2, startY - boxSize/2 - 16, panelW - width*(100.0f/1280.0f), panelH - height*(100.0f/720.0f));
 
   for (int i = 0; i < stickerLibrary.size(); i++) {
     Sticker s = stickerLibrary.get(i);
@@ -326,11 +377,11 @@ void drawStickerLibraryOverlay() {
   noClip();
   // 스크롤바 그리기
   if (minOverlayScrollY > 0) {
-    scrollbarW = 12;
-    float scrollbarMargin = 20;
+    scrollbarW = width * (12.0f/1280.0f);
+    float scrollbarMargin = width * (20.0f/1280.0f);
     scrollbarX = panelX + panelW - scrollbarMargin - scrollbarW;
-    scrollbarY = panelY + 80;
-    scrollbarH = panelH - 120;
+    scrollbarY = panelY + height * (80.0f/720.0f);
+    scrollbarH = panelH - height * (120.0f/720.0f);
 
     // 스크롤바 트랙
     fill(200, 180);
@@ -480,9 +531,9 @@ void handleDiaryMouse() { // 마우스를 처음 눌렀을 때 호출
   textSize(30);
   String dateString = "Date : " + diary_year + ". " + diary_month + ". " + diary_day;
   float dateTextW = textWidth(dateString);
-  float dateTextH = 30;
-  float dateTextX = width/2 - dateTextW/2 - 120;
-  float dateTextY = 12;
+  float dateTextH = height * (30.0f/720.0f);
+  float dateTextX = width/2 - dateTextW/2 - width * (120.0f/1280.0f);
+  float dateTextY = height * (12.0f/720.0f);
   popStyle();
   datePressed = mouseHober(dateTextX, dateTextY, dateTextW, dateTextH);
 }
@@ -494,14 +545,13 @@ void handleDiaryDrag() {  // 드래그하는 동안 호출
       float dy = mouseY - scrollbarDragStartY;
       float scrollablePixelRange = scrollbarH - thumbH;
       if (scrollablePixelRange > 0) {
-        float scrollRatio = dy / scrollablePixelRange;
-        float scrollDelta = scrollRatio * minOverlayScrollY;
-        overlayScrollY = constrain(scrollbarDragStartScrollY + scrollDelta, 0, minOverlayScrollY);
+        // 마우스 이동 거리에 비례하여 스크롤 양을 계산합니다.
+        float scrollAmount = dy * (minOverlayScrollY / scrollablePixelRange);
+        overlayScrollY = constrain(scrollbarDragStartScrollY + scrollAmount, 0, minOverlayScrollY);
       }
     }
     return;
   }
-
   if (isDatePickerVisible != 0) {
     handleDatePickerDrag();
     return;
@@ -585,6 +635,15 @@ void handleDiaryRelease() {
     handleDatePickerMouseRelease();
     return;
   }
+
+  // 스티커가 삭제 존 위에서 놓아졌는지 확인합니다.
+  if (currentlyDraggedSticker != null && isResizing == -1) {
+    float deleteZoneSize = 128;
+    if (mouseHober(0, textFieldY - deleteZoneSize, deleteZoneSize, deleteZoneSize)) {
+      placedStickers.remove(currentlyDraggedSticker);
+      selectedSticker = null; // 선택된 스티커도 초기화
+    }
+  }
   currentlyDraggedSticker = null; // 스티커 놓기
     isResizing = -1;
 
@@ -607,9 +666,9 @@ void handleDiaryRelease() {
   textSize(30);
   String dateString = "Date : " + diary_year + ". " + diary_month + ". " + diary_day;
   float dateTextW = textWidth(dateString);
-  float dateTextH = 30;
-  float dateTextX = width/2 - dateTextW/2 - 120;
-  float dateTextY = 12;
+  float dateTextH = height * (30.0f/720.0f);
+  float dateTextX = width/2 - dateTextW/2 - width * (120.0f/1280.0f);
+  float dateTextY = height * (12.0f/720.0f);
   popStyle();
   if (datePressed && mouseHober(dateTextX, dateTextY, dateTextW, dateTextH)) { openDatePickerDialog(); }
   
@@ -619,17 +678,20 @@ void handleDiaryRelease() {
 }
 
 void handleStickerLibraryOverlayRelease() {
-  float panelX = 100, panelY = 100, panelW = width - 200, panelH = height - 200;
+  float panelX = width * (100.0f/1280.0f);
+  float panelY = height * (100.0f/720.0f);
+  float panelW = width - 2 * panelX;
+  float panelH = height - 2 * panelY;
 
   // 닫기 버튼 클릭
-  if (mouseHober(panelX + panelW - 50, panelY + 10, 40, 40)) {
+  if (mouseHober(panelX + panelW - width*(50.0f/1280.0f), panelY + height*(10.0f/720.0f), width*(40.0f/1280.0f), height*(40.0f/720.0f))) {
     isStickerLibraryOverlayVisible = false;
     return;
   }
 
   // 스티커 클릭 시 일기장에 추가
-  float boxSize = 100;
-  int spacing = 120;
+  float boxSize = width * (100.0f/1280.0f);
+  float spacing = width * (120.0f/1280.0f);
   int startX = (int)(panelX + 80);   // drawStickerLibraryOverlay와 동일한 값 사용
   int startY = (int)(panelY + 130);  // drawStickerLibraryOverlay와 동일한 값 사용
   int cols = floor((panelW - 100) / spacing);
@@ -654,7 +716,7 @@ void handleStickerLibraryOverlayRelease() {
     }
 
     // 스티커가 보이는 영역(패널) 안에 있을 때만 클릭 처리
-    boolean isStickerVisible = (stickerY + newH/2 > panelY + 80) && (stickerY - newH/2 < panelY + panelH);
+    boolean isStickerVisible = (stickerY + newH/2 > panelY + height*(80.0f/720.0f)) && (stickerY - newH/2 < panelY + panelH);
 
     if (isStickerVisible && mouseHober(stickerX - newW / 2, stickerY - newH / 2, newW, newH)) {
       Sticker newSticker = new Sticker(width / 2, textFieldY / 2, s.img, defaultStickerSize, s.imageName);
@@ -675,8 +737,8 @@ void openDatePickerDialog() { // 달력 토글
     datePickerCalendar.setTime(calendar.getTime());
   }
 
-  datePickerX = DATE_X+width/2-datePickerWidth;
-  datePickerY = DATE_Y+DATE_H;
+  datePickerX = width/2 - datePickerWidth/2;
+  datePickerY = navigationBarY + 10;
   isDatePickerVisible = 1;
 }
 
@@ -701,20 +763,20 @@ void drawDatePicker() {
   String monthString = monthToString(datePickerCalendar.get(Calendar.MONTH));
 
 
-  text(datePickerCalendar.get(Calendar.YEAR) + " " + monthString, datePickerX + datePickerWidth / 2, datePickerY + 30);
+  text(datePickerCalendar.get(Calendar.YEAR) + " " + monthString, datePickerX + datePickerWidth / 2, datePickerY + height*(30.0f/720.0f));
 
   // 화살표
   textSize(24);
-  text("<", datePickerX + 30, datePickerY + 30); // 이전 달
-  text(">", datePickerX + datePickerWidth - 30, datePickerY + 30); // 다음 달
+  text("<", datePickerX + width*(30.0f/1280.0f), datePickerY + height*(30.0f/720.0f)); // 이전 달
+  text(">", datePickerX + datePickerWidth - width*(30.0f/1280.0f), datePickerY + height*(30.0f/720.0f)); // 다음 달
 
   // 요일 레이블
   String[] daysOfWeek = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
   textSize(14);
   float cellWidth = datePickerWidth / 7.0;
   for (int i = 0; i < 7; i++) {
-    fill(i == 0 ? color(200, 0, 0) : 0); // 일요일
-    text(daysOfWeek[i], datePickerX + cellWidth * i + cellWidth / 2, datePickerY + 70);
+    fill(i == 0 ? color(200, 0, 0) : 0); // 일요일 
+    text(daysOfWeek[i], datePickerX + cellWidth * i + cellWidth / 2, datePickerY + height*(70.0f/720.0f));
   }
 
   // 날짜 그리드
@@ -724,7 +786,7 @@ void drawDatePicker() {
   int maxDaysInMonth = tempCal.getActualMaximum(Calendar.DAY_OF_MONTH);
 
   int day = 1;
-  float cellHeight = (datePickerHeight - 100) / 6.0;
+  float cellHeight = (datePickerHeight - height*(100.0f/720.0f)) / 6.0;
   textSize(16);
 
   for (int row = 0; row < 6; row++) {
@@ -733,7 +795,7 @@ void drawDatePicker() {
       if (day > maxDaysInMonth) break; // 마지막 날짜를 넘어가면 중단
 
       float x = datePickerX + col * cellWidth;
-      float y = datePickerY + 90 + row * cellHeight;
+      float y = datePickerY + height*(90.0f/720.0f) + row * cellHeight;
       
       // 현재 선택된 날짜 표시
       if (datePickerCalendar.get(Calendar.YEAR) == diary_year &&
@@ -757,20 +819,21 @@ void drawDatePicker() {
       day++;
     }
   }
-  if (mouseHober(datePickerX, datePickerY, 60, 60)) {
+  float arrowArea = width*(60.0f/1280.0f);
+  if (mouseHober(datePickerX, datePickerY, arrowArea, arrowArea)) {
     noStroke();
     fill(150,100);
-    rect(datePickerX, datePickerY, 60, 60, 4);
+    rect(datePickerX, datePickerY, arrowArea, arrowArea, 4);
   }
-  else if (mouseHober(datePickerX + datePickerWidth - 60, datePickerY, 60, 60)) {
+  else if (mouseHober(datePickerX + datePickerWidth - arrowArea, datePickerY, arrowArea, arrowArea)) {
     noStroke();
     fill(150,100);
-    rect(datePickerX + datePickerWidth - 60, datePickerY, 60, 60, 4);
+    rect(datePickerX + datePickerWidth - arrowArea, datePickerY, arrowArea, arrowArea, 4);
   }
-  if (mouseHober(datePickerX + datePickerWidth / 2 - 60, datePickerY, 128, 64)) {
+  if (mouseHober(datePickerX + datePickerWidth / 2 - width*(60.0f/1280.0f), datePickerY, width*(128.0f/1280.0f), height*(64.0f/720.0f))) {
     noStroke();
     fill(150,100);
-    rect(datePickerX + datePickerWidth / 2 - 58, datePickerY+8, 128, 48, 12);
+    rect(datePickerX + datePickerWidth / 2 - width*(58.0f/1280.0f), datePickerY+height*(8.0f/720.0f), width*(128.0f/1280.0f), height*(48.0f/720.0f), 12);
   }
   popStyle();
 }
@@ -782,22 +845,22 @@ void openYearMonthPicker() {  // 년도 설정창 토글
   yearmonthScrollX = width/2;
   yearmonthScrollY = height/2;
 
-  yearmonthScrollW = 480;
-  yearmonthScrollH = 240;
+  yearmonthScrollW = round(width * (480.0f/1280.0f));
+  yearmonthScrollH = round(height * (240.0f/720.0f));
 
-  yearPickerX = yearmonthScrollX-96;
+  yearPickerX = yearmonthScrollX - width * (96.0f/1280.0f);
   yearmonthY = yearmonthScrollY;
   isDatePickerVisible = 2;
 
   yearmonthScrollX = width/2-yearmonthScrollW/2;
   yearmonthScrollY = height/2-yearmonthScrollH/2;
-  initYearMonthButton();
+  initYearMonthButton(); 
 }
 void initYearMonthButton() {
-  yearmonthOK = new rectButton(yearmonthScrollX-yearmonthButtonA+240,yearmonthScrollY+yearmonthScrollH-32,48,24, #FBDAB0);
+  yearmonthOK = new rectButton(round(yearmonthScrollX-yearmonthButtonA+width*(240.0f/1280.0f)), round(yearmonthScrollY+yearmonthScrollH-height*(32.0f/720.0f)), round(width*(48.0f/1280.0f)), round(height*(24.0f/720.0f)), #FBDAB0);
   yearmonthOK.rectButtonText("OK", 18);
   yearmonthOK.setShadow(false);
-  yearmonthCancle = new rectButton(yearmonthScrollX+yearmonthButtonA+240,yearmonthScrollY+yearmonthScrollH-32,48,24, #D9D9D9);
+  yearmonthCancle = new rectButton(round(yearmonthScrollX+yearmonthButtonA+width*(240.0f/1280.0f)), round(yearmonthScrollY+yearmonthScrollH-height*(32.0f/720.0f)), round(width*(48.0f/1280.0f)), round(height*(24.0f/720.0f)), #D9D9D9);
   yearmonthCancle.rectButtonText("Cancle", 18);
   yearmonthCancle.setShadow(false);
 }
@@ -814,59 +877,55 @@ void drawYearMonthPicker() {  // 년도 설정창 드로우
   fill(255);
   rect(yearmonthScrollX,yearmonthScrollY,yearmonthScrollW,yearmonthScrollH,24);
   noStroke();
-  fill(#FBDAB0);
-  rect(yearmonthScrollX,yearmonthScrollY,64,yearmonthScrollH,24,0,0,24);
-  fill(#DBFDB4);
-  rect(yearmonthScrollX+64,yearmonthY-24,yearmonthScrollW-64,48);
+  fill(#FBDAB0); 
+  rect(yearmonthScrollX,yearmonthScrollY,width*(64.0f/1280.0f),yearmonthScrollH,24,0,0,24);
+  fill(#DBFDB4); 
+  rect(yearmonthScrollX+width*(64.0f/1280.0f),yearmonthY-height*(24.0f/720.0f),yearmonthScrollW-width*(64.0f/1280.0f),height*(48.0f/720.0f));
   // 텍스트
   fill(0);
   textAlign(CENTER,CENTER);
   if (nowDragInPicker == 0) {
+    text(yearPicker, yearPickerX, yearmonthY);  
 
-    if (nowDragInPicker == 0) {
-
-      text(yearPicker, yearPickerX, yearmonthY);  
-
-      text(monthToString(monthToIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+128, yearmonthY);
-
-      fill(125);
-      text(monthToString(prevMonthIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+128, yearmonthY-48);
-      text(monthToString(nextMonthIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+128, yearmonthY+48);
-
-      if (yearPicker > 0)    { text(yearPicker-1, yearPickerX, yearmonthY-48); }
-      if (yearPicker < 9999) { text(yearPicker+1, yearPickerX, yearmonthY+48); }
-      
-    }
-  }
-  else if (nowDragInPicker == 1) {
-
-    text(yearPicker, yearPickerX, yearmonthY + set*4.8);  
-
-    text(monthToString(monthToIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+128, yearmonthY);
+    text(monthToString(monthToIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+width*(128.0f/1280.0f), yearmonthY);
 
     fill(125);
-    text(monthToString(prevMonthIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+128, yearmonthY-48);
-    text(monthToString(nextMonthIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+128, yearmonthY+48);
+    text(monthToString(prevMonthIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+width*(128.0f/1280.0f), yearmonthY-height*(48.0f/720.0f));
+    text(monthToString(nextMonthIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+width*(128.0f/1280.0f), yearmonthY+height*(48.0f/720.0f));
 
-    if (yearPicker > 0)    { text(yearPicker-1, yearPickerX, yearmonthY-48 + set*4.8); }
-    if (yearPicker < 9999) { text(yearPicker+1, yearPickerX, yearmonthY+48 + set*4.8); }
+    if (yearPicker > 0)    { text(yearPicker-1, yearPickerX, yearmonthY-height*(48.0f/720.0f)); }
+    if (yearPicker < 9999) { text(yearPicker+1, yearPickerX, yearmonthY+height*(48.0f/720.0f)); }
+  }
+
+  else if (nowDragInPicker == 1) {
+
+    text(yearPicker, yearPickerX, yearmonthY + set*height*(4.8f/720.0f));  
+
+    text(monthToString(monthToIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+width*(128.0f/1280.0f), yearmonthY);
+
+    fill(125);
+    text(monthToString(prevMonthIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+width*(128.0f/1280.0f), yearmonthY-height*(48.0f/720.0f));
+    text(monthToString(nextMonthIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+width*(128.0f/1280.0f), yearmonthY+height*(48.0f/720.0f));
+
+    if (yearPicker > 0)    { text(yearPicker-1, yearPickerX, yearmonthY-height*(48.0f/720.0f) + set*height*(4.8f/720.0f)); }
+    if (yearPicker < 9999) { text(yearPicker+1, yearPickerX, yearmonthY+height*(48.0f/720.0f) + set*height*(4.8f/720.0f)); }
 
   }
   else if (nowDragInPicker == 2) {
 
     text(yearPicker, yearPickerX, yearmonthY);  // 선택 년도
 
-    text(monthToString(monthToIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+128, yearmonthY + set*4.8);
+    text(monthToString(monthToIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+width*(128.0f/1280.0f), yearmonthY + set*height*(4.8f/720.0f));
 
     fill(125);
-    text(monthToString(prevMonthIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+128, yearmonthY-48 + set*4.8);
-    text(monthToString(nextMonthIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+128, yearmonthY+48 + set*4.8);
+    text(monthToString(prevMonthIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+width*(128.0f/1280.0f), yearmonthY-height*(48.0f/720.0f) + set*height*(4.8f/720.0f));
+    text(monthToString(nextMonthIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+width*(128.0f/1280.0f), yearmonthY+height*(48.0f/720.0f) + set*height*(4.8f/720.0f));
 
-    if (yearPicker > 0)    { text(yearPicker-1, yearPickerX, yearmonthY-48); }
-    if (yearPicker < 9999) { text(yearPicker+1, yearPickerX, yearmonthY+48); }
+    if (yearPicker > 0)    { text(yearPicker-1, yearPickerX, yearmonthY-height*(48.0f/720.0f)); }
+    if (yearPicker < 9999) { text(yearPicker+1, yearPickerX, yearmonthY+height*(48.0f/720.0f)); }
     
   }
-  text("|",yearmonthScrollX+32+yearmonthScrollW/2,yearmonthY);
+  text("|",yearmonthScrollX+width*(32.0f/1280.0f)+yearmonthScrollW/2,yearmonthY);
   fill(150);
   if (yearmonthOK != null) {
     yearmonthOK.render();
@@ -888,11 +947,11 @@ void handleDatePickerMouse() {  // 달력 클릭
 
 void handleYearMonthMouse() {  // 년도 설정창 클릭
   if (nowDragInPicker == 0) {
-    if (mouseHober(yearPickerX-64,yearmonthScrollY,192,yearmonthScrollH)) {
+    if (mouseHober(yearPickerX-width*(64.0f/1280.0f),yearmonthScrollY,width*(192.0f/1280.0f),yearmonthScrollH)) {
       nowDragInPicker = 1;
       return;
     }
-    if (mouseHober(yearmonthScrollX+yearmonthScrollW/2+64,yearmonthScrollY,192,yearmonthScrollH)) {
+    if (mouseHober(yearmonthScrollX+yearmonthScrollW/2+width*(64.0f/1280.0f),yearmonthScrollY,width*(192.0f/1280.0f),yearmonthScrollH)) {
       nowDragInPicker = 2;
       return;
     }
@@ -914,8 +973,9 @@ void handleYearMonthDrag() {  // 년도 설정창 드래그
   if (set >= 10) {
     if (nowDragInPicker == 1) { // 년도
       if (yearPicker > 0) yearPicker--;
-    } else if (nowDragInPicker == 2) { 
-      if (monthPicker > 1) monthPicker--;
+    } else if (nowDragInPicker == 2) {
+      monthPicker--;
+      if (monthPicker < 1) monthPicker = 12;
     }
     set = 0;
   }
@@ -923,12 +983,12 @@ void handleYearMonthDrag() {  // 년도 설정창 드래그
     if (nowDragInPicker == 1) { // 년도
       if (yearPicker < 9999) yearPicker++;
     } else if (nowDragInPicker == 2) {
-      if (monthPicker < 12) monthPicker++;
+      monthPicker++;
+      if (monthPicker > 12) monthPicker = 1;
     }
     set = 0;
   }
 }
-
 
 void handleDatePickerMouseRelease() { // 달력 마우스 떼기
   float cellWidth = datePickerWidth / 7.0;
@@ -936,8 +996,7 @@ void handleDatePickerMouseRelease() { // 달력 마우스 떼기
     
     if (yearmonthOK != null &&
         mouseHober(yearmonthOK.position_x, yearmonthOK.position_y, yearmonthOK.width, yearmonthOK.height)) {
-      datePickerCalendar.set(yearPicker,monthPicker -1, diary_day);
-      calendar.set(diary_year, diary_month - 1, diary_day);
+      datePickerCalendar.set(yearPicker, monthPicker - 1, 1);
       closeDatePickerDialog();
       return;
 
@@ -953,17 +1012,18 @@ void handleDatePickerMouseRelease() { // 달력 마우스 떼기
     return;
   }
   // 이전 달 화살표 클릭
-  if (mouseHober(datePickerX, datePickerY, 60, 60)) {
+  float arrowArea = width*(60.0f/1280.0f);
+  if (mouseHober(datePickerX, datePickerY, arrowArea, arrowArea)) {
     datePickerCalendar.add(Calendar.MONTH, -1);
     return;
   }
   // 다음 달 화살표 클릭
-  if (mouseHober(datePickerX + datePickerWidth - 60, datePickerY, 60, 60)) {
+  if (mouseHober(datePickerX + datePickerWidth - arrowArea, datePickerY, arrowArea, arrowArea)) {
     datePickerCalendar.add(Calendar.MONTH, 1);
     return;
   }
   // 달/년도 클릭
-  if (mouseHober(datePickerX + datePickerWidth / 2 - 60, datePickerY, 128, 64)) {
+  if (mouseHober(datePickerX + datePickerWidth / 2 - width*(60.0f/1280.0f), datePickerY, width*(128.0f/1280.0f), height*(64.0f/720.0f))) {
     openYearMonthPicker();
     return;
   }
@@ -974,7 +1034,7 @@ void handleDatePickerMouseRelease() { // 달력 마우스 떼기
   int firstDayOfWeek = tempCal.get(Calendar.DAY_OF_WEEK);
   int maxDaysInMonth = tempCal.getActualMaximum(Calendar.DAY_OF_MONTH);
   int day = 1;
-  float cellHeight = (datePickerHeight - 100) / 6.0;
+  float cellHeight = (datePickerHeight - height*(100.0f/720.0f)) / 6.0;
 
   for (int row = 0; row < 6; row++) {
     for (int col = 0; col < 7; col++) {
@@ -982,7 +1042,7 @@ void handleDatePickerMouseRelease() { // 달력 마우스 떼기
       if (day > maxDaysInMonth) break;
 
       float x = datePickerX + col * cellWidth;
-      float y = datePickerY + 90 + row * cellHeight;
+      float y = datePickerY + height*(90.0f/720.0f) + row * cellHeight;
 
       if (mouseHober(x, y, cellWidth, cellHeight)) {
         // 날짜 선택
@@ -1010,19 +1070,19 @@ if ((!mouseHober(yearmonthScrollX, yearmonthScrollY, yearmonthScrollW, yearmonth
 }
 void handleDrawingDiaryMouseWheel(MouseEvent ev) {
   if (isStickerLibraryOverlayVisible) {
-    if (mouseHober(130, 164, width - 270, height - 280)) {
+    if (mouseHober(width*(130.0f/1280.0f), height*(164.0f/720.0f), width - width*(270.0f/1280.0f), height - height*(280.0f/720.0f))) {
       float scrollAmount = ev.getCount() * 10; // 스크롤 속도
       overlayScrollY = constrain(overlayScrollY + scrollAmount, 0, minOverlayScrollY);
     }
   }
 
 
-  if (isDatePickerVisible == 2) {
-    if (mouseHober(yearPickerX-64,yearmonthScrollY,192,yearmonthScrollH)) {
+  if (isDatePickerVisible == 2) { 
+    if (mouseHober(yearPickerX-width*(64.0f/1280.0f),yearmonthScrollY,width*(192.0f/1280.0f),yearmonthScrollH)) {
       yearPicker -= ev.getCount();
       yearPicker = constrain(yearPicker, 1, 9998);
     }
-    if (mouseHober(yearmonthScrollX+yearmonthScrollW/2+64,yearmonthScrollY,192,yearmonthScrollH)) {
+    if (mouseHober(yearmonthScrollX+yearmonthScrollW/2+width*(64.0f/1280.0f),yearmonthScrollY,width*(192.0f/1280.0f),yearmonthScrollH)) {
       monthPicker -= ev.getCount();
       monthPicker = clampMonth1to12(monthPicker);
     }
