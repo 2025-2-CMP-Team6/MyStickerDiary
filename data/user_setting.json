@@ -1,8 +1,6 @@
 {
-  "Volume": [
-    100,
-    100,
-    100
-  ],
+  "bgmVolume": 0.39461588859558105,
+  "dragSpeed": 1.5,
+  "sfxVolume": 1,
   "Name": ""
 }
