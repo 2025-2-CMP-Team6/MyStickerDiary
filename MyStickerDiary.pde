@@ -11,7 +11,6 @@ import processing.sound.*;
 
 // 저장해야 할 변수
 String username;
-int[] volume;
 
 
 // 화면 통제 변수 선언
@@ -88,9 +87,11 @@ float navigationBarY;
 // 달력 
 Calendar calendar = Calendar.getInstance();
 
-// 사운드
+// 사운드 변수
 SoundFile song;
-float currentVolume = 0.5; // 볼륨 설정 (0.0 ~ 1.0)
+float bgmVolume = 0.5; // 배경음 볼륨 (0.0 ~ 1.0)
+float sfxVolume = 0.8; // 효과음 볼륨 (0.0 ~ 1.0)
+SoundFile clickSound;
 
 
 // 메뉴 버튼 오브젝트를 한번씩만 만들어줘야 하는 이슈가 발생해서 center control 파일에 선언합니다.
@@ -98,8 +99,10 @@ rectButton dsButton, slButton, ddButton, dlButton;
 //rectButton nameButton;
 GImageButton nameEditButton; // G4P 이미지 버튼 선언
 //설정 화면 내 버튼
+GSlider dragSpeedSlider; // 메뉴 드래그 속도 조절 슬라이더
 rectButton settings_goToMainButton; // 메인으로
-GSlider sdr; // 슬라이더
+GSlider sdr; // BGM 슬라이더
+GSlider sfxSlider; // 효과음 슬라이더
 // 다이어리 보관함 버튼
 rectButton backToMenuButton;
 rectButton prevMonthButton;
@@ -116,6 +119,7 @@ boolean isMenuDragging = false;
 float dragStartX = 0;
 float dragStartScroll = 0;
 float totalDragDist = 0;
+float menuDragSpeed = 1.0; // 메뉴 드래그 속도 (1.0이 기본)
 
 
 void textAreaUI() {
@@ -175,8 +179,11 @@ float worldMouseY() { return mouseY; }
 
 // 메뉴 버튼 초기화 함수
 void initMenuButtons() {
-  float pagePaddingX = width * (120.0f / 1280.0f);
-  float menuGutterX = width * (80.0f / 1280.0f);
+  // 버튼 사이의 간격(menuGutterX)을 일관되게 유지하고, 페이지 가장자리 여백(pagePaddingX)을 그 절반으로 설정합니다.
+  // 이렇게 하면 페이지가 넘어갈 때의 버튼 간격과 페이지 내의 버튼 간격이 동일해집니다.
+  float menuGutterX = width * (120.0f / 1280.0f); // 버튼 사이의 주된 간격
+  float pagePaddingX = menuGutterX / 2.0f;       // 페이지 가장자리 여백
+
   float btnW = (width - pagePaddingX * 2 - menuGutterX) / 2;
   float btnH = height * (360.0f / 720.0f);
   float menuTop = height * (200.0f / 720.0f);
@@ -187,13 +194,11 @@ void initMenuButtons() {
 
   dsButton = new rectButton(x1, y, round(btnW), round(btnH), #FEFD48);
   dsButton.rectButtonText("Drawing\nSticker", 50);
-
   slButton = new rectButton(x2, y, round(btnW), round(btnH), #FEFD48);
   slButton.rectButtonText("Sticker\nLibrary", 50);
 
   ddButton = new rectButton(x1 + width, y, round(btnW), round(btnH), #FEFD48);
   ddButton.rectButtonText("drawing\nDiary", 50);
-
   dlButton = new rectButton(x2 + width, y, round(btnW), round(btnH), #FEFD48);
   dlButton.rectButtonText("Diary\nLibrary", 50);
 
@@ -259,6 +264,7 @@ void performHeavySetup() { // 시간이 오래 걸리는 작업들을 백그라�
 
     loadingMessage = "Loading sounds...";
     thread("loadSong");
+    clickSound = new SoundFile(this, "data/sounds/click.mp3"); // 효과음 로드
     loadingProgress = 0.15;
 
     // 아이콘 이미지 로드
@@ -307,7 +313,7 @@ void performHeavySetup() { // 시간이 오래 걸리는 작업들을 백그라�
     loadingProgress = 0.95;
 
     loadingMessage = "Finalizing...";
-    settings_goToMainButton = new rectButton(width/2 - 100, height/2 + 100, 200, 50, color(100, 150, 255));
+    settings_goToMainButton = new rectButton(width/2 - 100, height/2 + 150, 200, 50, color(100, 150, 255));
     settings_goToMainButton.rectButtonText("Main", 24);
     loadingProgress = 1.0;
 
@@ -326,8 +332,27 @@ void finishSetupOnMainThread() { // 메인 스레드에서만 실행해야 하�
     nameEditButton.setVisible(false);
 
     G4P.setCursor(CROSS);
-    sdr = new GSlider(this, round(width*(400.0f/1280.0f)), round(height*(250.0f/720.0f)), round(width*(200.0f/1280.0f)), round(height*(100.0f/720.0f)), 15);
+
+    float sliderW = width * (200.0f / 1280.0f);
+    float sliderX = width / 2 - sliderW / 2;
+
+    // BGM 슬라이더
+    sdr = new GSlider(this, round(sliderX), round(height*(250.0f/720.0f)), round(sliderW), round(height*(60.0f/720.0f)), 15);
     sdr.setVisible(false);
+    sdr.setValue(bgmVolume); // 파일에서 불러온 값으로 설정
+
+    // 효과음 슬라이더
+    sfxSlider = new GSlider(this, round(sliderX), round(height*(330.0f/720.0f)), round(sliderW), round(height*(60.0f/720.0f)), 15);
+    sfxSlider.setVisible(false);
+    sfxSlider.setValue(sfxVolume); // 파일에서 불러온 값으로 설정
+
+    // 드래그 속도 슬라이더
+    dragSpeedSlider = new GSlider(this, round(sliderX), round(height*(410.0f/720.0f)), round(sliderW), round(height*(60.0f/720.0f)), 15);
+    dragSpeedSlider.setLimits(1.0f, 0.5f, 2.0f); // 범위 설정 (초기값은 1.0)
+    dragSpeedSlider.setValue(menuDragSpeed); // 파일에서 불러온 값으로 설정
+    dragSpeedSlider.setNbrTicks(4); // 0.5, 1.0, 1.5, 2.0
+    dragSpeedSlider.setStickToTicks(true);
+    dragSpeedSlider.setVisible(false);
 }
 
 // G4P 컨트롤 이벤트를 처리하는 핸들러
@@ -338,7 +363,7 @@ void handleButtonEvents(GImageButton button, GEvent event) {
 }
 
 void loadSong() {
-  song = new SoundFile(this, "cutebgm.mp3");
+  song = new SoundFile(this, "sounds/cutebgm.mp3");
 
   if (song == null) {
     println("Sound file failed to load.");
@@ -346,7 +371,7 @@ void loadSong() {
   }
 
   song.loop();
-  song.amp(currentVolume);
+  song.amp(bgmVolume);
 }
 
 void loadStickersFromFolder(String folderPath, float startProgress, float endProgress) {
@@ -385,29 +410,62 @@ void drawSettingsScreen() {
   rect(0, 0, width, height);
   
   // 설정 창 UI
+  float panelW = width*(600.0f/1280.0f);
+  float panelH = height*(500.0f/720.0f);
   rectMode(CENTER); 
   fill(255);
   stroke(0); 
-  rect(width/2, height/2, width*(600.0f/1280.0f), height*(500.0f/720.0f), 15); 
+  rect(width/2, height/2, panelW, panelH, 15); 
   rectMode(CORNER);
   
+  // 닫기(X) 버튼
+  float closeBtnSize = 40;
+  float closeBtnX = (width/2 + panelW/2) - closeBtnSize;
+  float closeBtnY = (height/2 - panelH/2);
+  pushStyle();
+  textSize(24);
+  textAlign(CENTER, CENTER);
+  if (mouseHober(closeBtnX, closeBtnY, closeBtnSize, closeBtnSize)) {
+    fill(255, 0, 0); // Hover color
+  } else {
+    fill(100);
+  }
+  text("X", closeBtnX + closeBtnSize/2, closeBtnY + closeBtnSize/2);
+  popStyle();
+
   // 내부 내용
   fill(0);
   textAlign(CENTER, CENTER);
   textSize(40);
-  text("설정 (Settings)", width/2, height/2 - 200);
+  text("Settings", width/2, height/2 - 200);
+
+  // 슬라이더 레이블
+  textAlign(RIGHT, CENTER);
+  textSize(20);
+  text("BGM Volume", sdr.getX() - 10, sdr.getY() + sdr.getHeight()/2);
+  text("SFX Volume", sfxSlider.getX() - 10, sfxSlider.getY() + sfxSlider.getHeight()/2);
+  text("Drag Speed", dragSpeedSlider.getX() - 10, dragSpeedSlider.getY() + dragSpeedSlider.getHeight()/2);
+
+  // 슬라이더 값 표시
+  textAlign(LEFT, CENTER);
+  text(String.format("%d%%", round(sdr.getValueF() * 100)), sdr.getX() + sdr.getWidth() + 10, sdr.getY() + sdr.getHeight()/2);
+  text(String.format("%d%%", round(sfxSlider.getValueF() * 100)), sfxSlider.getX() + sfxSlider.getWidth() + 10, sfxSlider.getY() + sfxSlider.getHeight()/2);
+  text(String.format("%.1fx", dragSpeedSlider.getValueF()), dragSpeedSlider.getX() + dragSpeedSlider.getWidth() + 10, dragSpeedSlider.getY() + dragSpeedSlider.getHeight()/2);
 
     // 메인으로 가기 버튼
   settings_goToMainButton.render(); 
   //아래에 계속해서 내부 내용 추가
-    // 슬라이더 테스트
 }
 
 public void handleSliderEvents(GValueControl slider, GEvent event) { 
-  if (slider == sdr)  // The slider being configured?
-    currentVolume = sdr.getValueF();
-    println(sdr.getValueS()+ "    " +  currentVolume + "    " + event);    
-    song.amp(currentVolume);    
+  if (slider == sdr) {
+    bgmVolume = sdr.getValueF();
+    song.amp(bgmVolume);    
+  } else if (slider == dragSpeedSlider) {
+    menuDragSpeed = dragSpeedSlider.getValueF();
+  } else if (slider == sfxSlider) {
+    sfxVolume = sfxSlider.getValueF();
+  }
 }
 
 void drawLoadingScreen() {
@@ -509,7 +567,10 @@ void draw() {
 void keyPressed() {
   if (key == ESC) { // ESC 키 -> 설정화면 
     isSettingsVisible = !isSettingsVisible;
+    playClickSound();
     sdr.setVisible(isSettingsVisible);
+    sfxSlider.setVisible(isSettingsVisible);
+    dragSpeedSlider.setVisible(isSettingsVisible);
     key = 0; // ESC 키가 프로그램 종료로 이어지지 않도록 방지
 
     if (isSettingsVisible) {
@@ -538,13 +599,37 @@ void keyPressed() {
 void mousePressed() {
   // 설정 화면이 보이는 상태에선 설정 화면 내의 기능만 처리하도록 함
   if (isSettingsVisible) {
-    // 메인으로 가기 버튼 처리
+    // 패널 및 닫기 버튼 영역 정의
+    float panelW = width * (600.0f / 1280.0f);
+    float panelH = height * (500.0f / 720.0f);
+    float panelX = width / 2 - panelW / 2;
+    float panelY = height / 2 - panelH / 2;
+
+    float closeBtnSize = 40;
+    float closeBtnX = (width / 2 + panelW / 2) - closeBtnSize;
+    float closeBtnY = (height / 2 - panelH / 2);
+
+    // 닫기 버튼 클릭 또는 패널 외부 클릭 확인
+    if (mouseHober(closeBtnX, closeBtnY, closeBtnSize, closeBtnSize) || !mouseHober(panelX, panelY, panelW, panelH)) {
+        playClickSound();
+        isSettingsVisible = false;
+        sdr.setVisible(false);
+        sfxSlider.setVisible(false);
+        dragSpeedSlider.setVisible(false);
+        updateTextUIVisibility(); // 다이어리 화면의 텍스트 필드 가시성 복원
+        return;
+    }
+
+    // 'Main' 버튼 클릭 처리
     if (settings_goToMainButton.isMouseOverButton()) {
+      playClickSound();
       isSettingsVisible = false; 
       sdr.setVisible(false);
+      sfxSlider.setVisible(false);
+      dragSpeedSlider.setVisible(false); // 드래그 속도 슬라이더도 숨기도록 추가
       switchScreen(start_screen);  
     }
-    return; // 뒤 버튼 눌리지 않도록
+    return; // 설정 창 내부의 다른 곳을 클릭했으면 다른 이벤트가 발생하지 않도록 함
   }
 
   switch (currentScreen) {
@@ -634,6 +719,9 @@ void mouseWheel(MouseEvent ev) {
     case diary_library:
       handleDiaryLibraryMouseWheel(ev);
       break;
+    case menu_screen: // Add this case for menu scrolling
+      handleMenuMouseWheel(ev);
+      break;
   }
 }
 
@@ -641,40 +729,44 @@ void initializeSetting() {
   String filePath = "data/user_setting.json";  
   JSONObject settingData = loadJSONObject(filePath);
   if (settingData == null) {
-    println("settingData file not found or is invalid: " + filePath);
+    println("user_setting.json not found. Using default settings.");
     username = "";
     isNameEntered = false;
-    volume = new int[]{100, 100, 100}; // 기본 볼륨 값 (예: 마스터, BGM, 효과음)
+    bgmVolume = 0.5f;
+    sfxVolume = 0.8f;
+    menuDragSpeed = 1.0f;
     return;
   }
   
   // 이름
   username = settingData.getString("Name", "");
   isNameEntered = !username.isEmpty();
-  
-  // 볼륨 데이터
-  JSONArray volumeArray = settingData.getJSONArray("Volume");
-  if (volumeArray != null) {
-    volume = volumeArray.getIntArray();
-  } else {
-    volume = new int[]{100, 100, 100};
-  }
+
+  // 볼륨 및 드래그 속도
+  bgmVolume = settingData.getFloat("bgmVolume", 0.5f);
+  sfxVolume = settingData.getFloat("sfxVolume", 0.8f);
+  menuDragSpeed = settingData.getFloat("dragSpeed", 1.0f);
 }
 
 
 void dispose() {  // 종료될때 실행 함수
   // 설정 저장
     JSONObject settingData = new JSONObject();
-    // 이름
+    // 이름, 볼륨, 드래그 속도 저장
     settingData.setString("Name", username);
-    // 볼륨 데이터
-    JSONArray volumeArray = new JSONArray();
-    for (int i = 0; i < volume.length; i++) {
-      volumeArray.append(volume[i]);
-    }
-    settingData.setJSONArray("Volume", volumeArray);
+    settingData.setFloat("bgmVolume", bgmVolume);
+    settingData.setFloat("sfxVolume", sfxVolume);
+    settingData.setFloat("dragSpeed", menuDragSpeed);
   
     saveJSONObject(settingData, "data/user_setting.json");
+    println("Settings saved.");
+}
+
+void playClickSound() {
+  if (clickSound != null) {
+    clickSound.amp(sfxVolume);
+    clickSound.play();
+  }
 }
 
 // 배경 이펙트용 클래스
