@@ -27,8 +27,16 @@ final int name_screen = 6;
 // 초기화면은 시작화면 (StartScreen)
 int currentScreen = start_screen;
 
+int loadingStage = 0; // 0: 시작 전, 1: 백그라운드 로딩 중, 2: 메인 스레드 로딩, 3: 완료
+float loadingProgress = 0.0; // 로딩 진행률 (0.0 ~ 1.0)
+float displayLoadingProgress = 0.0; // 화면에 표시될 부드러운 진행률
+String loadingMessage = ""; // 현재 로딩 작업 메시지
+boolean readyToTransition = false; // 로딩 완료 후 화면 전환 준비 플래그
+
 boolean isSettingsVisible = false; // 설정 화면 표시 여부
 boolean isMouseOverStartBtn = false; // 마우스가 버튼 위에 있는지 여부
+
+ArrayList<Bubble> bubbles; // 배경 이펙트용 원
 
 PFont myFont; // 폰트
 
@@ -44,11 +52,31 @@ float defaultStickerSize = 100.0; // 스티커의 기본 크기
 // 폰트 변수 선언
 PFont font;
 
+// 시작화면 캐릭터
+PImage meow;
+
 // 표정 아이콘
 PImage[] emotIcon;
 // 날씨 아이콘
 PImage[] weatherIcon;
 PImage trashClosedIcon, trashOpenIcon; // 휴지통 아이콘
+
+// 스티커 제작 도구 아이콘 및 커서 (MakingSticker.pde에서 이동)
+PImage saveImg;
+PImage backImg;
+PImage brushImg;
+PImage paintImg;
+PImage eraserImg;
+PImage brushCursor;
+PImage paintCursor;
+PImage eraserCursor;
+PImage spoideCursor;
+PGraphics lineCursor;
+PGraphics rectCursor;
+PGraphics circleCursor;
+
+// 컬러 팔레트 (MakingSticker.pde에서 이동)
+color[] palleteColor;
 
 // 텍스트UI 변수 선언
 GTextField titleArea;  // 제목
@@ -191,37 +219,57 @@ void ensureDiaryUI() {
   }
 }
 
-void setup() {
+void setup() { // 앱 시작 시 최소한의 초기화만 수행
     size(1200, 840);
     pixelDensity(1);
-    imageMode(CENTER);
-    stickerLibrary = new ArrayList<Sticker>();
-    placedStickers = new ArrayList<Sticker>();
-    initializeSetting();
-    titlespace = height * (48.0f / 720.0f);
-    textFieldY = height * (480.0f / 720.0f);
-    navigationBarY = height * (64.0f / 720.0f);
-    setupCreator();
-    textAreaUI();
-    thread("loadSong");
   
     // 실행 창 이름 지정
     surface.setTitle("MyStickerDiary");
-
     // 실행 창 사이즈 사용자가 임의 조정하지 못하게 설정
     surface.setResizable(false);
 
-    font = createFont("data/fonts/nanumHandWriting_babyLove.ttf", 24);
+    // 컬러 팔레트 초기화 (Bubble 생성보다 먼저)
+    palleteColor = new color[]{color(0, 0, 0), color(255, 0, 0), color(255, 165, 0), color(255, 255, 0), color(0, 255, 0), color(0, 255, 255), color(0, 0, 255), color(255, 0, 255), color(139, 69, 19), color(128, 128, 128), color(211, 211, 211), color(255, 255, 255)};
 
-    // 표정 아이콘 로드 0: 분노, 1: 화남, 2: 울음, 3: 중립, 4: 행복
+    // 배경 이펙트 초기화
+    bubbles = new ArrayList<Bubble>();
+    for (int i = 0; i < 20; i++) { // 원 개수 줄임 (50 -> 20)
+      bubbles.add(new Bubble());
+    }
+
+    font = createFont("data/fonts/nanumHandWriting_babyLove.ttf", 24);
+    
+    loadingStage = 1;
+    thread("performHeavySetup");
+}
+
+void performHeavySetup() { // 시간이 오래 걸리는 작업들을 백그라운드 스레드에서 처리
+    loadingMessage = "Initializing...";
+    imageMode(CENTER);
+    stickerLibrary = new ArrayList<Sticker>();
+    placedStickers = new ArrayList<Sticker>();
+    titlespace = height * (48.0f / 720.0f);
+    textFieldY = height * (480.0f / 720.0f);
+    navigationBarY = height * (64.0f / 720.0f);
+    loadingProgress = 0.05;
+    
+    loadingMessage = "Loading settings...";
+    initializeSetting();
+    loadingProgress = 0.1;
+
+    loadingMessage = "Loading sounds...";
+    thread("loadSong");
+    loadingProgress = 0.15;
+
+    // 아이콘 이미지 로드
+    loadingMessage = "Loading UI icons...";
+    meow = loadImage("data/images/meow.png");
     emotIcon = new PImage[5];
     emotIcon[0] = loadImage("images/icon_face_angry.png");
     emotIcon[1] = loadImage("images/icon_face_anger.png");
     emotIcon[2] = loadImage("images/icon_face_crying.png");
     emotIcon[3] = loadImage("images/icon_face_neutral.png");
     emotIcon[4] = loadImage("images/icon_face_happy.png");
-
-    // 날씨 아이콘 로드 0: 맑음, 1: 바람, 2: 흐림, 3: 비, 4: 눈, 5: 폭풍
     weatherIcon = new PImage[6];
     weatherIcon[0] = loadImage("images/icon_weather_sunny.png");
     weatherIcon[1] = loadImage("images/icon_weather_windy.png");
@@ -229,34 +277,57 @@ void setup() {
     weatherIcon[3] = loadImage("images/icon_weather_rainy.png");
     weatherIcon[4] = loadImage("images/icon_weather_snow.png");
     weatherIcon[5] = loadImage("images/icon_weather_storm.png");
-
     trashClosedIcon = loadImage("images/trash_closed.png");
     trashOpenIcon = loadImage("images/trash_open.png");
+    loadingProgress = 0.25;
 
+    // 스티커 제작 도구 리소스 로딩
+    loadingMessage = "Loading creator tools...";
+    saveImg = loadImage("data/images/saveIcon.png");
+    backImg = loadImage("data/images/backIcon.png");
+    brushImg = loadImage("data/images/brush.png");
+    paintImg = loadImage("data/images/paint.png");
+    eraserImg = loadImage("data/images/eraser.png");
+    brushCursor = loadImage("data/images/brush.png");
+    paintCursor = loadImage("data/images/paint.png");
+    eraserCursor = loadImage("data/images/eraser.png");
+    spoideCursor = loadImage("data/images/spoide.png");
+    loadingProgress = 0.40;
+
+    loadingMessage = "Preparing sticker list...";
+    loadStickersFromFolder("sticker", 0.40, 0.90); // 스티커 로딩에 50% 할당
+
+    loadingMessage = "Initializing UI...";
     initMenuButtons();
-
     initDiaryLibrary();
-    loadStickersFromFolder("sticker");
+    loadingProgress = 0.92;
 
-    // GImageButton 초기화 수정된 부분
+    loadingMessage = "Fetching weather data...";
+    todayWeather = getWeather();
+    loadingProgress = 0.95;
+
+    loadingMessage = "Finalizing...";
+    settings_goToMainButton = new rectButton(width/2 - 100, height/2 + 100, 200, 50, color(100, 150, 255));
+    settings_goToMainButton.rectButtonText("Main", 24);
+    loadingProgress = 1.0;
+
+    loadingStage = 2; // 백그라운드 로딩 완료
+}
+
+void finishSetupOnMainThread() { // 메인 스레드에서만 실행해야 하는 초기화 작업
+    setupCreator();
+    textAreaUI();
+
+    // G4P 컨트롤(GImageButton, GSlider 등)은 메인 스레드에서 생성해야 합니다.
     String[] nameButtonImages = {
       "images/name_edit_off.png", "images/name_edit_over.png", "images/name_edit_down.png"
     };
-    // 우측 상단에 버튼 위치
     nameEditButton = new GImageButton(this, round(width - width*(80.0f/1280.0f)), round(height*(30.0f/720.0f)), nameButtonImages, "images/name_edit_masks.png");
-    nameEditButton.setVisible(false); // 프로그램 시작 시 버튼을 보이지 않게 설정
+    nameEditButton.setVisible(false);
 
-    //설정
-    // 설정 창의 '메인으로 가기' 버튼 초기화
-    settings_goToMainButton = new rectButton(width/2 - 100, height/2 + 100, 200, 50, color(100, 150, 255));
-    settings_goToMainButton.rectButtonText("Main", 24);
-
-    // 슬라이더 초기화
     G4P.setCursor(CROSS);
     sdr = new GSlider(this, round(width*(400.0f/1280.0f)), round(height*(250.0f/720.0f)), round(width*(200.0f/1280.0f)), round(height*(100.0f/720.0f)), 15);
     sdr.setVisible(false);
-
-    todayWeather = getWeather();
 }
 
 // G4P 컨트롤 이벤트를 처리하는 핸들러
@@ -278,31 +349,32 @@ void loadSong() {
   song.amp(currentVolume);
 }
 
-void loadStickersFromFolder(String folderPath) {
+void loadStickersFromFolder(String folderPath, float startProgress, float endProgress) {
   File folder = new File(dataPath(folderPath));
   if (folder.exists() && folder.isDirectory()) {
-    File[] files = folder.listFiles();
-    if (files != null) {
-      Arrays.sort(files); // 파일 이름순으로 정렬
-      for (File file : files) {
-        if (file.isFile()) {
-          String fileName = file.getName().toLowerCase();
-          // .DS_Store 같은 시스템 파일을 제외하고 이미지 파일만 로드하도록 수정
-          if (fileName.endsWith(".png") || fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") || fileName.endsWith(".gif")) {
-            String filePath = file.getAbsolutePath();
-            PImage img = loadImage(filePath);
-            stickerLibrary.add(new Sticker(0, 0, img, defaultStickerSize, file.getName()));
-          }
-        }
+    File[] files = folder.listFiles(new FilenameFilter() {
+      public boolean accept(File dir, String name) {
+        String lower = name.toLowerCase();
+        return lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".gif");
       }
-    }
-    else {
-      println("file load fail");
+    });
+    if (files != null && files.length > 0) {
+      Arrays.sort(files); // 파일 이름순으로 정렬
+      float progressStep = (endProgress - startProgress) / files.length;
+      for (int i = 0; i < files.length; i++) {
+        File file = files[i];
+        stickerLibrary.add(new Sticker(0, 0, defaultStickerSize, file.getName()));
+        loadingProgress = startProgress + ((i + 1) * progressStep);
+        loadingMessage = "Loading sticker " + (i + 1) + " / " + files.length;
+      }
+    } else {
+      loadingProgress = endProgress;
     }
   }
   else {
-        println("Folder not found: " + folderPath);
-    }
+    println("Folder not found: " + folderPath);
+    loadingProgress = endProgress;
+  }
 }
 
 // 설정 화면 그리기
@@ -338,7 +410,63 @@ public void handleSliderEvents(GValueControl slider, GEvent event) {
     song.amp(currentVolume);    
 }
 
+void drawLoadingScreen() {
+    // 목표 진행률(loadingProgress)을 향해 현재 표시되는 진행률(displayLoadingProgress)을 부드럽게 업데이트합니다.
+    displayLoadingProgress = lerp(displayLoadingProgress, loadingProgress, 0.05);
+
+    background(#FFCA1A);
+    drawBackgroundEffect();
+    
+    textAlign(CENTER, CENTER);
+    fill(0);
+    textFont(font);
+    textSize(50);
+    text("Loading...", width/2, height/2 - 80);
+    
+    // 진행 메시지
+    textSize(22);
+    text(loadingMessage, width/2, height/2);
+
+    // 진행률 바
+    float barW = width * 0.6;
+    float barH = 30;
+    float barX = width/2 - barW/2;
+    float barY = height/2 + 50;
+
+    // 바 배경
+    noStroke();
+    fill(100, 80);
+    rect(barX, barY, barW, barH, 15);
+
+    // 채워지는 바
+    fill(#4CAF50); // 초록색
+    if (displayLoadingProgress > 0) {
+      rect(barX, barY, barW * displayLoadingProgress, barH, 15);
+    }
+
+    // 퍼센트 텍스트
+    fill(255);
+    textSize(18);
+    // 소수점 없이 정수로 표시
+    text(floor(displayLoadingProgress * 100) + "%", width/2, barY + barH/2);
+}
+
 void draw() {
+    if (loadingStage < 3) {
+      drawLoadingScreen();
+      if (readyToTransition) {
+        // 100%가 그려진 다음 프레임에 전환 실행
+        finishSetupOnMainThread();
+        loadingStage = 3; // 모든 로딩 완료
+      } else if (loadingStage == 2) {
+        // 백그라운드 로딩이 완료되었고, 이제 화면 표시가 100%에 도달하기를 기다립니다.
+        if (displayLoadingProgress >= 0.99f) {
+          displayLoadingProgress = 1.0f; // 100%로 강제 설정
+          readyToTransition = true;      // 다음 프레임에 전환하도록 플래그 설정
+        }
+      }
+      return;
+    }
     // 디폴트 모드 세팅
     imageMode(CORNER);
     rectMode(CORNER);
@@ -547,4 +675,46 @@ void dispose() {  // 종료될때 실행 함수
     settingData.setJSONArray("Volume", volumeArray);
   
     saveJSONObject(settingData, "data/user_setting.json");
+}
+
+// 배경 이펙트용 클래스
+class Bubble {
+  PVector pos;
+  float size;
+  float speed;
+  color c;
+
+  Bubble() {
+    // 화면 아래쪽에서 시작하도록 y 좌표를 설정
+    pos = new PVector(random(width), random(height, height + 200));
+    size = random(20, 150);
+    speed = random(0.5, 2.0);
+    // 팔레트에서 무작위 색상 선택
+    color baseColor = palleteColor[int(random(palleteColor.length))];
+    c = color(red(baseColor), green(baseColor), blue(baseColor), random(50, 150));
+  }
+
+  void update() {
+    pos.y -= speed; // 위로 이동
+    // 화면 위로 완전히 사라지면 아래에서 다시 시작
+    if (pos.y < -size) {
+      pos.y = height + size;
+      pos.x = random(width);
+      size = random(20, 150);
+      speed = random(0.5, 2.0);
+    }
+  }
+
+  void display() {
+    noStroke();
+    fill(c);
+    ellipse(pos.x, pos.y, size, size);
+  }
+}
+
+void drawBackgroundEffect() {
+  for (Bubble b : bubbles) {
+    b.update();
+    b.display();
+  }
 }

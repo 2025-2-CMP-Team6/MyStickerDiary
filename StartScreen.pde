@@ -1,18 +1,11 @@
 // 시작화면에 들어갈 캐릭터 변수 선언
-PImage meow;
-
 // 마우스가 눌렸는지 확인해줄 변수 선언
 boolean isStartButtonPressed = false;
 
 public void drawStartScreen() {
     background(#FFCA1A);
-
-    fill(#FFE880);
-    noStroke();
-    quad(0, 0, 0, 300, 1280, 400, 1280, 0);
-
-    meow = loadImage("data/images/meow.png");
-
+    drawBackgroundEffect();
+    
     drawMeow();
     drawTitle();
     drawClickAnywhere();

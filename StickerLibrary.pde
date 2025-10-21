@@ -77,9 +77,10 @@ void drawLibrary() {
       s.x = startX + c * spacing;
       s.y = startY + r * spacing - libraryScrollY;
       
+      PImage img = s.img;
       // 원본 비율을 유지하는 새로운 너비와 높이
-      float w = s.img.width;
-      float h = s.img.height;
+      float w = img.width;
+      float h = img.height;
       float newW, newH;
       
       if (w > h) { // 이미지가 가로로 넓다면
@@ -91,7 +92,7 @@ void drawLibrary() {
       }
   
       // 계산된 새 크기로 이미지 그리기
-      image(s.img, s.x, s.y, newW, newH);
+      image(img, s.x, s.y, newW, newH);
       
       // 마우스 영역 확인
       if (mouseHober(s.x-newW/2, s.y-newH/2, newW, newH)) {
@@ -199,8 +200,9 @@ void drawLibrary() {
     // Iterate backwards to safely remove items
     for (int i = stickerLibrary.size() - 1; i >= 0; i--) {
         Sticker s = stickerLibrary.get(i);
-        float w = s.img.width;
-        float h = s.img.height;
+        PImage img = s.img; // 이미지 가져오기
+        float w = img.width;
+        float h = img.height;
         float newW, newH;
         if (w > h) {
           newW = boxSize;

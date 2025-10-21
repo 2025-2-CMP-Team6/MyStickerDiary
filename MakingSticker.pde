@@ -4,25 +4,11 @@ PGraphics stickerCanvas; // 캔버스
 float canvasSize; // 정사각형 캔버스 크기
 float canvasX, canvasY; // 캔버스가 그려질 화면상의 위치
 
-// 기능 아이콘
-PImage saveImg;  // 저장 이미지
-PImage backImg;  // 뒤로가기 이미지
-
 // 그리기 도구
 String tool = ""; // 현재 선택된 도구
 float toolGab; // 도구 간격
 float toolPos[] = new float[2];  // 도구 좌표
 String posTool;  // 이전 도구
-
-PImage brushImg;  // 브러쉬 이미지
-PImage paintImg;  // 페인트 이미지
-PImage eraserImg;  // 지우개 이미지
-
-PImage brushCursor;  // 브러쉬 커서
-PImage paintCursor;  // 페인트 커서
-PImage eraserCursor; // 지우개 커서
-PImage spoideCursor;  // 스포이드 커서
-
 
 color selectedColor = color(0); // 현재 선택된 그리기 색상
 // 브러쉬
@@ -34,20 +20,15 @@ PGraphics sizeCursor; // 브러쉬 크기 커서
 // 도형
 boolean isDrawingShape = false; // 도형을 그리고 있는지 여부
 int[] pmousePos = new int[2];
-PGraphics lineCursor;  // 직선 마우스 커서
-PGraphics rectCursor;  // 사각형 마우스 커서
-PGraphics circleCursor;  // 원 마우스 커서
 // 아이콘 좌표
 int[] linePos = new int[2];
 int[] circlePos = new int[2];
 int[] rectPos = new int[2];
 
-// 컬러 팔레트
 boolean isPalleteOpen = true;  //  팔레트 열림
 float[] colorPos = new float[2]; // 색의 좌표
 float colorSize; // 색의 크기
 float colorGab_palette; // 색의 간격
-color[] palleteColor = {color(0, 0, 0), color(255, 0, 0), color(255, 165, 0), color(255, 255, 0), color(0, 255, 0), color(0, 255, 255), color(0, 0, 255), color(255, 0, 255), color(139, 69, 19), color(128, 128, 128), color(211, 211, 211), color(255, 255, 255)}; // 팔레트 저장 색
 boolean colorToggle = false;
 
 // 뒤로 가기 버튼, 세이브 버튼 전역 변수로 설정해서 버튼 클릭 인식 최적화했습니다.
@@ -87,20 +68,6 @@ void setupCreator() {
   BACK_X = width * (24.0f / 1280.0f);
   BACK_Y = height * (24.0f / 720.0f);
 
-  // 버튼 아이콘
-saveImg = loadImage("data/images/saveIcon.png");
-backImg = loadImage("data/images/backIcon.png");
-
-  // 도구 아이콘
- brushImg = loadImage("data/images/brush.png");
- paintImg = loadImage("data/images/paint.png");
- eraserImg = loadImage("data/images/eraser.png");
-
- // 도구 커서
- brushCursor = loadImage("data/images/brush.png");
- paintCursor = loadImage("data/images/paint.png");
- eraserCursor = loadImage("data/images/eraser.png");
- spoideCursor = loadImage("data/images/spoide.png");
  lineCursor = createGraphics(32,32);
  lineCursor.noSmooth();
  lineCursor.beginDraw();
@@ -320,7 +287,7 @@ void handleCreatorMouse() {
     PImage newStickerImg = stickerCanvas.get(); // 캔버스를 PImage로 변환
     cursor(ARROW);
     if (stickerToEdit != null) {
-      stickerToEdit.img = newStickerImg;
+      stickerToEdit.img = newStickerImg; // 편집된 이미지로 교체
       newStickerImg.save(dataPath("sticker/" + stickerToEdit.imageName));
     } else {
       String sticker_name = "sticker_" + year() + month() + day() + "_" + hour() + minute() + second() + ".png";

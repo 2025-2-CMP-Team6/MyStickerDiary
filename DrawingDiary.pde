@@ -350,7 +350,7 @@ void drawStickerLibraryOverlay() {
 
     float stickerX = startX + c * spacing;
     float stickerY = startY + r * spacing - overlayScrollY;
-    float w = s.img.width;
+    float w = s.img.width; 
     float h = s.img.height;
     float newW, newH;
 

@@ -10,12 +10,8 @@ boolean pressedOnNameBtn = false;
 public void drawMenuScreen() {
 
     pushStyle();
-
     background(#FFCA1A);
-
-    fill(#FFE880);
-    noStroke();
-    quad(0, 0, 0, 300, 1280, 400, 1280, 0);
+    drawBackgroundEffect();
 
     fill(0);
     textSize(50);
