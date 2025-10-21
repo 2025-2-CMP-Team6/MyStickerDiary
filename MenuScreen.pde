@@ -25,14 +25,7 @@ public void drawMenuScreen() {
     // 휠 스크롤이 멈추면 자동 정렬 시작
     if (isWheeling && millis() - lastWheelTime > WHEEL_SNAP_DELAY) {
         isWheeling = false;
-        // 3개의 지점(0, width/2, width) 중 가장 가까운 곳으로 스냅
-        if (menuScrollX < width * 0.25f) {
-            menuTargetScrollX = 0;
-        } else if (menuScrollX < width * 0.75f) {
-            menuTargetScrollX = width / 2;
-        } else {
-            menuTargetScrollX = width;
-        }
+        snapToNearestPage();
     }
 
     // 사용자가 직접 조작(드래그, 휠)하지 않을 때만 목표 위치로 부드럽게 이동
@@ -204,14 +197,7 @@ public void handleMenuReleased() {
       // if (clickNAME) { switchScreen(name_screen);   return; } // G4P 버튼으로 대체되어 제거
 
   } else {
-      // 3개의 지점(0, width/2, width) 중 가장 가까운 곳으로 스냅
-      if (menuScrollX < width * 0.25f) {
-          menuTargetScrollX = 0;
-      } else if (menuScrollX < width * 0.75f) {
-          menuTargetScrollX = width / 2;
-      } else {
-          menuTargetScrollX = width;
-      }
+      snapToNearestPage();
   }
 
 }
@@ -240,6 +226,19 @@ public void handleMenuMouseWheel(MouseEvent ev) {
     menuTargetScrollX = applyInertia(potentialScrollX);
 }
 
+/**
+ * 현재 스크롤 위치(`menuScrollX`)를 기반으로 가장 가까운 페이지(0, width/2, width)를 찾아
+ * 목표 스크롤 위치(`menuTargetScrollX`)를 설정합니다.
+ */
+void snapToNearestPage() {
+    if (menuScrollX < width * 0.25f) {
+        menuTargetScrollX = 0;
+    } else if (menuScrollX < width * 0.75f) {
+        menuTargetScrollX = width / 2;
+    } else {
+        menuTargetScrollX = width;
+    }
+}
 /**
  * 이상적인 스크롤 위치에 관성/저항 효과를 적용하여 실제 시각적 위치를 반환합니다.
  * @param idealPos 저항이 없는 이상적인 스크롤 위치

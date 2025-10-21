@@ -527,15 +527,8 @@ void handleDiaryMouse() { // 마우스를 처음 눌렀을 때 호출
   }
 
   // 날짜 텍스트 클릭 확인
-  pushStyle();
-  textSize(30);
-  String dateString = "Date : " + diary_year + ". " + diary_month + ". " + diary_day;
-  float dateTextW = textWidth(dateString);
-  float dateTextH = height * (30.0f/720.0f);
-  float dateTextX = width/2 - dateTextW/2 - width * (120.0f/1280.0f);
-  float dateTextY = height * (12.0f/720.0f);
-  popStyle();
-  datePressed = mouseHober(dateTextX, dateTextY, dateTextW, dateTextH);
+  float[] dateRect = getDateTextRect();
+  datePressed = mouseHober(dateRect[0], dateRect[1], dateRect[2], dateRect[3]);
 }
   
 void handleDiaryDrag() {  // 드래그하는 동안 호출
@@ -650,6 +643,8 @@ void handleDiaryRelease() {
   if (finishPressed && mouseHober(
       finishButton.position_x, finishButton.position_y,
       finishButton.width,      finishButton.height)) {
+         // 일기 보관함으로 이동하기 전에, 보관함의 달력을 현재 일기 날짜로 설정합니다.
+         libraryCalendar.set(diary_year, diary_month - 1, 1);
          switchScreen(diary_library);
          saveDiary();
          loadDiaryDates();
@@ -662,15 +657,8 @@ void handleDiaryRelease() {
   }
   
   // 날짜 텍스트 클릭 시 달력 열기
-  pushStyle();
-  textSize(30);
-  String dateString = "Date : " + diary_year + ". " + diary_month + ". " + diary_day;
-  float dateTextW = textWidth(dateString);
-  float dateTextH = height * (30.0f/720.0f);
-  float dateTextX = width/2 - dateTextW/2 - width * (120.0f/1280.0f);
-  float dateTextY = height * (12.0f/720.0f);
-  popStyle();
-  if (datePressed && mouseHober(dateTextX, dateTextY, dateTextW, dateTextH)) { openDatePickerDialog(); }
+  float[] dateRect = getDateTextRect();
+  if (datePressed && mouseHober(dateRect[0], dateRect[1], dateRect[2], dateRect[3])) { openDatePickerDialog(); }
   
   finishPressed = false;
   storagePressed = false;
@@ -726,6 +714,22 @@ void handleStickerLibraryOverlayRelease() {
       return;
     }
   }
+}
+
+/**
+ * 일기 화면 상단의 날짜 텍스트의 사각형 영역([x, y, w, h])을 계산하여 반환합니다.
+ * @return 날짜 텍스트의 영역을 담은 float 배열
+ */
+float[] getDateTextRect() {
+  pushStyle();
+  textSize(30);
+  String dateString = "Date : " + diary_year + ". " + diary_month + ". " + diary_day;
+  float dateTextW = textWidth(dateString);
+  float dateTextH = 30; // drawDiary()의 textSize와 일치
+  float dateTextX = width/2 - dateTextW/2 - width * (120.0f/1280.0f);
+  float dateTextY = height * (12.0f/720.0f);
+  popStyle();
+  return new float[] { dateTextX, dateTextY, dateTextW, dateTextH };
 }
 
 
@@ -835,6 +839,24 @@ void drawDatePicker() {
     fill(150,100);
     rect(datePickerX + datePickerWidth / 2 - width*(58.0f/1280.0f), datePickerY+height*(8.0f/720.0f), width*(128.0f/1280.0f), height*(48.0f/720.0f), 12);
   }
+
+  // 뒤로가기(닫기) 버튼 추가
+  float backBtnW = 100;
+  float backBtnH = 30;
+  float backBtnX = datePickerX + (datePickerWidth - backBtnW) / 2;
+  float backBtnY = datePickerY + datePickerHeight - backBtnH - 10; // 패널 하단에서 10px 위
+
+  if (mouseHober(backBtnX, backBtnY, backBtnW, backBtnH)) {
+      fill(220, 220, 220);
+  } else {
+      fill(235, 235, 235);
+  }
+  stroke(150);
+  rect(backBtnX, backBtnY, backBtnW, backBtnH, 5);
+
+  fill(0);
+  textSize(16);
+  text("Back", backBtnX + backBtnW / 2, backBtnY + backBtnH / 2);
   popStyle();
 }
 void openYearMonthPicker() {  // 년도 설정창 토글
@@ -1011,6 +1033,17 @@ void handleDatePickerMouseRelease() { // 달력 마우스 떼기
     handleYearMonthMouseRelease();
     return;
   }
+
+  // 뒤로가기 버튼 클릭
+  float backBtnW = 100;
+  float backBtnH = 30;
+  float backBtnX = datePickerX + (datePickerWidth - backBtnW) / 2;
+  float backBtnY = datePickerY + datePickerHeight - backBtnH - 10;
+  if (mouseHober(backBtnX, backBtnY, backBtnW, backBtnH)) {
+      closeDatePickerDialog();
+      return;
+  }
+
   // 이전 달 화살표 클릭
   float arrowArea = width*(60.0f/1280.0f);
   if (mouseHober(datePickerX, datePickerY, arrowArea, arrowArea)) {

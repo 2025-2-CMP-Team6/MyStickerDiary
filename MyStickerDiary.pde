@@ -565,30 +565,10 @@ void draw() {
 
 // 키보드 입력
 void keyPressed() {
-  if (key == ESC) { // ESC 키 -> 설정화면 
-    isSettingsVisible = !isSettingsVisible;
+  if (key == ESC) { // ESC 키 -> 설정화면 토글
     playClickSound();
-    sdr.setVisible(isSettingsVisible);
-    sfxSlider.setVisible(isSettingsVisible);
-    dragSpeedSlider.setVisible(isSettingsVisible);
+    toggleSettingsScreen(!isSettingsVisible);
     key = 0; // ESC 키가 프로그램 종료로 이어지지 않도록 방지
-
-    if (isSettingsVisible) {
-      // 설정 창이 켜졌을 때 둘 다 숨깁니다.
-      if (titleArea != null) {
-        titleArea.setVisible(false);
-        titleArea.setAlpha(0);
-      }
-      if (textArea != null) {
-        textArea.setVisible(false);
-        textArea.setAlpha(0);
-      }
-    } else {
-      // 설정 창이 꺼졌을 때 원래 상태로 되돌립니다.
-      updateTextUIVisibility();
-    }
-
-  
   }
 }
 
@@ -612,21 +592,14 @@ void mousePressed() {
     // 닫기 버튼 클릭 또는 패널 외부 클릭 확인
     if (mouseHober(closeBtnX, closeBtnY, closeBtnSize, closeBtnSize) || !mouseHober(panelX, panelY, panelW, panelH)) {
         playClickSound();
-        isSettingsVisible = false;
-        sdr.setVisible(false);
-        sfxSlider.setVisible(false);
-        dragSpeedSlider.setVisible(false);
-        updateTextUIVisibility(); // 다이어리 화면의 텍스트 필드 가시성 복원
+        toggleSettingsScreen(false);
         return;
     }
 
     // 'Main' 버튼 클릭 처리
     if (settings_goToMainButton.isMouseOverButton()) {
       playClickSound();
-      isSettingsVisible = false; 
-      sdr.setVisible(false);
-      sfxSlider.setVisible(false);
-      dragSpeedSlider.setVisible(false); // 드래그 속도 슬라이더도 숨기도록 추가
+      toggleSettingsScreen(false);
       switchScreen(start_screen);  
     }
     return; // 설정 창 내부의 다른 곳을 클릭했으면 다른 이벤트가 발생하지 않도록 함
@@ -767,6 +740,21 @@ void playClickSound() {
     clickSound.amp(sfxVolume);
     clickSound.play();
   }
+}
+
+/**
+ * 설정 화면의 가시성을 토글하고 관련 UI 요소들의 상태를 업데이트합니다.
+ * @param show 설정 화면을 표시할지 여부
+ */
+void toggleSettingsScreen(boolean show) {
+  isSettingsVisible = show;
+  sdr.setVisible(show);
+  sfxSlider.setVisible(show);
+  dragSpeedSlider.setVisible(show);
+
+  // isSettingsVisible 상태가 변경되었으므로,
+  // 다이어리 텍스트 필드의 가시성을 다시 계산하여 업데이트합니다.
+  updateTextUIVisibility();
 }
 
 // 배경 이펙트용 클래스
