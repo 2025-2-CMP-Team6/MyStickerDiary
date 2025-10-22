@@ -20,7 +20,7 @@ public void drawMenuScreen() {
 
     fill(0);
     textSize(50);
-    text("Main Menu", 120, 40);
+    text("Main Menu", 110, 70);
 
     // 휠 스크롤이 멈추면 자동 정렬 시작
     if (isWheeling && millis() - lastWheelTime > WHEEL_SNAP_DELAY) {
@@ -84,6 +84,8 @@ public void drawMenuScreen() {
       text("NAME : " + username,
            nameEditButton.getX() + nameEditButton.getWidth() / 2, // 버튼의 x 중앙
            nameEditButton.getY() + nameEditButton.getHeight() + 8); // 버튼의 y 하단 + 간격
+
+           
       popStyle();
       // 수정 끝
     }
