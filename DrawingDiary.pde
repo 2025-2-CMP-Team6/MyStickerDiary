@@ -109,7 +109,7 @@ void drawDiary() {
 
   // 스티커를 드래그하여 이동 중일 때 삭제 존을 표시합니다.
   if (currentlyDraggedSticker != null && isResizing == -1) { // 이동 중에만
-    float deleteZoneSize = 128;
+    float deleteZoneSize = 64;
     float deleteZoneX = 0;
     float deleteZoneY = textFieldY - deleteZoneSize;
 
@@ -631,7 +631,7 @@ void handleDiaryRelease() {
 
   // 스티커가 삭제 존 위에서 놓아졌는지 확인합니다.
   if (currentlyDraggedSticker != null && isResizing == -1) {
-    float deleteZoneSize = 128;
+    float deleteZoneSize = 64;
     if (mouseHober(0, textFieldY - deleteZoneSize, deleteZoneSize, deleteZoneSize)) {
       placedStickers.remove(currentlyDraggedSticker);
       selectedSticker = null; // 선택된 스티커도 초기화
