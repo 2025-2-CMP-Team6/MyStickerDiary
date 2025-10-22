@@ -14,23 +14,11 @@ void drawLibrary() {
     background(220, 240, 220);
     imageMode(CENTER);
     rectMode(CENTER);
-    // UI그리기
-    // 타이틀
+    // 타이틀 (뒤로가기 버튼과 겹치지 않도록 위치 조정)
     fill(0);
     textAlign(CENTER, CENTER);
     textSize(40);
-    text("Sticker Library", width/2, 60);
-    
-    // 일기장으로
-    if (mouseHober(width - width*(175.0f/1280.0f), height*(25.0f/720.0f), width*(150.0f/1280.0f), height*(50.0f/720.0f))) {
-      fill(220);
-    } else {
-      fill(200);
-    }
-    rect(width - width*(100.0f/1280.0f), height*(50.0f/720.0f), width*(150.0f/1280.0f), height*(50.0f/720.0f));
-    fill(0);
-    textSize(20);
-    text("Back to diary", width - width*(100.0f/1280.0f), height*(50.0f/720.0f));
+    text("Sticker Library", width/2, height*(60.0f/720.0f));
   
     // '새 스티커 만들기' 버튼
     if (mouseHober(width/2 - width*(125.0f/1280.0f), height - height*(110.0f/720.0f), width*(250.0f/1280.0f), height*(60.0f/720.0f))) {
@@ -78,35 +66,24 @@ void drawLibrary() {
       s.y = startY + r * spacing - libraryScrollY;
       
       PImage img = s.img;
-      // 원본 비율을 유지하는 새로운 너비와 높이
-      float w = img.width;
-      float h = img.height;
-      float newW, newH;
-      
-      if (w > h) { // 이미지가 가로로 넓다면
-        newW = boxSize;
-        newH = h * (boxSize / w);
-      } else { // 이미지가 세로로 길거나 정사각형이라면
-        newH = boxSize;
-        newW = w * (boxSize / h);
-      }
+      PVector newSize = getScaledImageSize(img, boxSize);
   
       // 계산된 새 크기로 이미지 그리기
-      image(img, s.x, s.y, newW, newH);
+      image(img, s.x, s.y, newSize.x, newSize.y);
       
       // 마우스 영역 확인
-      if (mouseHober(s.x-newW/2, s.y-newH/2, newW, newH)) {
+      if (mouseHober(s.x-newSize.x/2, s.y-newSize.y/2, newSize.x, newSize.y)) {
         rectMode(CORNER);
         stroke(0);
         strokeWeight(3);
         noFill();
-        rect(s.x-newW/2, s.y-newH/2, newW, newH);
+        rect(s.x-newSize.x/2, s.y-newSize.y/2, newSize.x, newSize.y);
         strokeWeight(1);
 
         // 삭제 버튼 그리기
         float deleteBtnRadius = max(10, width * (8.0f / 1280.0f)); // 최소 10px
-        float deleteBtnX = s.x + newW/2;
-        float deleteBtnY = s.y - newH/2;
+        float deleteBtnX = s.x + newSize.x/2;
+        float deleteBtnY = s.y - newSize.y/2;
 
         pushStyle();
         if (dist(mouseX, mouseY, deleteBtnX, deleteBtnY) < deleteBtnRadius) {
@@ -153,23 +130,12 @@ void drawLibrary() {
       }
       rect(libScrollbarX, thumbY, libScrollbarW, thumbH, 6);
     }
+    
+    drawBackButton(); // 공통 뒤로가기 버튼 호출
     popStyle();
   }
   
   void handleLibraryMouse() {
-    // 일기장으로 버튼
-    if (mouseHober(width - width*(175.0f/1280.0f), height*(25.0f/720.0f), width*(150.0f/1280.0f), height*(50.0f/720.0f))) {
-      switchScreen(drawing_diary);
-      return;
-    }
-    
-    // 새 스티커 만들기 버튼
-    if (mouseHober(width/2 - width*(125.0f/1280.0f), height - height*(110.0f/720.0f), width*(250.0f/1280.0f), height*(60.0f/720.0f))) {
-      setupCreator(); 
-      switchScreen(making_sticker);
-      return;
-    }
-    
     // 스크롤바 드래그 확인
     if (minLibraryScrollY > 0 && mouseHober(libScrollbarX, thumbY, libScrollbarW, thumbH)) {
       isDraggingLibScrollbar = true;
@@ -201,34 +167,29 @@ void drawLibrary() {
     for (int i = stickerLibrary.size() - 1; i >= 0; i--) {
         Sticker s = stickerLibrary.get(i);
         PImage img = s.img; // 이미지 가져오기
-        float w = img.width;
-        float h = img.height;
-        float newW, newH;
-        if (w > h) {
-          newW = boxSize;
-          newH = h * (boxSize / w);
-        } else {
-          newH = boxSize;
-          newW = w * (boxSize / h);
-        }
+        PVector newSize = getScaledImageSize(img, boxSize);
 
-        if (mouseHober(s.x-newW/2, s.y-newH/2, newW, newH)) {
+        if (mouseHober(s.x-newSize.x/2, s.y-newSize.y/2, newSize.x, newSize.y)) {
             // 삭제 버튼 클릭 확인
             float deleteBtnRadius = max(10, width * (8.0f / 1280.0f));
-            float deleteBtnX = s.x + newW/2;
-            float deleteBtnY = s.y - newH/2;
+            float deleteBtnX = s.x + newSize.x/2;
+            float deleteBtnY = s.y - newSize.y/2;
 
             if (dist(mouseX, mouseY, deleteBtnX, deleteBtnY) < deleteBtnRadius) {
-                // 파일 삭제
-                File stickerFile = new File(dataPath("sticker/" + s.imageName));
-                if (stickerFile.exists()) {
-                    if (!stickerFile.delete()) {
-                        println("Failed to delete sticker file: " + s.imageName);
+                UiBooster booster = new UiBooster();
+                boolean confirmed = booster.showConfirmDialog("Are you sure you want to delete this sticker?", "Delete Sticker");
+                if (confirmed) {
+                    // 파일 삭제
+                    File stickerFile = new File(dataPath("sticker/" + s.imageName));
+                    if (stickerFile.exists()) {
+                        if (!stickerFile.delete()) {
+                            println("Failed to delete sticker file: " + s.imageName);
+                        }
                     }
+                    // 라이브러리에서 스티커 제거
+                    stickerLibrary.remove(i);
                 }
-                // 라이브러리에서 스티커 제거
-                stickerLibrary.remove(i);
-                return; // 한 번에 하나만 삭제
+                return; // 한 번에 하나의 동작만 처리 (삭제 시도 또는 취소)
             }
 
             // 스티커를 클릭하면 편집 화면으로 이동 (삭제가 아닐 경우)

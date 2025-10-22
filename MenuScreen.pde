@@ -20,7 +20,7 @@ public void drawMenuScreen() {
 
     fill(0);
     textSize(50);
-    text("Main Menu", 110, 70);
+    text("Main Menu", 78, 86);
 
     // 휠 스크롤이 멈추면 자동 정렬 시작
     if (isWheeling && millis() - lastWheelTime > WHEEL_SNAP_DELAY) {
@@ -43,10 +43,10 @@ public void drawMenuScreen() {
 
     translate(-round(menuScrollX), 0); // menuScrollX 값을 반올림하여 정수 픽셀로 이동
 
-    dsButton.render();
-    slButton.render();
-    ddButton.render();
-    dlButton.render();
+    dsButton.render(round(worldMouseX()), round(worldMouseY()));
+    slButton.render(round(worldMouseX()), round(worldMouseY()));
+    ddButton.render(round(worldMouseX()), round(worldMouseY()));
+    dlButton.render(round(worldMouseX()), round(worldMouseY()));
 
     popMatrix();
 
@@ -78,41 +78,84 @@ public void drawMenuScreen() {
     if (isNameEntered) {
       pushStyle();
       fill(0);
-      textAlign(CENTER, TOP);   
-      textSize(16);           
-      // 수정된 부분: GImageButton의 위치에 맞춰 텍스트 위치를 조정합니다.
+      textAlign(RIGHT, CENTER);   // 텍스트 정렬을 오른쪽으로 변경
+      textSize(32);               // 폰트 크기 증가
+      // 이름 텍스트를 버튼의 왼쪽에, 세로 중앙 정렬하여 표시합니다.
       text("NAME : " + username,
-           nameEditButton.getX() + nameEditButton.getWidth() / 2, // 버튼의 x 중앙
-           nameEditButton.getY() + nameEditButton.getHeight() + 8); // 버튼의 y 하단 + 간격
-
+           nameEditButton.getX() - 24, // 버튼 왼쪽에서 24px 여백
+           nameEditButton.getY() + nameEditButton.getHeight() / 2); // 버튼의 세로 중앙
            
       popStyle();
-      // 수정 끝
     }
     // Page indicators (toolbar-like) - 3개의 스냅 지점용
-    float indicatorRadius = 8;
+    float defaultIndicatorRadius = 8;
+    float currentIndicatorRadius = 9; // 현재 페이지 인디케이터를 더 크게
     float indicatorSpacing = 20;
-    float totalIndicatorWidth = 3 * (indicatorRadius * 2) + 2 * indicatorSpacing;
+    float totalIndicatorWidth = 3 * (defaultIndicatorRadius * 2) + 2 * indicatorSpacing;
     float indicatorStartX = width / 2 - totalIndicatorWidth / 2;
     float indicatorY = height - 30; // 30 pixels from the bottom
 
+    // 인디케이터 X 좌표 계산
+    float indicator1X = indicatorStartX + defaultIndicatorRadius;
+    float indicator2X = indicatorStartX + defaultIndicatorRadius + indicatorSpacing + defaultIndicatorRadius * 2;
+    float indicator3X = indicatorStartX + defaultIndicatorRadius + 2 * (indicatorSpacing + defaultIndicatorRadius * 2);
+
+    // 상태 확인
+    boolean isCurrent1 = menuScrollX < width * 0.25f;
+    boolean isCurrent2 = menuScrollX >= width * 0.25f && menuScrollX < width * 0.75f;
+    boolean isCurrent3 = menuScrollX >= width * 0.75f;
+
+    boolean isHover1 = dist(mouseX, mouseY, indicator1X, indicatorY) < defaultIndicatorRadius * 1.5;
+    boolean isHover2 = dist(mouseX, mouseY, indicator2X, indicatorY) < defaultIndicatorRadius * 1.5;
+    boolean isHover3 = dist(mouseX, mouseY, indicator3X, indicatorY) < defaultIndicatorRadius * 1.5;
+
+    noStroke();
+
     // 첫 번째 지점 (0)
-    fill(menuScrollX < width * 0.25f ? 0 : 150);
-    ellipse(indicatorStartX + indicatorRadius, indicatorY, indicatorRadius * 2, indicatorRadius * 2);
+    fill(isCurrent1 ? 0 : (isHover1 ? 80 : 150));
+    float r1 = isCurrent1 ? currentIndicatorRadius : defaultIndicatorRadius;
+    ellipse(indicator1X, indicatorY, r1 * 2, r1 * 2);
 
     // 두 번째 지점 (width/2)
-    fill(menuScrollX >= width * 0.25f && menuScrollX < width * 0.75f ? 0 : 150);
-    ellipse(indicatorStartX + indicatorRadius + indicatorSpacing + indicatorRadius * 2, indicatorY, indicatorRadius * 2, indicatorRadius * 2);
+    fill(isCurrent2 ? 0 : (isHover2 ? 80 : 150));
+    float r2 = isCurrent2 ? currentIndicatorRadius : defaultIndicatorRadius;
+    ellipse(indicator2X, indicatorY, r2 * 2, r2 * 2);
 
     // 세 번째 지점 (width)
-    fill(menuScrollX >= width * 0.75f ? 0 : 150);
-    ellipse(indicatorStartX + indicatorRadius + 2 * (indicatorSpacing + indicatorRadius * 2), indicatorY, indicatorRadius * 2, indicatorRadius * 2);
+    fill(isCurrent3 ? 0 : (isHover3 ? 80 : 150));
+    float r3 = isCurrent3 ? currentIndicatorRadius : defaultIndicatorRadius;
+    ellipse(indicator3X, indicatorY, r3 * 2, r3 * 2);
 
     popStyle();
 
 }
 
 public void handleMenuMousePressed() {
+
+  // Page indicator click handling
+  float indicatorRadius = 8;
+  float indicatorSpacing = 20;
+  float totalIndicatorWidth = 3 * (indicatorRadius * 2) + 2 * indicatorSpacing;
+  float indicatorStartX = width / 2 - totalIndicatorWidth / 2;
+  float indicatorY = height - 30;
+
+  float indicator1X = indicatorStartX + indicatorRadius;
+  float indicator2X = indicatorStartX + indicatorRadius + indicatorSpacing + indicatorRadius * 2;
+  float indicator3X = indicatorStartX + indicatorRadius + 2 * (indicatorSpacing + indicatorRadius * 2);
+
+  // 클릭 영역을 조금 더 넓게 설정 (반지름의 1.5배)
+  if (dist(mouseX, mouseY, indicator1X, indicatorY) < indicatorRadius * 1.5) {
+    menuTargetScrollX = 0;
+    return;
+  }
+  if (dist(mouseX, mouseY, indicator2X, indicatorY) < indicatorRadius * 1.5) {
+    menuTargetScrollX = width / 2;
+    return;
+  }
+  if (dist(mouseX, mouseY, indicator3X, indicatorY) < indicatorRadius * 1.5) {
+    menuTargetScrollX = width;
+    return;
+  }
 
   dsButton.onPress((int)worldMouseX(), (int)worldMouseY());
   slButton.onPress((int)worldMouseX(), (int)worldMouseY());

@@ -26,16 +26,12 @@ final float DIARY_DELETE_BTN_RADIUS = 6; // 일기 삭제 버튼 반지름
 
 void initDiaryLibrary() {
   libraryCalendar = Calendar.getInstance();
-  
-  backToMenuButton = new rectButton(round(width*(20.0f/1280.0f)), round(height*(20.0f/720.0f)), round(width*(150.0f/1280.0f)), round(height*(50.0f/720.0f)), #DDDDDD);
-  backToMenuButton.rectButtonText("Back to Menu", 18);
-  backToMenuButton.setShadow(false);
 
-  prevMonthButton = new rectButton(round(width/2 - width*(200.0f/1280.0f)), round(height*(80.0f/720.0f)), round(width*(40.0f/1280.0f)), round(height*(40.0f/720.0f)), #EEEEEE);
+  prevMonthButton = new rectButton(this, round(width/2 - width*(200.0f/1280.0f)), round(height*(80.0f/720.0f)), round(width*(40.0f/1280.0f)), round(height*(40.0f/720.0f)), #EEEEEE);
   prevMonthButton.rectButtonText("<", 24);
   prevMonthButton.setShadow(false);
   
-  nextMonthButton = new rectButton(round(width/2 + width*(160.0f/1280.0f)), round(height*(80.0f/720.0f)), round(width*(40.0f/1280.0f)), round(height*(40.0f/720.0f)), #EEEEEE);
+  nextMonthButton = new rectButton(this, round(width/2 + width*(160.0f/1280.0f)), round(height*(80.0f/720.0f)), round(width*(40.0f/1280.0f)), round(height*(40.0f/720.0f)), #EEEEEE);
   nextMonthButton.rectButtonText(">", 24);
   nextMonthButton.setShadow(false);
 }
@@ -93,10 +89,10 @@ void openLibYearMonthPicker() {
 }
 
 void initLibYearMonthButton() {
-  libYearMonthOK = new rectButton(round(libYearmonthScrollX + libYearmonthScrollW/2 - libYearmonthButtonA/2 - width*(30.0f/1280.0f)), round(libYearmonthScrollY + libYearmonthScrollH - height*(48.0f/720.0f)), round(width*(60.0f/1280.0f)), round(height*(24.0f/720.0f)), #FBDAB0);
+  libYearMonthOK = new rectButton(this, round(libYearmonthScrollX + libYearmonthScrollW/2 - libYearmonthButtonA/2 - width*(30.0f/1280.0f)), round(libYearmonthScrollY + libYearmonthScrollH - height*(48.0f/720.0f)), round(width*(60.0f/1280.0f)), round(height*(24.0f/720.0f)), #FBDAB0);
   libYearMonthOK.rectButtonText("OK", 18);
   libYearMonthOK.setShadow(false);
-  libYearMonthCancle = new rectButton(round(libYearmonthScrollX + libYearmonthScrollW/2 + libYearmonthButtonA/2), round(libYearmonthScrollY + libYearmonthScrollH - height*(48.0f/720.0f)), round(width*(70.0f/1280.0f)), round(height*(24.0f/720.0f)), #D9D9D9);
+  libYearMonthCancle = new rectButton(this, round(libYearmonthScrollX + libYearmonthScrollW/2 + libYearmonthButtonA/2), round(libYearmonthScrollY + libYearmonthScrollH - height*(48.0f/720.0f)), round(width*(70.0f/1280.0f)), round(height*(24.0f/720.0f)), #D9D9D9);
   libYearMonthCancle.rectButtonText("Cancel", 18);
   libYearMonthCancle.setShadow(false);
 }
@@ -153,7 +149,7 @@ void drawLibYearMonthPicker() {
 void drawDiaryLibrary() {
    background(255, 250, 240); 
    
-   backToMenuButton.render();
+   drawBackButton(); // 공통 뒤로가기 버튼 호출
    prevMonthButton.render();
    nextMonthButton.render();
 
@@ -258,19 +254,10 @@ void drawCalendarGrid() {
         } else {
           fill(lerpSentimentColor(s));
           PImage icon = emotIcon[round(s * 5)];
-          float iconBoxSize = min(cellWidth, cellHeight) * 0.3f; // 셀의 작은 쪽에 맞춰 30% 크기
-          float w = icon.width;
-          float h = icon.height;
-          float newW, newH;
-          if (w > h) {
-            newW = iconBoxSize;
-            newH = h * (iconBoxSize / w);
-          } else {
-            newH = iconBoxSize;
-            newW = w * (iconBoxSize / h);
-          }
+          float iconBoxSize = min(cellWidth, cellHeight) * 0.3f;
+          PVector newSize = getScaledImageSize(icon, iconBoxSize);
           imageMode(CENTER);
-          image(icon, x + cellWidth / 2, y + cellHeight / 2, newW, newH);
+          image(icon, x + cellWidth / 2, y + cellHeight / 2, newSize.x, newSize.y);
           // 짧은 라벨 텍스트
           String shortLabel =
             (s < 0.2f) ? "V-" :
@@ -304,7 +291,6 @@ void handleDiaryLibraryMousePressed() {
     return;
   }
 
-  backToMenuButton.onPress(mouseX, mouseY);
   prevMonthButton.onPress(mouseX, mouseY);
   nextMonthButton.onPress(mouseX, mouseY);
 
@@ -313,10 +299,6 @@ void handleDiaryLibraryMousePressed() {
 void handleDiaryLibraryMouseReleased() {
   if (libraryPickerState == 1) {
     handleLibYearMonthMouseReleased();
-    return;
-  }
-  if (backToMenuButton.onRelease(mouseX, mouseY)) {
-    switchScreen(menu_screen);
     return;
   }
   if (prevMonthButton.onRelease(mouseX, mouseY)) {
@@ -366,12 +348,16 @@ void handleDiaryLibraryMouseReleased() {
             float deleteBtnY = y + deleteBtnRadius + 4;
 
             if (dist(mouseX, mouseY, deleteBtnX, deleteBtnY) < deleteBtnRadius) {
-                // 일기 파일 삭제
-                deleteDiary(clickedYear, clickedMonth, day);
-                // 데이터셋에서 제거
-                diaryDates.remove(dateKey);
-                diaryEmots.remove(dateKey);
-                return; // 작업 완료
+                UiBooster booster = new UiBooster();
+                boolean confirmed = booster.showConfirmDialog("Are you sure you want to delete this diary?", "Delete Diary");
+                if (confirmed) {
+                    // 일기 파일 삭제
+                    deleteDiary(clickedYear, clickedMonth, day);
+                    // 데이터셋에서 제거
+                    diaryDates.remove(dateKey);
+                    diaryEmots.remove(dateKey);
+                }
+                return; // 삭제를 시도했거나 취소했으므로 작업 완료
             }
 
             // 삭제가 아니면 일기 로드

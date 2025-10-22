@@ -5,7 +5,6 @@ boolean isStartButtonPressed = false;
 public void drawStartScreen() {
     background(#FFCA1A);
     drawBackgroundEffect();
-    
     drawMeow();
     drawTitle();
     drawClickAnywhere();
@@ -18,26 +17,25 @@ public void drawMeow() {
         return;
     }
 
-    // 캐릭터 이미지 위치 변수 선언
-    float imageX = width * (100.0f / 1280.0f);
-    float imageY = height - height * (150.0f / 720.0f);
-
-    // 캐릭터 사이즈 변수 선언
-    float imageSizeX = width * (200.0f / 1280.0f);
-    float imageSizeY = height * (200.0f / 720.0f);
-
-    // image(meow, imageX, imageY, imageSizeX, imageSizeY);
-    float w = meow.width;
-    float h = meow.height;
+    // 이미지를 화면 전체에 채우면서 비율을 유지하도록 크기를 계산합니다.
+    // 이미지가 화면보다 넓으면 높이를 맞추고, 화면보다 높으면 너비를 맞춥니다.
+    imageMode(CENTER);
+    float imgRatio = (float)meow.width / (float)meow.height;
+    float screenRatio = (float)width / (float)height;
+    
     float newW, newH;
-    float wRatio = imageSizeX / w;
-    float hRatio = imageSizeY / h;
-    float ratio = min(wRatio, hRatio);
+    if (imgRatio > screenRatio) {
+      // 이미지가 화면보다 넓은 경우 (좌우가 잘릴 수 있음)
+      newH = height;
+      newW = newH * imgRatio;
+    } else {
+      // 이미지가 화면보다 높은 경우 (상하가 잘릴 수 있음)
+      newW = width;
+      newH = newW / imgRatio;
+    }
 
-    newW = w * ratio;
-    newH = h * ratio;
-
-    image(meow, imageX, imageY, newW, newH);
+    // 계산된 크기로 이미지를 화면 중앙에 그립니다.
+    image(meow, width/2, height/2, newW, newH);
 }
 
 public void drawTitle() {

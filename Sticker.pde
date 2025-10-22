@@ -44,18 +44,7 @@ class Sticker { // 스티커 클래스
 
   // 화면에 표시될 크기(displayW, displayH)를 계산하여 PVector로 반환
   PVector getDisplaySize() {
-    float w = img.width;
-    float h = img.height;
-    float displayW, displayH;
-
-    if (w > h) {
-      displayW = size;
-      displayH = h * (size / w);
-    } else {
-      displayH = size;
-      displayW = w * (size / h);
-    }
-    return new PVector(displayW, displayH);
+    return getScaledImageSize(img, size);
   }
 
   // 특정 인덱스의 조절 핸들 사각형 정보를 [x, y, w, h] 배열로 반환

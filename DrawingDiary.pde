@@ -19,6 +19,7 @@ PVector resizeAnchor = new PVector(); // 크기 조절 시 고정점
 rectButton stickerStoreButton;
 rectButton finishButton;
 boolean storagePressed = false;
+boolean colorPickerPressed = false;
 boolean finishPressed = false;
 boolean isStickerLibraryOverlayVisible = false;
 
@@ -65,6 +66,10 @@ int diary_day = calendar.get(Calendar.DAY_OF_MONTH);
 int diary_month = calendar.get(Calendar.MONTH) + 1;
 int diary_year = calendar.get(Calendar.YEAR);
 
+// Diary colors
+color diaryPaperColor = color(251, 218, 176); // 네비게이션 바 기본 색상 (#FBDAB0)
+color diaryBackgroundColor = lerpColor(diaryPaperColor, color(255), 0.8); // 배경은 네비게이션 바 색상의 밝은 버전
+
 void drawDiary() {
 
   handleSize = width * (16.0f / 1280.0f);
@@ -76,17 +81,22 @@ void drawDiary() {
   updateTextUIVisibility();
 
   pushStyle();
-  background(255, 250, 220);
+  background(diaryBackgroundColor);
+  drawWeatherEffect(); // 날씨 효과 그리기 (WeatherEffects.pde)
   rectMode(CORNER);
-  fill(#FBDAB0);
+  fill(diaryPaperColor);
+  noStroke(); // 외곽선이 생기는 것을 방지합니다.
   rect(0, 0, width, navigationBarY);
-  rect(0, textFieldY, width, height); 
-
+  rect(0, textFieldY, width, height - textFieldY);
+  
+  // 공통 뒤로가기 버튼은 항상 그려줍니다.
+  drawBackButton(DIARY_BACK_X, DIARY_BACK_Y, DIARY_BACK_W, DIARY_BACK_H);
+  
   pushStyle();
   fill(0);
   textSize(30);
   textAlign(LEFT,CENTER);
-  text("Name : " + username, width * (72.0f/1280.0f), height * (30.0f/720.0f));
+  text("Name : " + username, width * (100.0f/1280.0f), height * (30.0f/720.0f));
   popStyle();
   
   // 일기장에 붙여진 스티커들을 모두 그리기
@@ -133,6 +143,7 @@ void drawDiary() {
   ensureDiaryUI();
   finishButton.render();
   stickerStoreButton.render();
+  diaryColorPicker.render();
 
   analyzeButton.render();
 
@@ -170,44 +181,42 @@ void drawDiary() {
     pushStyle();
     imageMode(CENTER);
     int iconCount = weatherIcon.length;
-    float iconSize = width * (40.0f / 1280.0f); // 아이콘 크기
+    float baseIconSize = width * (40.0f / 1280.0f); // 기본 아이콘 크기
     float rightMargin = width * (300.0f / 1280.0f); // 오른쪽 끝에서의 여백
     float iconSpacing = width * (10.0f / 1280.0f); // 아이콘 사이의 간격
     for (int i = 0; i < iconCount; i++) {
-      float currentIconSize = iconSize;
-      // 아이콘 x 좌표 계산 (오른쪽부터 왼쪽으로)
-      float x = width - rightMargin - (currentIconSize / 2) - (i * (currentIconSize + iconSpacing));
-      // 아이콘 y 좌표 계산 (상단 바의 중앙)
-      float y = navigationBarY / 2;
+      // 아이콘의 고정된 중앙 위치 계산 (오른쪽부터 왼쪽으로)
+      float x_center = width - rightMargin - (baseIconSize / 2) - (i * (baseIconSize + iconSpacing));
+      float y_center = navigationBarY / 2;
+
       PImage drawEmotIcon;
-      if (todayWeather == i) {
+      float effectiveIconSize;
+
+      if (todayWeather == i) { // 현재 선택된 날씨 아이콘
         drawEmotIcon = weatherIcon[i];
+        // 선택된 아이콘에 부드러운 펄스 효과 추가
+        float pulse = 1.0 + sin(frameCount * 0.1) * 0.05; // 1.0 ~ 1.05 사이로 크기 변화
+        effectiveIconSize = baseIconSize * pulse;
       }
-      else {
+      else { // 선택되지 않은 날씨 아이콘
         drawEmotIcon = weatherIcon[i].get();
         drawEmotIcon.filter(GRAY);
-        if (mouseHober(x-currentIconSize/2,y-currentIconSize/2,currentIconSize,currentIconSize)) {
-          currentIconSize *= 0.875f; // 35/40
+        // 호버 감지 영역은 호버 시의 크기를 기준으로 합니다.
+        if (mouseHober(x_center - (baseIconSize * 0.875f) / 2, y_center - (baseIconSize * 0.875f) / 2, baseIconSize * 0.875f, baseIconSize * 0.875f)) {
+          effectiveIconSize = baseIconSize * 0.875f; // 호버 시 35/40 크기
           if (mousePressed) {
-            todayWeather = i;
+            if (todayWeather != i) { // 날씨가 변경될 때만 효과 초기화
+              todayWeather = i;
+              initWeatherEffects(); // 날씨 효과 재설정
+            }
           }
         }
         else {
-          currentIconSize *= 0.75f; // 30/40
+          effectiveIconSize = baseIconSize * 0.75f; // 평상시 30/40 크기
         }
       }
-      // image(drawEmotIcon, x, y, currentIconSize, currentIconSize);
-      float w = drawEmotIcon.width;
-      float h = drawEmotIcon.height;
-      float newW, newH;
-      if (w > h) {
-        newW = currentIconSize;
-        newH = h * (currentIconSize / w);
-      } else {
-        newH = currentIconSize;
-        newW = w * (currentIconSize / h);
-      }
-      image(drawEmotIcon, x, y, newW, newH);
+      PVector newSize = getScaledImageSize(drawEmotIcon, effectiveIconSize);
+      image(drawEmotIcon, x_center, y_center, newSize.x, newSize.y);
     }
     popStyle();
   }
@@ -236,17 +245,8 @@ void drawDiary() {
         currentIconSize *= 0.75f; // 30/40
       }
       // image(drawEmotIcon, x, y, currentIconSize, currentIconSize);
-      float w = drawEmotIcon.width;
-      float h = drawEmotIcon.height;
-      float newW, newH;
-      if (w > h) {
-        newW = currentIconSize;
-        newH = h * (currentIconSize / w);
-      } else {
-        newH = currentIconSize;
-        newW = w * (currentIconSize / h);
-      }
-      image(drawEmotIcon, x, y, newW, newH);
+      PVector newSize = getScaledImageSize(drawEmotIcon, currentIconSize);
+      image(drawEmotIcon, x, y, newSize.x, newSize.y);
     }
     popStyle();
   }
@@ -256,17 +256,24 @@ void drawDiary() {
     textSize(30);
     String dateString = "Date : " + diary_year + ". " + diary_month + ". " + diary_day;
     float dateTextW = textWidth(dateString);
-    float dateTextH = 30;
-    float dateTextX = width/2 - dateTextW/2 - width * (120.0f/1280.0f);
-    float dateTextY = height * (12.0f/720.0f);
-    if (isDatePickerVisible == 0 && !isStickerLibraryOverlayVisible && mouseHober(dateTextX, dateTextY, dateTextW, dateTextH)) {
+    float dateTextH = 30; // 호버 영역을 위한 대략적인 높이
+    
+    // 날짜 텍스트의 중앙 좌표를 정의합니다.
+    float dateTextCenterX = width/2 - width * (120.0f/1280.0f);
+    float dateTextCenterY = height * (30.0f/720.0f);
+
+    // 호버 감지 및 그리기를 위한 사각형의 좌상단 좌표를 계산합니다.
+    float dateRectX = dateTextCenterX - dateTextW / 2;
+    float dateRectY = dateTextCenterY - dateTextH / 2;
+
+    if (isDatePickerVisible == 0 && !isStickerLibraryOverlayVisible && mouseHober(dateRectX, dateRectY, dateTextW, dateTextH)) {
       fill(150,100);
       noStroke();
-      rect(dateTextX-4, dateTextY+4, dateTextW+8, dateTextH,8);
+      rect(dateRectX - 4, dateRectY - 4, dateTextW + 8, dateTextH + 8, 8);
     }
     fill(0);
     textAlign(CENTER, CENTER);
-    text(dateString, width/2 - width * (120.0f/1280.0f), height * (30.0f/720.0f));
+    text(dateString, dateTextCenterX, dateTextCenterY);
     popStyle();
   }
 
@@ -277,7 +284,7 @@ void drawDiary() {
       drawYearMonthPicker();
     }
   }
-  
+
   if (isStickerLibraryOverlayVisible) {
     drawStickerLibraryOverlay();
   }
@@ -350,27 +357,17 @@ void drawStickerLibraryOverlay() {
 
     float stickerX = startX + c * spacing;
     float stickerY = startY + r * spacing - overlayScrollY;
-    float w = s.img.width; 
-    float h = s.img.height;
-    float newW, newH;
-
-    if (w > h) {
-      newW = boxSize;
-      newH = h * (boxSize / w);
-    } else {
-      newH = boxSize;
-      newW = w * (boxSize / h);
-    }
+    PVector newSize = getScaledImageSize(s.img, boxSize);
 
     imageMode(CENTER);
-    image(s.img, stickerX, stickerY, newW, newH);
+    image(s.img, stickerX, stickerY, newSize.x, newSize.y);
 
-    if (mouseHober(stickerX - newW / 2, stickerY - newH / 2, newW, newH)) {
+    if (mouseHober(stickerX - newSize.x / 2, stickerY - newSize.y / 2, newSize.x, newSize.y)) {
       stroke(0);
       strokeWeight(3);
       noFill();
       rectMode(CENTER);
-      rect(stickerX, stickerY, newW, newH);
+      rect(stickerX, stickerY, newSize.x, newSize.y);
       rectMode(CORNER);
     }
   }
@@ -407,12 +404,12 @@ void drawStickerLibraryOverlay() {
   }
   popStyle();
 }
-  
+
 void updateTextUIVisibility() {
   boolean onDiary = (currentScreen == drawing_diary);
   if (textArea != null) {
+    // 오버레이(스티커, 설정, 달력)가 활성화되면 텍스트 필드를 비활성화합니다.
     boolean isOverlayActive = (isStickerLibraryOverlayVisible || isSettingsVisible) || (isDatePickerVisible != 0);
-    
     titleArea.setVisible(onDiary);
     titleArea.setEnabled(onDiary && !isOverlayActive);
     
@@ -524,6 +521,13 @@ void handleDiaryMouse() { // 마우스를 처음 눌렀을 때 호출
       yearmonthCancle.width, yearmonthCancle.height);
   } else {
     yearmonthCanclePressed = false;
+  }
+
+  if (diaryColorPicker != null) {
+    colorPickerPressed = mouseHober(diaryColorPicker.position_x, diaryColorPicker.position_y,
+      diaryColorPicker.width, diaryColorPicker.height);
+  } else {
+    colorPickerPressed = false;
   }
 
   // 날짜 텍스트 클릭 확인
@@ -656,11 +660,27 @@ void handleDiaryRelease() {
     isStickerLibraryOverlayVisible = true;
   }
   
+  if (colorPickerPressed && mouseHober(
+      diaryColorPicker.position_x, diaryColorPicker.position_y,
+      diaryColorPicker.width, diaryColorPicker.height)) {
+    UiBooster booster = new UiBooster();
+    // 현재 네비게이션 바 색상을 기본값으로 설정 (RGB와 불투명 알파 255를 명시적으로 전달)
+    java.awt.Color defaultColor = new java.awt.Color(
+        round(red(diaryPaperColor)), round(green(diaryPaperColor)), round(blue(diaryPaperColor)), 255
+    );
+    java.awt.Color awtColor = booster.showColorPicker("Select Navigation Bar Color", "Choose a color for the navigation bar", defaultColor);
+    if (awtColor != null) {
+        diaryPaperColor = color(awtColor.getRed(), awtColor.getGreen(), awtColor.getBlue());
+        diaryBackgroundColor = lerpColor(diaryPaperColor, color(255), 0.8);
+    }
+  }
+
   // 날짜 텍스트 클릭 시 달력 열기
   float[] dateRect = getDateTextRect();
   if (datePressed && mouseHober(dateRect[0], dateRect[1], dateRect[2], dateRect[3])) { openDatePickerDialog(); }
   
   finishPressed = false;
+  colorPickerPressed = false;
   storagePressed = false;
   datePressed = false;
 }
@@ -691,22 +711,12 @@ void handleStickerLibraryOverlayRelease() {
 
     float stickerX = startX + c * spacing;
     float stickerY = startY + r * spacing - overlayScrollY; // 스크롤 위치 반영
-    float w = s.img.width;
-    float h = s.img.height;
-    float newW, newH;
-
-    if (w > h) {
-      newW = boxSize;
-      newH = h * (boxSize / w);
-    } else {
-      newH = boxSize;
-      newW = w * (boxSize / h);
-    }
+    PVector newSize = getScaledImageSize(s.img, boxSize);
 
     // 스티커가 보이는 영역(패널) 안에 있을 때만 클릭 처리
-    boolean isStickerVisible = (stickerY + newH/2 > panelY + height*(80.0f/720.0f)) && (stickerY - newH/2 < panelY + panelH);
+    boolean isStickerVisible = (stickerY + newSize.y/2 > panelY + height*(80.0f/720.0f)) && (stickerY - newSize.y/2 < panelY + panelH);
 
-    if (isStickerVisible && mouseHober(stickerX - newW / 2, stickerY - newH / 2, newW, newH)) {
+    if (isStickerVisible && mouseHober(stickerX - newSize.x / 2, stickerY - newSize.y / 2, newSize.x, newSize.y)) {
       Sticker newSticker = new Sticker(width / 2, textFieldY / 2, s.img, defaultStickerSize, s.imageName);
       placedStickers.add(newSticker);
       selectedSticker = newSticker;
@@ -716,20 +726,22 @@ void handleStickerLibraryOverlayRelease() {
   }
 }
 
-/**
- * 일기 화면 상단의 날짜 텍스트의 사각형 영역([x, y, w, h])을 계산하여 반환합니다.
- * @return 날짜 텍스트의 영역을 담은 float 배열
- */
+
 float[] getDateTextRect() {
   pushStyle();
   textSize(30);
   String dateString = "Date : " + diary_year + ". " + diary_month + ". " + diary_day;
   float dateTextW = textWidth(dateString);
-  float dateTextH = 30; // drawDiary()의 textSize와 일치
-  float dateTextX = width/2 - dateTextW/2 - width * (120.0f/1280.0f);
-  float dateTextY = height * (12.0f/720.0f);
+  float dateTextH = 30; // 대략적인 높이
+  
+  // drawDiary()와 동일한 로직으로 중앙 좌표를 계산합니다.
+  float dateTextCenterX = width/2 - width * (120.0f/1280.0f);
+  float dateTextCenterY = height * (30.0f/720.0f);
+  
+  float dateRectX = dateTextCenterX - dateTextW / 2;
+  float dateRectY = dateTextCenterY - dateTextH / 2;
   popStyle();
-  return new float[] { dateTextX, dateTextY, dateTextW, dateTextH };
+  return new float[] { dateRectX, dateRectY, dateTextW, dateTextH };
 }
 
 
@@ -879,10 +891,10 @@ void openYearMonthPicker() {  // 년도 설정창 토글
   initYearMonthButton(); 
 }
 void initYearMonthButton() {
-  yearmonthOK = new rectButton(round(yearmonthScrollX-yearmonthButtonA+width*(240.0f/1280.0f)), round(yearmonthScrollY+yearmonthScrollH-height*(32.0f/720.0f)), round(width*(48.0f/1280.0f)), round(height*(24.0f/720.0f)), #FBDAB0);
+  yearmonthOK = new rectButton(this, round(yearmonthScrollX-yearmonthButtonA+width*(240.0f/1280.0f)), round(yearmonthScrollY+yearmonthScrollH-height*(32.0f/720.0f)), round(width*(48.0f/1280.0f)), round(height*(24.0f/720.0f)), #FBDAB0);
   yearmonthOK.rectButtonText("OK", 18);
   yearmonthOK.setShadow(false);
-  yearmonthCancle = new rectButton(round(yearmonthScrollX+yearmonthButtonA+width*(240.0f/1280.0f)), round(yearmonthScrollY+yearmonthScrollH-height*(32.0f/720.0f)), round(width*(48.0f/1280.0f)), round(height*(24.0f/720.0f)), #D9D9D9);
+  yearmonthCancle = new rectButton(this, round(yearmonthScrollX+yearmonthButtonA+width*(240.0f/1280.0f)), round(yearmonthScrollY+yearmonthScrollH-height*(32.0f/720.0f)), round(width*(48.0f/1280.0f)), round(height*(24.0f/720.0f)), #D9D9D9);
   yearmonthCancle.rectButtonText("Cancle", 18);
   yearmonthCancle.setShadow(false);
 }
@@ -1156,6 +1168,13 @@ void saveDiary() {
 
   JSONObject diaryData = new JSONObject();
 
+  // Save colors
+  diaryData.setInt("paperColor", diaryPaperColor);
+  diaryData.setInt("backgroundColor", diaryBackgroundColor);
+
+  // Save weather
+  diaryData.setInt("weather", todayWeather);
+
   diaryData.setString("title", titleArea.getText());
   diaryData.setString("content", textArea.getText());
 
@@ -1210,6 +1229,16 @@ void loadDiary(int year, int month, int day) {
   diary_day = day;
   calendar.set(diary_year, diary_month - 1, diary_day);
 
+  // Load colors, with defaults for older files
+  color defaultPaperColor = color(251, 218, 176);
+  color defaultBackgroundColor = lerpColor(defaultPaperColor, color(255), 0.8);
+
+  diaryPaperColor = diaryData.getInt("paperColor", defaultPaperColor);
+  diaryBackgroundColor = diaryData.getInt("backgroundColor", defaultBackgroundColor);
+
+  // Load weather, with a default if not present
+  todayWeather = diaryData.getInt("weather", 0); // Default to sunny (0) if not saved
+
   // Load Emotion
 
   lastSentimentScore = -1.0f;
@@ -1262,6 +1291,7 @@ void loadDiary(int year, int month, int day) {
     }
   }
   
+  initWeatherEffects(); // 날씨 효과 초기화
   println("Diary loaded for " + year + "-" + month + "-" + day);
 }
 
@@ -1293,6 +1323,15 @@ void resetDiary() {
   // 감정 분석 상태 초기화
   lastSentimentScore = -1;
   lastSentimentLabel = "";    // 표시용
+
+  // 날씨를 현재 날씨로 다시 가져오기
+  todayWeather = getWeather();
+
+  // 5. 색상 초기화
+  diaryPaperColor = color(251, 218, 176);
+  diaryBackgroundColor = lerpColor(diaryPaperColor, color(255), 0.8);
+  initWeatherEffects(); // 날씨 효과 초기화
+  
   
   println("Diary has been reset for a new entry.");
 }

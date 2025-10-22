@@ -25,6 +25,7 @@ final int name_screen = 6;
 // 현재 보이는 화면 저장하는 변수 선언
 // 초기화면은 시작화면 (StartScreen)
 int currentScreen = start_screen;
+int previousScreen = start_screen;
 
 int loadingStage = 0; // 0: 시작 전, 1: 백그라운드 로딩 중, 2: 메인 스레드 로딩, 3: 완료
 float loadingProgress = 0.0; // 로딩 진행률 (0.0 ~ 1.0)
@@ -53,11 +54,13 @@ PFont font;
 
 // 시작화면 캐릭터
 PImage meow;
+PImage loadingImage;
 
 // 표정 아이콘
 PImage[] emotIcon;
 // 날씨 아이콘
 PImage[] weatherIcon;
+PImage undoIcon; // Added for undo/redo buttons
 PImage trashClosedIcon, trashOpenIcon; // 휴지통 아이콘
 
 // 스티커 제작 도구 아이콘 및 커서 (MakingSticker.pde에서 이동)
@@ -69,6 +72,7 @@ PImage eraserImg;
 PImage brushCursor;
 PImage paintCursor;
 PImage eraserCursor;
+PImage catImg, foxImg, cloudImg, owlImg;
 PImage spoideCursor;
 PGraphics lineCursor;
 PGraphics rectCursor;
@@ -104,7 +108,6 @@ rectButton settings_goToMainButton; // 메인으로
 GSlider sdr; // BGM 슬라이더
 GSlider sfxSlider; // 효과음 슬라이더
 // 다이어리 보관함 버튼
-rectButton backToMenuButton;
 rectButton prevMonthButton;
 rectButton nextMonthButton;
 
@@ -120,6 +123,35 @@ float dragStartX = 0;
 float dragStartScroll = 0;
 float totalDragDist = 0;
 float menuDragSpeed = 1.0; // 메뉴 드래그 속도 (1.0이 기본)
+
+// 뒤로가기 버튼
+float BACK_W, BACK_H;
+float BACK_X, BACK_Y;
+// 일기 쓰기 화면 전용 뒤로가기 버튼
+float DIARY_BACK_W, DIARY_BACK_H;
+float DIARY_BACK_X, DIARY_BACK_Y;
+
+boolean isBackButtonPressed = false; // 뒤로가기 버튼 눌림 상태 추적
+
+void drawBackButton(float x, float y, float w, float h) {
+  if (backImg != null) {
+    pushStyle();
+    if (mouseHober(x, y, w, h)) {
+      fill(255, 50);
+      noStroke();
+      rect(x - 4, y - 4, w + 8, h + 8, 8);
+    }
+    
+    imageMode(CORNER);
+    PVector newSize = getScaledImageSize(backImg, w, h);
+    image(backImg, x + (w - newSize.x) / 2, y + (h - newSize.y) / 2, newSize.x, newSize.y);
+    popStyle();
+  }
+}
+
+void drawBackButton() {
+  drawBackButton(BACK_X, BACK_Y, BACK_W, BACK_H);
+}
 
 
 void textAreaUI() {
@@ -144,6 +176,7 @@ void textAreaUI() {
 
 void switchScreen(int next) {
   int from = currentScreen;
+  previousScreen = from;
 
   isMenuDragging = false;
   pressedOnNameBtn = false;
@@ -158,6 +191,11 @@ void switchScreen(int next) {
   isDrawingShape = false;
   isBrushSizeChange = false;
   cursor(ARROW);
+
+  if (next == making_sticker) {
+    clearUndoStack(); // 되돌리기 및 다시 실행 스택 초기화
+    saveUndoState();  // 캔버스의 초기 상태(빈 화면 또는 편집할 스티커) 저장
+  }
 
   currentScreen = next;
 
@@ -186,46 +224,64 @@ void initMenuButtons() {
 
   float btnW = (width - pagePaddingX * 2 - menuGutterX) / 2;
   float btnH = height * (360.0f / 720.0f);
+  
   float menuTop = height * (200.0f / 720.0f);
 
   int x1 = round(pagePaddingX);
   int x2 = round(pagePaddingX + btnW + menuGutterX);
   int y  = round(menuTop);
 
-  dsButton = new rectButton(x1, y, round(btnW), round(btnH), #FEFD48);
+  dsButton = new rectButton(this, x1, y, round(btnW), round(btnH), #F0B950);
   dsButton.rectButtonText("Drawing\nSticker", 50);
-  slButton = new rectButton(x2, y, round(btnW), round(btnH), #FEFD48);
+  slButton = new rectButton(this, x2, y, round(btnW), round(btnH), #F0B950);
   slButton.rectButtonText("Sticker\nLibrary", 50);
 
-  ddButton = new rectButton(x1 + width, y, round(btnW), round(btnH), #FEFD48);
-  ddButton.rectButtonText("drawing\nDiary", 50);
-  dlButton = new rectButton(x2 + width, y, round(btnW), round(btnH), #FEFD48);
+  ddButton = new rectButton(this, x1 + width, y, round(btnW), round(btnH), #F0B950);
+  ddButton.rectButtonText("Drawing\nDiary", 50);
+  dlButton = new rectButton(this, x2 + width, y, round(btnW), round(btnH), #F0B950);
   dlButton.rectButtonText("Diary\nLibrary", 50);
 
+  // 메뉴 버튼에만 FANCY 스타일 적용
+  dsButton.setStyle(rectButton.ButtonStyle.FANCY);
+  slButton.setStyle(rectButton.ButtonStyle.FANCY);
+  ddButton.setStyle(rectButton.ButtonStyle.FANCY);
+  dlButton.setStyle(rectButton.ButtonStyle.FANCY);
+
+  // 버튼에 이미지 할당
+  dsButton.setImage(catImg);
+  slButton.setImage(foxImg);
+  ddButton.setImage(cloudImg);
+  dlButton.setImage(owlImg);
 }
 
 void ensureDiaryUI() {
   if(stickerStoreButton == null) {
-    stickerStoreButton = new rectButton(round(width * (1100.0f/1280.0f)), round(textFieldY - height*(120.0f/720.0f)), round(width*(180.0f/1280.0f)), round(height*(60.0f/720.0f)), #c8dcff);
+    stickerStoreButton = new rectButton(this, round(width * (1100.0f/1280.0f)), round(textFieldY - height*(120.0f/720.0f)), round(width*(180.0f/1280.0f)), round(height*(60.0f/720.0f)), #c8dcff);
     stickerStoreButton.rectButtonText("Sticker storage", 25);
     stickerStoreButton.setShadow(false);
   }
 
   if (finishButton == null) {
-    finishButton = new rectButton(round(width * (1100.0f/1280.0f)), round(textFieldY - height*(60.0f/720.0f)), round(width*(180.0f/1280.0f)), round(height*(60.0f/720.0f)), #F9E4B7);
+    finishButton = new rectButton(this, round(width * (1100.0f/1280.0f)), round(textFieldY - height*(60.0f/720.0f)), round(width*(180.0f/1280.0f)), round(height*(60.0f/720.0f)), #F9E4B7);
     finishButton.rectButtonText("Finish", 20);
     finishButton.setShadow(false);
   }
 
   if (analyzeButton == null) {
-    analyzeButton = new rectButton(round(width * (1100.0f/1280.0f)), round(textFieldY - height*(180.0f/720.0f)), round(width*(180.0f/1280.0f)), round(height*(60.0f/720.0f)), #B4F0C2);
+    analyzeButton = new rectButton(this, round(width * (1100.0f/1280.0f)), round(textFieldY - height*(180.0f/720.0f)), round(width*(180.0f/1280.0f)), round(height*(60.0f/720.0f)), #B4F0C2);
     analyzeButton.rectButtonText("Analyze", 22);
     analyzeButton.setShadow(false);
+  }
+
+  if (diaryColorPicker == null) {
+    diaryColorPicker = new rectButton(this, round(width * (1100.0f/1280.0f)), round(textFieldY - height*(240.0f/720.0f)), round(width*(180.0f/1280.0f)), round(height*(60.0f/720.0f)), #D0E0F0);
+    diaryColorPicker.rectButtonText("Change Color", 22);
+    diaryColorPicker.setShadow(false);
   }
 }
 
 void setup() { // 앱 시작 시 최소한의 초기화만 수행
-    size(1200, 840);
+    size(1200, 800);
     pixelDensity(1);
   
     // 실행 창 이름 지정
@@ -234,7 +290,20 @@ void setup() { // 앱 시작 시 최소한의 초기화만 수행
     surface.setResizable(false);
 
     // 컬러 팔레트 초기화 (Bubble 생성보다 먼저)
-    palleteColor = new color[]{color(0, 0, 0), color(255, 0, 0), color(255, 165, 0), color(255, 255, 0), color(0, 255, 0), color(0, 255, 255), color(0, 0, 255), color(255, 0, 255), color(139, 69, 19), color(128, 128, 128), color(211, 211, 211), color(255, 255, 255)};
+    palleteColor = new color[]{
+      color(0, 0, 0),        // 1. 검정 (맨 위)
+      color(255, 0, 0),      // 2. 빨강
+      color(255, 165, 0),    // 3. 주황
+      color(255, 255, 0),    // 4. 노랑
+      color(0, 255, 0),      // 5. 초록
+      color(0, 0, 255),      // 6. 파랑
+      color(0, 255, 255),    // 7. 하늘색
+      color(255, 0, 255),    // 8. 자홍색
+      color(128, 128, 128),  // 9. 회색
+      color(211, 211, 211),  // 10. 밝은 회색
+      color(255, 255, 255),  // 11. 하양 (맨 아래)
+      color(255, 255, 255)   // 12. 컬러피커용 자리 (색상 무관)
+    };
 
     // 배경 이펙트 초기화
     bubbles = new ArrayList<Bubble>();
@@ -244,6 +313,9 @@ void setup() { // 앱 시작 시 최소한의 초기화만 수행
 
     font = createFont("data/fonts/nanumHandWriting_babyLove.ttf", 24);
     
+    // 로딩 이미지를 가장 먼저 로드하여 즉시 표시될 수 있도록 합니다.
+    loadingImage = loadImage("data/images/running_friends.png");
+
     loadingStage = 1;
     thread("performHeavySetup");
 }
@@ -258,6 +330,17 @@ void performHeavySetup() { // 시간이 오래 걸리는 작업들을 백그라�
     navigationBarY = height * (64.0f / 720.0f);
     loadingProgress = 0.05;
     
+    BACK_W = width * (64.0f / 1280.0f);
+    BACK_H = height * (64.0f / 720.0f);
+    BACK_X = width * (24.0f / 1280.0f);
+    BACK_Y = height * (24.0f / 720.0f);
+
+    // 일기 쓰기 화면 전용 뒤로가기 버튼 값 설정 (좌상단으로 8px 이동, 크기 48x48로 축소)
+    DIARY_BACK_W = width * (48.0f / 1280.0f);
+    DIARY_BACK_H = height * (48.0f / 720.0f);
+    DIARY_BACK_X = width * (16.0f / 1280.0f);
+    DIARY_BACK_Y = height * (8.0f / 720.0f);
+
     loadingMessage = "Loading settings...";
     initializeSetting();
     loadingProgress = 0.1;
@@ -283,6 +366,7 @@ void performHeavySetup() { // 시간이 오래 걸리는 작업들을 백그라�
     weatherIcon[3] = loadImage("images/icon_weather_rainy.png");
     weatherIcon[4] = loadImage("images/icon_weather_snow.png");
     weatherIcon[5] = loadImage("images/icon_weather_storm.png");
+    undoIcon = loadImage("images/undo.png"); // Load undo icon
     trashClosedIcon = loadImage("images/trash_closed.png");
     trashOpenIcon = loadImage("images/trash_open.png");
     loadingProgress = 0.25;
@@ -298,10 +382,17 @@ void performHeavySetup() { // 시간이 오래 걸리는 작업들을 백그라�
     paintCursor = loadImage("data/images/paint.png");
     eraserCursor = loadImage("data/images/eraser.png");
     spoideCursor = loadImage("data/images/spoide.png");
+    loadingProgress = 0.35;
+
+    loadingMessage = "Loading menu button images...";
+    catImg = loadImage("images/cat.png");
+    foxImg = loadImage("images/fox.png");
+    cloudImg = loadImage("images/cloud.png");
+    owlImg = loadImage("images/owl.png");
     loadingProgress = 0.40;
 
     loadingMessage = "Preparing sticker list...";
-    loadStickersFromFolder("sticker", 0.40, 0.90); // 스티커 로딩에 50% 할당
+    loadStickersFromFolder("sticker", 0.40, 0.90);
 
     loadingMessage = "Initializing UI...";
     initMenuButtons();
@@ -310,10 +401,11 @@ void performHeavySetup() { // 시간이 오래 걸리는 작업들을 백그라�
 
     loadingMessage = "Fetching weather data...";
     todayWeather = getWeather();
+    initWeatherEffects(); // 날씨 효과 초기화
     loadingProgress = 0.95;
 
     loadingMessage = "Finalizing...";
-    settings_goToMainButton = new rectButton(width/2 - 100, height/2 + 150, 200, 50, color(100, 150, 255));
+    settings_goToMainButton = new rectButton(this, width/2 - 100, height/2 + 150, 200, 50, color(100, 150, 255));
     settings_goToMainButton.rectButtonText("Main", 24);
     loadingProgress = 1.0;
 
@@ -353,6 +445,7 @@ void finishSetupOnMainThread() { // 메인 스레드에서만 실행해야 하�
     dragSpeedSlider.setNbrTicks(4); // 0.5, 1.0, 1.5, 2.0
     dragSpeedSlider.setStickToTicks(true);
     dragSpeedSlider.setVisible(false);
+
 }
 
 // G4P 컨트롤 이벤트를 처리하는 핸들러
@@ -475,37 +568,58 @@ void drawLoadingScreen() {
     background(#FFCA1A);
     drawBackgroundEffect();
     
-    textAlign(CENTER, CENTER);
-    fill(0);
-    textFont(font);
-    textSize(50);
-    text("Loading...", width/2, height/2 - 80);
-    
-    // 진행 메시지
-    textSize(22);
-    text(loadingMessage, width/2, height/2);
-
-    // 진행률 바
+    // --- 레이아웃 변수 정의 ---
+    // 로딩 바를 기준으로 모든 UI 요소의 위치를 계산합니다.
     float barW = width * 0.6;
     float barH = 30;
     float barX = width/2 - barW/2;
-    float barY = height/2 + 50;
+    float barY = height/2 + 80; // 수직 레이아웃의 기준점
 
-    // 바 배경
+    float imgSize = 360;
+    float loadingTextSize = 50;
+    float messageTextSize = 22;
+
+    // 각 요소의 Y 좌표를 barY를 기준으로 계산합니다.
+    float imgY = barY - (imgSize / 4); // 이미지가 로딩 바 위에 바로 앉도록 조정합니다.
+    float loadingTextY = imgY - (imgSize / 6);      // "Loading..." 텍스트를 이미지 바로 위에 붙입니다.
+    float messageTextY = barY + barH + 2;       // 로딩 메시지를 로딩 바 바로 아래에 붙입니다.
+
+    // --- 그리기 시작 ---
+    // "Loading..." 텍스트
+    textAlign(CENTER, BOTTOM); // 텍스트의 하단(baseline)을 기준으로 위치를 잡습니다.
+    fill(0);
+    textFont(font);
+    textSize(loadingTextSize);
+    text("Loading...", width/2, loadingTextY);
+
+    // 로딩 이미지 그리기
+    if (loadingImage != null) {
+      imageMode(CENTER);
+      float travelWidth = barW - imgSize;
+      float imgX = barX + imgSize / 2 + travelWidth * displayLoadingProgress;
+      image(loadingImage, imgX, imgY, imgSize, imgSize);
+      imageMode(CORNER);
+    }
+
+    // 진행률 바
     noStroke();
-    fill(100, 80);
+    fill(100, 80); // 바 배경
     rect(barX, barY, barW, barH, 15);
-
-    // 채워지는 바
-    fill(#4CAF50); // 초록색
+    fill(#4CAF50); // 채워지는 바 (초록색)
     if (displayLoadingProgress > 0) {
       rect(barX, barY, barW * displayLoadingProgress, barH, 15);
     }
 
+    // 진행 메시지
+    fill(0);
+    textAlign(CENTER, TOP); // 텍스트의 상단을 기준으로 위치를 잡습니다.
+    textSize(messageTextSize);
+    text(loadingMessage, width/2, messageTextY);
+
     // 퍼센트 텍스트
-    fill(255);
+    fill(0);
     textSize(18);
-    // 소수점 없이 정수로 표시
+    textAlign(CENTER, CENTER);
     text(floor(displayLoadingProgress * 100) + "%", width/2, barY + barH/2);
 }
 
@@ -605,6 +719,24 @@ void mousePressed() {
     return; // 설정 창 내부의 다른 곳을 클릭했으면 다른 이벤트가 발생하지 않도록 함
   }
 
+  // 모든 화면에서 뒤로가기 버튼 공통 처리 (누름 감지)
+  float btnX, btnY, btnW, btnH;
+  if (currentScreen == drawing_diary) {
+    btnX = DIARY_BACK_X;
+    btnY = DIARY_BACK_Y;
+    btnW = DIARY_BACK_W;
+    btnH = DIARY_BACK_H;
+  } else {
+    btnX = BACK_X;
+    btnY = BACK_Y;
+    btnW = BACK_W;
+    btnH = BACK_H;
+  }
+  if (currentScreen != start_screen && currentScreen != menu_screen && mouseHober(btnX, btnY, btnW, btnH)) {
+    isBackButtonPressed = true;
+    return;
+  }
+
   switch (currentScreen) {
   case start_screen:
     //handleStartMouse();
@@ -632,6 +764,7 @@ void mouseDragged() {
   if (isSettingsVisible) {
     return;
   }
+
   switch (currentScreen) {
     case start_screen:
       //handleStartDrag();
@@ -658,6 +791,57 @@ void mouseReleased() {
   if (isSettingsVisible) {
     return;
   }
+
+  // 모든 화면에서 뒤로가기 버튼 공통 처리 (놓음 감지)
+  if (isBackButtonPressed) {
+    float btnX, btnY, btnW, btnH;
+    if (currentScreen == drawing_diary) {
+      btnX = DIARY_BACK_X;
+      btnY = DIARY_BACK_Y;
+      btnW = DIARY_BACK_W;
+      btnH = DIARY_BACK_H;
+    } else {
+      btnX = BACK_X;
+      btnY = BACK_Y;
+      btnW = BACK_W;
+      btnH = BACK_H;
+    }
+    if (mouseHober(btnX, btnY, btnW, btnH)) {
+      playClickSound();
+
+      if (currentScreen == making_sticker) {
+        UiBooster booster = new UiBooster();
+        boolean confirmed = booster.showConfirmDialog("Do you want to save your changes?", "Save Sticker");
+        if (confirmed) {
+          saveSticker();
+        }
+        // 저장 여부와 관계없이 이전 화면으로 돌아갑니다.
+        switchScreen(previousScreen);
+      } else if (currentScreen == drawing_diary) {
+        UiBooster booster = new UiBooster();
+        boolean confirmed = booster.showConfirmDialog("Do you want to save your diary?", "Save Diary");
+        if (confirmed) {
+          saveDiary();
+          libraryCalendar.set(diary_year, diary_month - 1, 1);
+          loadDiaryDates();
+          switchScreen(diary_library);
+        } else {
+          switchScreen(previousScreen);
+        }
+      } else if (currentScreen == diary_library) {
+        // 일기 보관함에서는 항상 메뉴 화면으로 이동
+        switchScreen(menu_screen);
+      } else if (currentScreen == sticker_library) {
+        // 스티커 보관함에서도 항상 메뉴 화면으로 이동
+        switchScreen(menu_screen);
+      } else {
+        switchScreen(previousScreen); // Default back button behavior
+      }
+    }
+    isBackButtonPressed = false; // Reset the flag
+    return;
+  }
+
   switch (currentScreen) {
   case start_screen:
     handleStartRelease();
