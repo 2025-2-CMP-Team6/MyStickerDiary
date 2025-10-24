@@ -1,10 +1,8 @@
-// 위치 정보를 담을 변수
 JSONObject locationData;
-// 날씨 정보를 담을 변수
 JSONObject weatherData;
 String apiKey = "3e79d21733beca9a4ceb38097f01fb08";
-float lat; // 위도
-float lon; // 경도
+float lat;
+float lon;
 String weatherDescription = "";
 float temperature = 0;
 
@@ -17,7 +15,7 @@ void setupLocation() {
     try {
       locationData = loadJSONObject(url);
       
-      // 위도, 경도 정보 파싱
+      // 위도, 경도 파싱
       lat = locationData.getFloat("lat");
       lon = locationData.getFloat("lon");
       println("Latitude: " + lat + ", Longitude: " + lon);
