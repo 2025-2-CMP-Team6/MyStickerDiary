@@ -9,6 +9,7 @@ String posTool;
 
 color selectedColor = color(0, 0, 0);
 float brushSize = 20;
+
 boolean isBrushSizeChange = false;
 float brushPos[] = new float[2];
 PGraphics sizeCursor;
@@ -60,6 +61,7 @@ void setupCreator() {
   colorGab_palette = height * (72.0f / 720.0f);
   SAVE_W = BACK_W = width * (64.0f / 1280.0f);
   SAVE_H = BACK_H = height * (64.0f / 720.0f);
+
   BACK_X = width * (24.0f / 1280.0f);
   BACK_Y = height * (24.0f / 720.0f);
  lineCursor = createGraphics(32,32);
@@ -127,6 +129,25 @@ void drawCreator() {
       noStroke();
       rect(x, y, toolIconSize, toolIconSize);
     }
+
+    String currentToolName = "";
+    switch(i) {
+      case 0: currentToolName = "brush"; break;
+      case 1: currentToolName = "paint"; break;
+      case 2: currentToolName = "eraser"; break;
+      case 3: currentToolName = "line"; break;
+      case 4: currentToolName = "rect"; break;
+      case 5: currentToolName = "circle"; break;
+    }
+    if (!currentToolName.isEmpty() && tool.equals(currentToolName)) {
+      pushStyle();
+      noFill();
+      stroke(#96DA4A);
+      strokeWeight(3);
+      rectMode(CORNER);
+      rect(x - 4, y - 4, toolIconSize + 6, toolIconSize + 6, 4);
+      popStyle();
+    }
   }
   // Icon drawing (2x5 grid)
   imageMode(CORNER);
@@ -192,6 +213,7 @@ void drawCreator() {
   fill(selectedColor);
   circle(brushPos[0], brushPos[1], brushSize);
   popStyle();
+
     // 도형 그리기 미리보기
   pushStyle();
     if (isDrawingShape && mouseHober(canvasX, canvasY, canvasSize, canvasSize)) {
@@ -231,31 +253,46 @@ void drawCreator() {
         circle(p[0], p[1], colorSize);
       }
     }
-    if (mouseHober(colorPos[0]-(colorGab_palette/2), colorPos[1]-(colorGab_palette/2), 2*colorGab_palette, colorGab_palette*6)) {
-      cursor(spoideCursor,0,30);
-    }
-    else {
-      switch (tool) {
-        case "brush":
-          cursor(brushCursor,0,0);
-          break;
-        case "paint":
-          cursor(paintCursor,0,0);
-          break;
-        case "eraser":
-        cursor(eraserCursor,0,31);
-          break;
-        case "line":
-          cursor(lineCursor.get(),2,2);
-          break;
-        case "rect":
-          cursor(rectCursor.get(),2,2);
-          break;
-        case "circle":
-          cursor(circleCursor.get(),2,2);
-          break;
-        default:
-          cursor(ARROW);
+
+    // --- 브러시/지우개 사용 시 캔버스 위에서 커서 변경 ---
+    boolean onCanvas = mouseHober(canvasX, canvasY, canvasSize, canvasSize);
+    if (onCanvas && (tool.equals("brush") || tool.equals("eraser"))) {
+        noCursor(); // 시스템 커서 숨기기
+        pushStyle();
+        noFill();
+        stroke(0); // 커서 색상 (검정)
+        strokeWeight(1);
+        ellipseMode(CENTER);
+        ellipse(mouseX, mouseY, brushSize, brushSize); // 브러시 크기로 원 그리기
+        popStyle();
+    } else { // 캔버스 위가 아니거나 다른 도구일 경우, 기존 커서 로직 사용
+      if (isBrushSizeChange) {
+        cursor(sizeCursor.get());
+      } else if (mouseHober(colorPos[0]-(colorGab_palette/2), colorPos[1]-(colorGab_palette/2), 2*colorGab_palette, colorGab_palette*6)) {
+        cursor(spoideCursor,0,30);
+      } else {
+        switch (tool) {
+          case "brush":
+            cursor(brushCursor,0,0);
+            break;
+          case "paint":
+            cursor(paintCursor,0,0);
+            break;
+          case "eraser":
+            cursor(eraserCursor,0,31);
+            break;
+          case "line":
+            cursor(lineCursor.get(),2,2);
+            break;
+          case "rect":
+            cursor(rectCursor.get(),2,2);
+            break;
+          case "circle":
+            cursor(circleCursor.get(),2,2);
+            break;
+          default:
+            cursor(ARROW);
+        }
       }
     }
   }
@@ -320,6 +357,15 @@ void handleCreatorMouse() {
         return; // 도구가 선택되었으면 함수 종료
         }
     }
+    
+    // 브러시 크기 조절 시작 감지
+    float d_brush = dist(brushPos[0], brushPos[1], mouseX, mouseY);
+    float brushAreaRadius = width * (66.0f/1280.0f);
+    if (d_brush < brushAreaRadius) {
+      isBrushSizeChange = true;
+      return;
+    }
+
     // 색상 선택
     for (int i = 0; i < palleteColor.length; i++) {
       int[] p = new int[2];
@@ -338,6 +384,15 @@ void handleCreatorMouse() {
     if (mouseHober(canvasX, canvasY, canvasSize, canvasSize)) {
         if (tool.equals("brush") || tool.equals("eraser") || tool.equals("paint") || tool.equals("line") || tool.equals("rect") || tool.equals("circle")) {
             saveUndoState();
+        }
+        if (tool.equals("paint")) {
+            int canvasMouseX = round(mouseX - canvasX);
+            int canvasMouseY = round(mouseY - canvasY);
+            
+            // floodFill 함수가 픽셀 로딩/업데이트 및 채우기 조건을 모두 처리합니다.
+            floodFill(canvasMouseX, canvasMouseY, selectedColor);
+
+            return; // Prevent other actions like shape drawing
         }
     }
     if (tool.equals("line") || tool.equals("rect") || tool.equals("circle")) {
@@ -382,12 +437,9 @@ void handleCreatorDrag() {
       stickerCanvas.endDraw();
     }
   }
-  float d = dist(brushPos[0],brushPos[1],mouseX,mouseY);
-  float brushAreaRadius = width * (66.0f/1280.0f);
-  if (d < brushAreaRadius) {
+  
+  if (isBrushSizeChange) {
     brushSize += mouseX - pmouseX;
-    cursor(sizeCursor.get());
-    isBrushSizeChange = true;
     float maxBrushSize = width * (128.0f/1280.0f);
     if (brushSize > maxBrushSize) {
       brushSize = maxBrushSize;
@@ -396,6 +448,7 @@ void handleCreatorDrag() {
       brushSize = 1;
     }
   }
+
 }
 void handleCreatorRelease() {
   // 모두 지우기 버튼 클릭 처리
@@ -487,9 +540,9 @@ void handleCreatorRelease() {
     stickerCanvas.endDraw();
   }
   else if (isBrushSizeChange) {
-    cursor(ARROW);
     isBrushSizeChange = false;
   }
+
   isDrawingShape = false; // 그리기 상태 초기화
 }
  
@@ -532,6 +585,7 @@ void clearUndoStack() {
 }
 void saveUndoState() {
   // 새로운 작업을 시작하면 Redo 스택은 비워져야 함
+  isStickerModified = true;
   redoStack.clear();
   undoStack.add(stickerCanvas.get()); 
   if (undoStack.size() > MAX_UNDO_STATES) {
@@ -541,6 +595,7 @@ void saveUndoState() {
 void performUndo() {
   if (!undoStack.isEmpty()) {
     // 현재 상태를 Redo 스택에 저장
+    isStickerModified = true;
     redoStack.add(stickerCanvas.get());
     if (redoStack.size() > MAX_UNDO_STATES) {
       redoStack.remove(0);
@@ -556,6 +611,7 @@ void performUndo() {
 void performRedo() {
   if (!redoStack.isEmpty()) {
     // Redo를 수행하기 전의 현재 상태를 undo 스택에 저장합니다.
+    isStickerModified = true;
     // redo 스택을 비우지 않기 위해 saveUndoState()를 직접 호출하지 않습니다.
     undoStack.add(stickerCanvas.get());
     if (undoStack.size() > MAX_UNDO_STATES) {
@@ -569,6 +625,58 @@ void performRedo() {
     stickerCanvas.endDraw();
   }
 }
+
+void floodFill(int x, int y, color replacementColor) {
+  int canvasW = stickerCanvas.width;
+  int canvasH = stickerCanvas.height;
+
+  if (x < 0 || x >= canvasW || y < 0 || y >= canvasH) return;
+
+  stickerCanvas.loadPixels();
+
+  color targetColor = stickerCanvas.get(x, y);
+  if (targetColor == replacementColor) {
+    // No need to updatePixels() if nothing changed
+    return;
+  }
+
+  // 안티에일리어싱으로 생긴 경계선을 처리하기 위해, 거의 불투명한 픽셀을 경계로 간주합니다.
+  // 이 값보다 알파(투명도)가 낮으면 채우기 대상으로 봅니다.
+  final int ALPHA_BOUNDARY_THRESHOLD = 250;
+
+  // 클릭한 지점이 이미 경계선(완전히 불투명한 색)이라면 채우지 않습니다.
+  if (alpha(targetColor) >= ALPHA_BOUNDARY_THRESHOLD) {
+    return;
+  }
+
+  ArrayList<PVector> queue = new ArrayList<PVector>();
+  queue.add(new PVector(x,y));
+
+  while (!queue.isEmpty()) {
+    PVector p = queue.remove(0);
+    int px = int(p.x);
+    int py = int(p.y);
+
+    if (px < 0 || px >= canvasW || py < 0 || py >= canvasH) {
+      continue;
+    }
+
+    int loc = px + py * canvasW;
+
+    // 현재 픽셀이 경계(불투명)가 아니고, 아직 새로운 색으로 채워지지 않았다면 채웁니다.
+    if (alpha(stickerCanvas.pixels[loc]) < ALPHA_BOUNDARY_THRESHOLD && stickerCanvas.pixels[loc] != replacementColor) {
+      stickerCanvas.pixels[loc] = replacementColor;
+
+      // 인접 픽셀을 큐에 추가
+      if (px + 1 < canvasW) queue.add(new PVector(px + 1, py));
+      if (px - 1 >= 0)      queue.add(new PVector(px - 1, py));
+      if (py + 1 < canvasH) queue.add(new PVector(px, py + 1));
+      if (py - 1 >= 0)      queue.add(new PVector(px, py - 1));
+    }
+  }
+  stickerCanvas.updatePixels();
+}
+
 void drawRainbowCircle(float x, float y, float diameter) {
   pushStyle();
   noStroke();
@@ -601,4 +709,27 @@ boolean isCanvasBlank(PGraphics pg) {
     }
   }
   return true; // 모든 픽셀이 투명함
+}
+
+void resetCreator() {
+  // 캔버스 초기화
+  stickerCanvas.beginDraw();
+  stickerCanvas.clear();
+  stickerCanvas.endDraw();
+
+  // 도구 및 속성 초기화
+  tool = ""; // 기본 도구 없음
+  selectedColor = color(0, 0, 0); // 기본 색상 검정
+  brushSize = 20; // 기본 브러시 크기
+
+  // 되돌리기/다시실행 스택 초기화
+  clearUndoStack();
+
+  // 기타 상태 플래그 초기화
+  isDrawingShape = false;
+  isBrushSizeChange = false;
+  clearAllPressed = false;
+  undoPressed = false;
+  redoPressed = false;
+  rainbowPickerClicked = false;
 }

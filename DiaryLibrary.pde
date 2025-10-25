@@ -258,16 +258,6 @@ void drawCalendarGrid() {
           PVector newSize = getScaledImageSize(icon, iconBoxSize);
           imageMode(CENTER);
           image(icon, x + cellWidth / 2, y + cellHeight / 2, newSize.x, newSize.y);
-          // 짧은 라벨 텍스트
-          String shortLabel =
-            (s < 0.2f) ? "V-" :
-            (s < 0.4f) ? "Neg" :
-            (s < 0.6f) ? "Neu" :
-            (s < 0.8f) ? "Pos" : "V+";
-          fill(0);
-          textSize(10);
-          textAlign(RIGHT, TOP);
-          text(shortLabel, x + cellWidth - width*(6.0f/1280.0f), y + height*(4.0f/720.0f));
         }
       }
       textAlign(LEFT, TOP);

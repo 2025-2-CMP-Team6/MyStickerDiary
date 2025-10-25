@@ -21,12 +21,12 @@ void drawLibrary() {
     text("Sticker Library", width/2, height*(60.0f/720.0f));
   
     // '새 스티커 만들기' 버튼
-    if (mouseHober(width/2 - width*(125.0f/1280.0f), height - height*(110.0f/720.0f), width*(250.0f/1280.0f), height*(60.0f/720.0f))) {
+    if (mouseHober(width/2 - width*(140.0f/1280.0f), height - height*(110.0f/720.0f), width*(280.0f/1280.0f), height*(60.0f/720.0f))) {
       fill(230, 230, 160);
     } else {
       fill(220, 220, 150);
     }
-    rect(width/2, height - height*(80.0f/720.0f), width*(250.0f/1280.0f), height*(60.0f/720.0f));
+    rect(width/2, height - height*(80.0f/720.0f), width*(280.0f/1280.0f), height*(60.0f/720.0f));
     fill(0);
     textSize(30);
     text("+ Making new Sticker!", width/2, height - height*(80.0f/720.0f));
@@ -53,9 +53,7 @@ void drawLibrary() {
     } else {
       minLibraryScrollY = 0;
     }
-    //clip(startX - boxSize/2, startY - boxSize/2 - 16, width + boxSize/2 - 40, height - boxSize/2 - 32);
-    rectMode(CORNER);
-    clip(0, startY + spacing, width*2, height - boxSize - 128);
+    clip(0, startY + spacing, width*2, height - boxSize - 128); 
   
     for (int i = 0; i < stickerLibrary.size(); i++) {
       Sticker s = stickerLibrary.get(i);
@@ -109,7 +107,7 @@ void drawLibrary() {
       float scrollbarMargin = width * (20.0f/1280.0f);
       libScrollbarX = width - scrollbarMargin - libScrollbarW;
       libScrollbarY = height * (80.0f/720.0f);
-      libScrollbarH = height - height * (120.0f/720.0f);
+      libScrollbarH = height - height * (200.0f/720.0f); // 상단(80) 및 하단(120) 여백을 제외한 높이
   
       // 스크롤바 트랙
       fill(200, 180);
@@ -161,14 +159,20 @@ void drawLibrary() {
       return;
     }
 
+    // '새 스티커 만들기' 버튼 클릭 확인 (우선순위 높임)
+    if (mouseHober(width/2 - width*(140.0f/1280.0f), height - height*(110.0f/720.0f), width*(280.0f/1280.0f), height*(60.0f/720.0f))) {
+      switchScreen(making_sticker);
+      return;
+    }
+
     // 스티커 클릭/삭제 확인
     float boxSize = width * (150.0f/1280.0f);
+
     // Iterate backwards to safely remove items
     for (int i = stickerLibrary.size() - 1; i >= 0; i--) {
         Sticker s = stickerLibrary.get(i);
         PImage img = s.img; // 이미지 가져오기
         PVector newSize = getScaledImageSize(img, boxSize);
-
         if (mouseHober(s.x-newSize.x/2, s.y-newSize.y/2, newSize.x, newSize.y)) {
             // 삭제 버튼 클릭 확인
             float deleteBtnRadius = max(10, width * (8.0f / 1280.0f));

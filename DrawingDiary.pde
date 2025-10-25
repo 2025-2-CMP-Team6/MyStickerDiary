@@ -132,24 +132,29 @@ void drawDiary() {
   popStyle();
 
   ensureDiaryUI();
-  finishButton.render();
+  analyzeButton.render();
   stickerStoreButton.render();
   diaryColorPicker.render();
-
-  analyzeButton.render();
+  finishButton.render();
 
   // 감정 분석 로딩/결과 UI
   pushStyle();
   textAlign(LEFT, CENTER);
   textSize(16);
+
+  // 버튼 레이아웃과 일관성을 유지하기 위해 Y 좌표를 다시 계산합니다.
+  float btnH = height * (60.0f/720.0f);
+  float analyzeBtnY = navigationBarY + 20;
+  float sentimentTextY = analyzeBtnY + btnH + 4; // 분석 버튼 아래에 텍스트 위치
+
   if (isAnalyzing) {
     // 로딩 텍스트
     fill(0);
-    text("Analyzing sentiment...", width * (1120.0f/1280.0f), textFieldY - height * (210.0f/720.0f));
+    text("Analyzing sentiment...", width * (1100.0f/1280.0f), sentimentTextY);
     pushMatrix();
     pushStyle();
-    float iconX = width * (1120.0f/1280.0f) + textWidth("Analyzing sentiment...") + width * (20.0f/1280.0f);
-    float iconY = textFieldY - height * (210.0f/720.0f);
+    float iconX = width * (1100.0f/1280.0f) + textWidth("Analyzing sentiment...") + width * (20.0f/1280.0f);
+    float iconY = sentimentTextY;
     translate(iconX, iconY);
     float angle = frameCount * 0.1;
     rotate(angle);
@@ -163,7 +168,7 @@ void drawDiary() {
    else if (lastSentimentScore >= 0) {
     fill(0);
     text("Sentiment: " + lastSentimentLabel + String.format(" (%.2f)", lastSentimentScore),
-        width * (1100.0f/1280.0f), textFieldY - height * (210.0f/720.0f));
+        width * (1100.0f/1280.0f), sentimentTextY);
   }
   popStyle();
 
@@ -194,13 +199,6 @@ void drawDiary() {
         // 호버 감지 영역은 호버 시의 크기를 기준으로 합니다.
         if (mouseHober(x_center - (baseIconSize * 0.875f) / 2, y_center - (baseIconSize * 0.875f) / 2, baseIconSize * 0.875f, baseIconSize * 0.875f)) {
           effectiveIconSize = baseIconSize * 0.875f;
-          // 날씨가 변경될 때만 효과 초기화
-          if (mousePressed) {
-            if (todayWeather != i) { // 날씨가 변경될 때만 효과 초기화
-              todayWeather = i;
-              initWeatherEffects(); // 날씨 효과 재설정
-            }
-          }
         }
         else { // 평상시 30/40 크기
           effectiveIconSize = baseIconSize * 0.75f; // 평상시 30/40 크기
@@ -546,6 +544,8 @@ void handleDiaryDrag() {
   if (currentlyDraggedSticker == null) {
     return;
   }
+  // 스티커를 드래그(이동 또는 크기 조절)하면 수정된 것으로 간주
+  isDiaryModified = true;
 
   Sticker s = currentlyDraggedSticker;
   if (isResizing == -1) { // 크기 조절 핸들이 아니면 스티커 이동
@@ -599,6 +599,25 @@ void handleDiaryRelease() {
   }
   analyzePressed = false;
   
+  // 날씨 아이콘 클릭 처리 (오버레이가 없을 때만)
+  if (weatherIcon != null && !isStickerLibraryOverlayVisible && isDatePickerVisible == 0) {
+    int iconCount = weatherIcon.length;
+    float baseIconSize = width * (40.0f / 1280.0f);
+    float rightMargin = width * (300.0f / 1280.0f);
+    float iconSpacing = width * (10.0f / 1280.0f);
+    for (int i = 0; i < iconCount; i++) {
+      float x_center = width - rightMargin - (baseIconSize / 2) - (i * (baseIconSize + iconSpacing));
+      float y_center = navigationBarY / 2;
+
+      // 선택되지 않은 아이콘을 클릭했는지 확인
+      if (todayWeather != i && mouseHober(x_center - (baseIconSize * 0.875f) / 2, y_center - (baseIconSize * 0.875f) / 2, baseIconSize * 0.875f, baseIconSize * 0.875f)) {
+        todayWeather = i;
+        isDiaryModified = true;
+        initWeatherEffects();
+        return; // 한 번에 하나의 동작만 처리
+      }
+    }
+  }
   
   if (isStickerLibraryOverlayVisible) {
     if (isDraggingScrollbar) {
@@ -628,6 +647,7 @@ void handleDiaryRelease() {
     float deleteZoneSize = 64;
     if (mouseHober(0, textFieldY - deleteZoneSize, deleteZoneSize, deleteZoneSize)) {
       placedStickers.remove(currentlyDraggedSticker); // 스티커 삭제
+      isDiaryModified = true; // 스티커 삭제 시 수정됨
       selectedSticker = null; // 선택된 스티커도 초기화
     }
   }
@@ -660,8 +680,12 @@ void handleDiaryRelease() {
     );
     java.awt.Color awtColor = booster.showColorPicker("Select Navigation Bar Color", "Choose a color for the navigation bar", defaultColor);
     if (awtColor != null) {
-        diaryPaperColor = color(awtColor.getRed(), awtColor.getGreen(), awtColor.getBlue());
-        diaryBackgroundColor = lerpColor(diaryPaperColor, color(255), 0.8);
+        color newColor = color(awtColor.getRed(), awtColor.getGreen(), awtColor.getBlue());
+        if (newColor != diaryPaperColor) {
+          diaryPaperColor = newColor;
+          diaryBackgroundColor = lerpColor(diaryPaperColor, color(255), 0.8);
+          isDiaryModified = true; // 색상 변경 시 수정됨
+        }
     }
   }
 
@@ -708,6 +732,7 @@ void handleStickerLibraryOverlayRelease() {
 
     if (isStickerVisible && mouseHober(stickerX - newSize.x / 2, stickerY - newSize.y / 2, newSize.x, newSize.y)) {
       Sticker newSticker = new Sticker(width / 2, textFieldY / 2, s.img, defaultStickerSize, s.imageName);
+      isDiaryModified = true; // 스티커 추가 시 수정됨
       placedStickers.add(newSticker);
       selectedSticker = newSticker;
       isStickerLibraryOverlayVisible = false; // 스티커 추가 후 오버레이 닫기
@@ -1078,9 +1103,16 @@ void handleDatePickerMouseRelease() {
 
       if (mouseHober(x, y, cellWidth, cellHeight)) {
         // 날짜 선택 및 적용
-        diary_year = datePickerCalendar.get(Calendar.YEAR);
-        diary_month = datePickerCalendar.get(Calendar.MONTH) + 1;
-        diary_day = day;
+        int newYear = datePickerCalendar.get(Calendar.YEAR);
+        int newMonth = datePickerCalendar.get(Calendar.MONTH) + 1;
+        int newDay = day;
+
+        if (newYear != diary_year || newMonth != diary_month || newDay != diary_day) {
+          isDiaryModified = true;
+        }
+        diary_year = newYear;
+        diary_month = newMonth;
+        diary_day = newDay;
 
         // 메인 calendar 업데이트
         calendar.set(diary_year, diary_month - 1, diary_day);
@@ -1279,6 +1311,7 @@ void loadDiary(int year, int month, int day) {
   }
   
   initWeatherEffects();
+  isDiaryModified = false; // 일기 로드 후 수정 상태 초기화
   println("Diary loaded for " + year + "-" + month + "-" + day);
 }
 
@@ -1318,6 +1351,7 @@ void resetDiary() {
   diaryPaperColor = color(251, 218, 176);
   diaryBackgroundColor = lerpColor(diaryPaperColor, color(255), 0.8);
   initWeatherEffects();
+  isDiaryModified = false; // 새 일기 시작 시 수정 상태 초기화
   
   
   println("Diary has been reset for a new entry.");
@@ -1337,6 +1371,8 @@ void startDiarySentimentAnalysis() {
 
       String key = makeDateKey(diary_year, diary_month, diary_day); // 날짜 키 생성
       diarySentiments.put(key, lastSentimentScore);
+
+      isDiaryModified = true; // 감정 분석 결과가 나오면 수정된 것으로 간주
 
       isAnalyzing = false;
       println("[Sentiment] " + key + " -> " + r.label + " (" + nf(lastSentimentScore,1,2) + ")");

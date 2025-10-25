@@ -63,6 +63,9 @@ PGraphics lineCursor;
 PGraphics rectCursor;
 PGraphics circleCursor;
 
+boolean isStickerModified = false;
+boolean isDiaryModified = false;
+
 color[] palleteColor;
 
 GTextField titleArea;
@@ -147,6 +150,15 @@ void textAreaUI() {
   }
 }
 
+public void handleTextEvents(GEditableTextControl textcontrol, GEvent event) {
+  // 일기 작성 화면에서 텍스트가 변경되었을 때만 플래그 설정
+  if (currentScreen == drawing_diary && (textcontrol == titleArea || textcontrol == textArea)) {
+    if (event == GEvent.CHANGED) {
+      isDiaryModified = true;
+    }
+  }
+}
+
 void switchScreen(int next) {
   int from = currentScreen;
   previousScreen = from;
@@ -156,7 +168,8 @@ void switchScreen(int next) {
   totalDragDist = 0;
 
   if (from == making_sticker) {
-    stickerToEdit = null; // 스티커 편집기에서 나갈 때 편집 상태 초기화
+    stickerToEdit = null; // 스티커 편집 상태 초기화
+    resetCreator(); // 스티커 만들기 화면 전체 상태 초기화
   }
 
   menuTargetScrollX = menuScrollX;
@@ -168,6 +181,7 @@ void switchScreen(int next) {
   if (next == making_sticker) {
     clearUndoStack(); // 되돌리기 및 다시 실행 스택 초기화
     saveUndoState();  // 캔버스의 초기 상태(빈 화면 또는 편집할 스티커) 저장
+    isStickerModified = false; // 스티커 수정 상태 초기화
   }
 
   currentScreen = next;
@@ -227,28 +241,38 @@ void initMenuButtons() {
 }
 
 void ensureDiaryUI() {
-  if(stickerStoreButton == null) {
-    stickerStoreButton = new rectButton(this, round(width * (1100.0f/1280.0f)), round(textFieldY - height*(120.0f/720.0f)), round(width*(180.0f/1280.0f)), round(height*(60.0f/720.0f)), #c8dcff);
-    stickerStoreButton.rectButtonText("Sticker storage", 25);
-    stickerStoreButton.setShadow(false);
-  }
+  // 버튼 레이아웃 변수
+  float btnColumnX = width * (1100.0f/1280.0f);
+  float btnW = width * (180.0f/1280.0f);
+  float btnH = height * (60.0f/720.0f);
 
-  if (finishButton == null) {
-    finishButton = new rectButton(this, round(width * (1100.0f/1280.0f)), round(textFieldY - height*(60.0f/720.0f)), round(width*(180.0f/1280.0f)), round(height*(60.0f/720.0f)), #F9E4B7);
-    finishButton.rectButtonText("Finish", 20);
-    finishButton.setShadow(false);
-  }
+  float analyzeBtnY = navigationBarY;
+  float finishBtnY = textFieldY - btnH;
+  float colorBtnY = finishBtnY - btnH;
+  float stickerBtnY = colorBtnY - btnH;
 
   if (analyzeButton == null) {
-    analyzeButton = new rectButton(this, round(width * (1100.0f/1280.0f)), round(textFieldY - height*(180.0f/720.0f)), round(width*(180.0f/1280.0f)), round(height*(60.0f/720.0f)), #B4F0C2);
+    analyzeButton = new rectButton(this, round(btnColumnX), round(analyzeBtnY), round(btnW), round(btnH), #B4F0C2);
     analyzeButton.rectButtonText("Analyze", 22);
     analyzeButton.setShadow(false);
   }
 
+  if(stickerStoreButton == null) {
+    stickerStoreButton = new rectButton(this, round(btnColumnX), round(stickerBtnY), round(btnW), round(btnH), #c8dcff);
+    stickerStoreButton.rectButtonText("Sticker storage", 25);
+    stickerStoreButton.setShadow(false);
+  }
+
   if (diaryColorPicker == null) {
-    diaryColorPicker = new rectButton(this, round(width * (1100.0f/1280.0f)), round(textFieldY - height*(240.0f/720.0f)), round(width*(180.0f/1280.0f)), round(height*(60.0f/720.0f)), #D0E0F0);
+    diaryColorPicker = new rectButton(this, round(btnColumnX), round(colorBtnY), round(btnW), round(btnH), #D0E0F0);
     diaryColorPicker.rectButtonText("Change Color", 22);
     diaryColorPicker.setShadow(false);
+  }
+
+  if (finishButton == null) {
+    finishButton = new rectButton(this, round(btnColumnX), round(finishBtnY), round(btnW), round(btnH), #F9E4B7);
+    finishButton.rectButtonText("Finish", 20);
+    finishButton.setShadow(false);
   }
 }
 
@@ -791,21 +815,27 @@ void mouseReleased() {
       playClickSound();
 
       if (currentScreen == making_sticker) {
-        UiBooster booster = new UiBooster();
-        boolean confirmed = booster.showConfirmDialog("Do you want to save your changes?", "Save Sticker");
-        if (confirmed) {
-          saveSticker();
+        if (isStickerModified) {
+          UiBooster booster = new UiBooster();
+          boolean confirmed = booster.showConfirmDialog("Do you want to save your changes?", "Save Sticker");
+          if (confirmed) {
+            saveSticker();
+          }
         }
         // 저장 여부와 관계없이 이전 화면으로 돌아갑니다.
         switchScreen(previousScreen);
       } else if (currentScreen == drawing_diary) {
-        UiBooster booster = new UiBooster();
-        boolean confirmed = booster.showConfirmDialog("Do you want to save your diary?", "Save Diary");
-        if (confirmed) {
-          saveDiary();
-          libraryCalendar.set(diary_year, diary_month - 1, 1);
-          loadDiaryDates();
-          switchScreen(diary_library);
+        if (isDiaryModified) {
+          UiBooster booster = new UiBooster();
+          boolean confirmed = booster.showConfirmDialog("Do you want to save your diary?", "Save Diary");
+          if (confirmed) {
+            saveDiary();
+            libraryCalendar.set(diary_year, diary_month - 1, 1);
+            loadDiaryDates();
+            switchScreen(diary_library);
+          } else {
+            switchScreen(previousScreen);
+          }
         } else {
           switchScreen(previousScreen);
         }
