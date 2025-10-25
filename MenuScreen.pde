@@ -17,7 +17,6 @@ public void drawMenuScreen() {
     pushStyle();
     background(#FFCA1A);
     drawBackgroundEffect();
-
     fill(0);
     textSize(50);
     text("Main Menu", 78, 86);

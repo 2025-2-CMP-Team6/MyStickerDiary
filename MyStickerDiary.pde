@@ -261,6 +261,13 @@ void setup() { // 앱 시작 시 최소한의 초기화만 수행
     // 실행 창 사이즈 사용자가 임의 조정하지 못하게 설정
     surface.setResizable(false);
 
+    // 앱 아이콘 설정
+    PImage icon = loadImage("images/icon.png");
+    surface.setIcon(icon);
+
+    // 로딩 화면에 필요한 기본 폰트를 먼저 로드합니다.
+    font = createFont("data/fonts/nanumHandWriting_babyLove.ttf", 24);
+
     // 컬러 팔레트 초기화 (Bubble 생성보다 먼저)
     palleteColor = new color[]{
       color(0, 0, 0),        // 1. 검정 (맨 위)
@@ -283,8 +290,6 @@ void setup() { // 앱 시작 시 최소한의 초기화만 수행
       bubbles.add(new Bubble());
     }
 
-    font = createFont("data/fonts/nanumHandWriting_babyLove.ttf", 24);
-    
     // 로딩 이미지를 가장 먼저 로드
     loadingImage = loadImage("data/images/running_friends.png");
 
@@ -322,6 +327,10 @@ void performHeavySetup() { // 시간이 오래 걸리는 작업들을 백그라�
     clickSound = new SoundFile(this, "data/sounds/click.mp3"); // 효과음 로드
     loadingProgress = 0.15;
 
+    // 폰트 로드
+    loadingMessage = "Loading fonts...";
+    loadingProgress = 0.20;
+
     // 아이콘 이미지 로드
     loadingMessage = "Loading UI icons...";
     meow = loadImage("data/images/meow.png");
@@ -341,7 +350,7 @@ void performHeavySetup() { // 시간이 오래 걸리는 작업들을 백그라�
     undoIcon = loadImage("images/undo.png");
     trashClosedIcon = loadImage("images/trash_closed.png");
     trashOpenIcon = loadImage("images/trash_open.png");
-    loadingProgress = 0.25;
+    loadingProgress = 0.30;
 
     // 스티커 제작 도구 리소스 로딩
     loadingMessage = "Loading creator tools...";
@@ -354,17 +363,17 @@ void performHeavySetup() { // 시간이 오래 걸리는 작업들을 백그라�
     paintCursor = loadImage("data/images/paint.png");
     eraserCursor = loadImage("data/images/eraser.png");
     spoideCursor = loadImage("data/images/spoide.png");
-    loadingProgress = 0.35;
+    loadingProgress = 0.40;
 
     loadingMessage = "Loading menu button images...";
     catImg = loadImage("images/cat.png");
     foxImg = loadImage("images/fox.png");
     cloudImg = loadImage("images/cloud.png");
     owlImg = loadImage("images/owl.png");
-    loadingProgress = 0.40;
+    loadingProgress = 0.45;
 
     loadingMessage = "Preparing sticker list...";
-    loadStickersFromFolder("sticker", 0.40, 0.90);
+    loadStickersFromFolder("sticker", 0.45, 0.90);
 
     loadingMessage = "Initializing UI...";
     initMenuButtons();
