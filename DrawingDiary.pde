@@ -19,6 +19,14 @@ boolean storagePressed = false;
 boolean colorPickerPressed = false;
 boolean finishPressed = false;
 boolean isStickerLibraryOverlayVisible = false; // 스티커 보관함 오버레이 표시 여부
+// Right-click 'edit' context UI for StickerLibrary overlay
+boolean isStickerEditContextVisible = false;
+float editContextX = 0;
+float editContextY = 0;
+float editContextBtnW = 0;
+float editContextBtnH = 0;
+int editContextStickerIndex = -1;
+
 float overlayScrollY = 0; // 스티커 보관함 오버레이 스크롤 위치
 float minOverlayScrollY = 0; // 스티커 보관함 오버레이 최소 스크롤 위치
 boolean isDraggingScrollbar = false; // 스크롤바 드래그 중인지 여부
@@ -26,15 +34,6 @@ float scrollbarDragStartY; // 스크롤바 드래그 시작 Y 좌표
 float scrollbarDragStartScrollY; // 스크롤바 드래그 시작 시 스크롤 위치
 float scrollbarX, scrollbarY, scrollbarW, scrollbarH; // 스크롤바 위치 및 크기
 float thumbY, thumbH; // 스크롤바 섬 위치 및 크기
-// --- [ADDED] Right-click '수정' context for sticker overlay ---
-boolean isStickerEditContextVisible = false; // 우클릭 컨텍스트 버튼 표시 여부
-float editContextX = 0; 
-float editContextY = 0;
-float editContextBtnW = 0;
-float editContextBtnH = 0;
-int editContextStickerIndex = -1; // stickerLibrary 내의 타겟 인덱스
-// --------------------------------------------------------------
-
 
 int isDatePickerVisible = 0; // 0: 안보임, 1: 달력, 2: 년도
 Calendar datePickerCalendar;
@@ -391,23 +390,15 @@ void drawStickerLibraryOverlay() {
     float scrollableDist = scrollbarH - thumbH;
     float scrollRatio = overlayScrollY / minOverlayScrollY; // 스크롤 비율
     thumbY = scrollbarY + scrollableDist * scrollRatio;
-    // 마우스가 섬 위에 있거나 드래그 중이면 색상 변경
-    if (isDraggingScrollbar || mouseHober(scrollbarX, thumbY, scrollbarW, thumbH)) {
-      fill(120);
-    } else {
-      fill(170);
-    }
-    rect(scrollbarX, thumbY, scrollbarW, thumbH, 6);
-  }
   
-  // [ADDED] 우클릭 '수정' 컨텍스트 버튼 그리기
+  // [Added] Draw small 'edit' chip when right-click context is visible
   if (isStickerEditContextVisible) {
-    // 버튼 기본 크기
     float bw = width * (72.0f/1280.0f);
     float bh = height * (36.0f/720.0f);
-    // 화면 / 패널 안으로 보정
+    // initial position near cursor
     float bx = editContextX;
     float by = editContextY;
+    // ensure within panel bounds
     if (bx + bw > panelX + panelW) bx = (panelX + panelW) - bw;
     if (by + bh > panelY + panelH) by = (panelY + panelH) - bh;
     if (bx < panelX) bx = panelX;
@@ -416,20 +407,28 @@ void drawStickerLibraryOverlay() {
     editContextBtnH = bh;
     editContextX = bx;
     editContextY = by;
-    // 버튼 그리기
+
     noStroke();
     fill(255, 240);
     rect(bx, by, bw, bh, 6);
     stroke(0, 120);
     noFill();
     rect(bx, by, bw, bh, 6);
+
     fill(0);
     textAlign(CENTER, CENTER);
-    textSize(height * (16.0f/720.0f));
-    text("수정", bx + bw/2, by + bh/2);
+    textSize(height*(16.0f/720.0f));
+    text("edit", bx + bw / 2, by + bh / 2);
   }
-  // [/ADDED]
-popStyle();
+  // 마우스가 섬 위에 있거나 드래그 중이면 색상 변경
+    if (isDraggingScrollbar || mouseHober(scrollbarX, thumbY, scrollbarW, thumbH)) {
+      fill(120);
+    } else {
+      fill(170);
+    }
+    rect(scrollbarX, thumbY, scrollbarW, thumbH, 6);
+  }
+  popStyle();
 }
 
 void updateTextUIVisibility() {
@@ -706,8 +705,7 @@ void handleDiaryRelease() {
   if (storagePressed && mouseHober(
       stickerStoreButton.position_x, stickerStoreButton.position_y,
       stickerStoreButton.width, stickerStoreButton.height)) {
-    isStickerEditContextVisible = false;
-    isStickerLibraryOverlayVisible = true;
+    isStickerLibraryOverlayVisible = true; isStickerEditContextVisible = false;
   }
   
   if (colorPickerPressed && mouseHober(
@@ -740,23 +738,27 @@ void handleDiaryRelease() {
 }
 
 void handleStickerLibraryOverlayRelease() {
+  
   float panelX = width * (100.0f/1280.0f);
   float panelY = height * (100.0f/720.0f);
   float panelW = width - 2 * panelX;
   float panelH = height - 2 * panelY;
-  // [ADDED] 우클릭 컨텍스트 버튼: 클릭 처리 및 외부 클릭 시 닫기
+  // [Added] If 'edit' context button is visible, handle its click first
   if (isStickerEditContextVisible && mouseButton == LEFT) {
     float bw = width * (72.0f/1280.0f);
     float bh = height * (36.0f/720.0f);
     float bx = editContextX;
     float by = editContextY;
-    // 패널 내부로 위치 보정 (drawStickerLibraryOverlay와 동일)
+    // bounds correction same as drawing
     if (bx + bw > panelX + panelW) bx = (panelX + panelW) - bw;
     if (by + bh > panelY + panelH) by = (panelY + panelH) - bh;
     if (bx < panelX) bx = panelX;
     if (by < panelY) by = panelY;
     if (mouseHober(bx, by, bw, bh)) {
-      // '수정' 버튼 클릭 → 편집 화면으로 전환
+// Mark that we came here via DrawingDiary overlay -> MakingSticker edit
+returnToDiaryAfterEdit = true;
+overlayWasVisibleBeforeEdit = isStickerLibraryOverlayVisible;
+
       if (editContextStickerIndex >= 0 && editContextStickerIndex < stickerLibrary.size()) {
         stickerToEdit = stickerLibrary.get(editContextStickerIndex);
         stickerCanvas.beginDraw();
@@ -768,16 +770,14 @@ void handleStickerLibraryOverlayRelease() {
       switchScreen(making_sticker);
       return;
     } else {
-      // 다른 영역 클릭: 컨텍스트 버튼만 닫기 (오버레이 유지)
+      // clicked somewhere else -> just close the small button, keep overlay
       isStickerEditContextVisible = false;
-      return;
+      // do not return; allow other clicks (e.g., close button) to be processed
     }
   }
 
-
   // 닫기 버튼 클릭
   if (mouseHober(panelX + panelW - width*(50.0f/1280.0f), panelY + height*(10.0f/720.0f), width*(40.0f/1280.0f), height*(40.0f/720.0f))) { // 닫기 버튼 영역
-    isStickerEditContextVisible = false;
     isStickerLibraryOverlayVisible = false;
     return;
   }
@@ -801,26 +801,30 @@ void handleStickerLibraryOverlayRelease() {
     // 스티커가 보이는 영역(패널) 안에 있을 때만 클릭 처리
     boolean isStickerVisible = (stickerY + newSize.y/2 > panelY + height*(80.0f/720.0f)) && (stickerY - newSize.y/2 < panelY + panelH); // 스티커가 패널 내부에 보이는지 확인
 
+    
     if (isStickerVisible && mouseHober(stickerX - newSize.x / 2, stickerY - newSize.y / 2, newSize.x, newSize.y)) {
       if (mouseButton == RIGHT) {
-        // 우클릭: '수정' 컨텍스트 버튼 표시 (오버레이 유지)
+        // show small 'edit' button near cursor; keep overlay open
         isStickerEditContextVisible = true;
         editContextStickerIndex = i;
         editContextX = mouseX + 8;
         editContextY = mouseY + 8;
         return;
-      } else if (mouseButton == LEFT) {
-
-      Sticker newSticker = new Sticker(width / 2, textFieldY / 2, s.img, defaultStickerSize, s.imageName);
-      isDiaryModified = true; // 스티커 추가 시 수정됨
-      placedStickers.add(newSticker);
-      selectedSticker = newSticker;
-      isStickerEditContextVisible = false;
-    isStickerLibraryOverlayVisible = false; // 스티커 추가 후 오버레이 닫기
-      return;
-    
+      } else {
+        // LEFT click: place sticker into diary at clicked position (Y constrained above text area)
+        PVector displaySize = getScaledImageSize(s.img, defaultStickerSize);
+        float placeX = mouseX;
+        float placeY = constrain(mouseY, 0 + displaySize.y/2, textFieldY - displaySize.y/2);
+        Sticker newSticker = new Sticker(placeX, placeY, s.img, defaultStickerSize, s.imageName);
+        isDiaryModified = true; 
+        placedStickers.add(newSticker);
+        selectedSticker = newSticker;
+        isStickerEditContextVisible = false;
+        isStickerLibraryOverlayVisible = false; 
+        return;
       }
-}
+    }
+
   }
 }
 
@@ -1216,7 +1220,7 @@ if ((!mouseHober(yearmonthScrollX, yearmonthScrollY, yearmonthScrollW, yearmonth
   }
 }
 void handleDrawingDiaryMouseWheel(MouseEvent ev) {
-  // [ADDED] 스크롤 시 컨텍스트 버튼 닫기
+  // hide edit chip on scroll
   isStickerEditContextVisible = false;
 
   if (isStickerLibraryOverlayVisible) { // 스티커 보관함 오버레이가 열려있을 때

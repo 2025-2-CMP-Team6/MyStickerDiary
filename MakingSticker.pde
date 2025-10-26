@@ -514,7 +514,7 @@ void handleCreatorRelease() {
   // 저장 버튼 클릭 처리
   if (mouseHober(width - SAVE_W - BACK_X, height - SAVE_H - BACK_Y, SAVE_W, SAVE_H)) {
     saveSticker();
-    switchScreen(sticker_library);
+    if (returnToDiaryAfterEdit) { switchScreen(drawing_diary); returnToDiaryAfterEdit = false; overlayWasVisibleBeforeEdit = false; } else { switchScreen(sticker_library); }
     return;
   }
   // 도형 그리기가 활성화된 상태에서 마우스를 놓았을 때

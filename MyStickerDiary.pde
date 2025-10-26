@@ -22,6 +22,10 @@ final int name_screen = 6;
 int currentScreen = start_screen;
 int previousScreen = start_screen;
 
+// Flow flags: return to DrawingDiary after in-place edit
+boolean returnToDiaryAfterEdit = false;
+boolean overlayWasVisibleBeforeEdit = false;
+
 int loadingStage = 0; // 0: 시작 전, 1: 백그라운드 로딩 중, 2: 메인 스레드 로딩 완료, 3: 모든 로딩 완료
 float loadingProgress = 0.0; // 로딩 진행률 (0.0 ~ 1.0)
 float displayLoadingProgress = 0.0; // 화면에 표시될 부드러운 진행률
@@ -162,6 +166,16 @@ public void handleTextEvents(GEditableTextControl textcontrol, GEvent event) {
 void switchScreen(int next) {
   int from = currentScreen;
   previousScreen = from;
+// Reset Sticker overlay state when entering DrawingDiary
+if (next == drawing_diary) {
+  isStickerEditContextVisible = false;
+  if (!returnToDiaryAfterEdit) {
+    isStickerLibraryOverlayVisible = false;
+  }
+  isDraggingScrollbar = false;
+  returnToDiaryAfterEdit = false;
+  overlayWasVisibleBeforeEdit = false;
+}
 
   isMenuDragging = false;
   pressedOnNameBtn = false;
@@ -378,7 +392,7 @@ void performHeavySetup() { // 시간이 오래 걸리는 작업들을 백그라�
 
     // 스티커 제작 도구 리소스 로딩
     loadingMessage = "Loading creator tools...";
-    saveImg = loadImage("data/images/saveIcon.png");
+    saveImg = loadImage("data/images/SaveIcon.png");
     backImg = loadImage("data/images/backIcon.png");
     brushImg = loadImage("data/images/brush.png");
     paintImg = loadImage("data/images/paint.png");
@@ -825,21 +839,19 @@ void mouseReleased() {
         // 저장 여부와 관계없이 이전 화면으로 돌아갑니다.
         switchScreen(previousScreen);
       } else if (currentScreen == drawing_diary) {
-        if (isDiaryModified) {
-          UiBooster booster = new UiBooster();
-          boolean confirmed = booster.showConfirmDialog("Do you want to save your diary?", "Save Diary");
-          if (confirmed) {
-            saveDiary();
-            libraryCalendar.set(diary_year, diary_month - 1, 1);
-            loadDiaryDates();
-            switchScreen(diary_library);
-          } else {
-            switchScreen(previousScreen);
-          }
-        } else {
-          switchScreen(previousScreen);
-        }
-      } else if (currentScreen == diary_library) {
+    if (isDiaryModified) {
+      UiBooster booster = new UiBooster();
+      boolean confirmed = booster.showConfirmDialog("Do you want to save your diary?", "Save Diary");
+      if (confirmed) {
+        saveDiary();
+        // Optional: refresh diary data
+        libraryCalendar.set(diary_year, diary_month - 1, 1);
+        loadDiaryDates();
+      }
+    }
+    // Always go to main menu from DrawingDiary
+    switchScreen(menu_screen);
+  } else if (currentScreen == diary_library) {
         // 일기 보관함에서는 메뉴 화면으로 이동
         switchScreen(menu_screen);
       } else if (currentScreen == sticker_library) {
