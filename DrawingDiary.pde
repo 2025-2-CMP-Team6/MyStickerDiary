@@ -671,7 +671,22 @@ void handleDiaryRelease() {
       overlayScrollY = clickRatio * minOverlayScrollY;
       return;
     }
-    handleStickerLibraryOverlayRelease();
+
+    // 패널 영역 계산
+    float panelX = width * (100.0f/1280.0f);
+    float panelY = height * (100.0f/720.0f);
+    float panelW = width - 2 * panelX;
+    float panelH = height - 2 * panelY;
+
+    // 패널 내부에서 클릭이 일어났는지 확인
+    if (mouseHober(panelX, panelY, panelW, panelH)) {
+      // 패널 내부 클릭 시, 세부 동작 처리
+      handleStickerLibraryOverlayRelease();
+    } else {
+      // 패널 외부 클릭 시, 오버레이 닫기
+      isStickerLibraryOverlayVisible = false;
+      isStickerEditContextVisible = false; // 컨텍스트 메뉴도 함께 닫기
+    }
     return;
   }
 
@@ -1329,6 +1344,12 @@ void loadDiary(int year, int month, int day) {
   
   // 현재 일기 상태 초기화
   placedStickers.clear();
+  // 스티커 선택/조작 상태 초기화
+  selectedSticker = null;
+  currentlyDraggedSticker = null;
+  isResizing = -1;
+  resizeAnchor.set(0, 0);
+
   titleArea.setText(diaryData.getString("title", ""));
   textArea.setText(diaryData.getString("content", ""));
   
@@ -1406,11 +1427,6 @@ void loadDiary(int year, int month, int day) {
 }
 
 void resetDiary() {
-  // 스티커 목록 초기화
-  if (placedStickers != null) {
-    placedStickers.clear();
-  }
-  
   // 텍스트 필드 초기화
   if (titleArea != null) {
     titleArea.setText("");
@@ -1425,10 +1441,14 @@ void resetDiary() {
   diary_month = calendar.get(Calendar.MONTH) + 1;
   diary_day = calendar.get(Calendar.DAY_OF_MONTH);
   
-  // 선택된 스티커 및 상태 초기화
+  // 스티커 관련 모든 상태 초기화
+  if (placedStickers != null) {
+    placedStickers.clear();
+  }
   selectedSticker = null;
   currentlyDraggedSticker = null;
   isResizing = -1;
+  resizeAnchor.set(0, 0); // 스티커 리사이즈 기준점 초기화
 
   // 감정 분석 상태 초기화
   lastSentimentScore = -1;

@@ -25,6 +25,7 @@ int previousScreen = start_screen;
 // Flow flags: return to DrawingDiary after in-place edit
 boolean returnToDiaryAfterEdit = false;
 boolean overlayWasVisibleBeforeEdit = false;
+int diaryReturnScreen = menu_screen; // 일기장에서 돌아갈 화면 (메뉴 또는 일기 보관함)
 
 int loadingStage = 0; // 0: 시작 전, 1: 백그라운드 로딩 중, 2: 메인 스레드 로딩 완료, 3: 모든 로딩 완료
 float loadingProgress = 0.0; // 로딩 진행률 (0.0 ~ 1.0)
@@ -165,6 +166,14 @@ public void handleTextEvents(GEditableTextControl textcontrol, GEvent event) {
 
 void switchScreen(int next) {
   int from = currentScreen;
+
+  // 일기 작성 화면으로 진입할 때, 어디서 왔는지 기록합니다.
+  // (메뉴 화면 또는 일기 보관함에서 온 경우에만 해당)
+  // 스티커 편집 등 다른 화면에서 일기 작성 화면으로 돌아올 때는 이 값을 바꾸지 않습니다.
+  if (next == drawing_diary && (from == menu_screen || from == diary_library)) {
+    diaryReturnScreen = from;
+  }
+
   previousScreen = from;
 // Reset Sticker overlay state when entering DrawingDiary
 if (next == drawing_diary) {
@@ -392,7 +401,7 @@ void performHeavySetup() { // 시간이 오래 걸리는 작업들을 백그라�
 
     // 스티커 제작 도구 리소스 로딩
     loadingMessage = "Loading creator tools...";
-    saveImg = loadImage("data/images/SaveIcon.png");
+    saveImg = loadImage("data/images/saveIcon.png");
     backImg = loadImage("data/images/backIcon.png");
     brushImg = loadImage("data/images/brush.png");
     paintImg = loadImage("data/images/paint.png");
@@ -849,8 +858,8 @@ void mouseReleased() {
         loadDiaryDates();
       }
     }
-    // Always go to main menu from DrawingDiary
-    switchScreen(menu_screen);
+    // 기록해둔 이전 화면(메뉴 또는 일기 보관함)으로 돌아갑니다.
+    switchScreen(diaryReturnScreen);
   } else if (currentScreen == diary_library) {
         // 일기 보관함에서는 메뉴 화면으로 이동
         switchScreen(menu_screen);
