@@ -85,6 +85,7 @@ SoundFile song;
 float bgmVolume = 0.5;
 float sfxVolume = 0.8;
 SoundFile clickSound;
+boolean bgmStarted = false;
 
 rectButton dsButton, slButton, ddButton, dlButton;
 GImageButton nameEditButton;
@@ -370,7 +371,7 @@ void performHeavySetup() { // 시간이 오래 걸리는 작업들을 백그라�
     loadingProgress = 0.1;
 
     loadingMessage = "Loading sounds..."; // 사운드 로딩 메시지
-    thread("loadSong");
+    loadSong();
     clickSound = new SoundFile(this, "data/sounds/click.mp3"); // 효과음 로드
     loadingProgress = 0.15;
 
@@ -652,6 +653,13 @@ void drawLoadingScreen() {
 }
 
 void draw() {
+
+    if (!bgmStarted && song != null) {
+      song.loop();
+      song.amp(bgmVolume);
+      bgmStarted = true;
+    }
+    
     if (loadingStage < 3) {
       drawLoadingScreen();
       if (readyToTransition) {
