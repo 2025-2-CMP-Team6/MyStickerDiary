@@ -1,3 +1,5 @@
+// DrawingDiary.pde
+
 rectButton analyzeButton;
 boolean analyzePressed = false;
 boolean isAnalyzing = false;
@@ -9,7 +11,8 @@ int todayWeather;
 
 Sticker selectedSticker;
 float handleSize;
-// -1: 조절중x, 0: 왼쪽 위, 1: 왼쪽 아래, 2: 오른쪽 위, 3: 오른쪽 아래
+// Whether Handling or Not
+// -1: Not Handling, 0: Left Top, 1: Left Bottom, 2: Right Top, 3: Right Bottom
 int isResizing = -1;
 PVector resizeAnchor = new PVector();
 
@@ -18,8 +21,7 @@ rectButton finishButton;
 boolean storagePressed = false;
 boolean colorPickerPressed = false;
 boolean finishPressed = false;
-boolean isStickerLibraryOverlayVisible = false; // 스티커 보관함 오버레이 표시 여부
-// Right-click 'edit' context UI for StickerLibrary overlay
+boolean isStickerLibraryOverlayVisible = false;
 boolean isStickerEditContextVisible = false;
 float editContextX = 0;
 float editContextY = 0;
@@ -27,15 +29,15 @@ float editContextBtnW = 0;
 float editContextBtnH = 0;
 int editContextStickerIndex = -1;
 
-float overlayScrollY = 0; // 스티커 보관함 오버레이 스크롤 위치
-float minOverlayScrollY = 0; // 스티커 보관함 오버레이 최소 스크롤 위치
-boolean isDraggingScrollbar = false; // 스크롤바 드래그 중인지 여부
-float scrollbarDragStartY; // 스크롤바 드래그 시작 Y 좌표
-float scrollbarDragStartScrollY; // 스크롤바 드래그 시작 시 스크롤 위치
-float scrollbarX, scrollbarY, scrollbarW, scrollbarH; // 스크롤바 위치 및 크기
-float thumbY, thumbH; // 스크롤바 섬 위치 및 크기
+float overlayScrollY = 0;
+float minOverlayScrollY = 0; 
+boolean isDraggingScrollbar = false; 
+float scrollbarDragStartY;
+float scrollbarDragStartScrollY; 
+float scrollbarX, scrollbarY, scrollbarW, scrollbarH;
+float thumbY, thumbH;
 
-int isDatePickerVisible = 0; // 0: 안보임, 1: 달력, 2: 년도
+int isDatePickerVisible = 0; // 0: UnVisible, 1: Month, 2: Year
 Calendar datePickerCalendar;
 float datePickerWidth;
 float datePickerHeight;
@@ -58,7 +60,7 @@ int yearPicker;
 int monthPicker;
 int set;
 
-int nowDragInPicker; // 0: 드래그x, 1: 년도, 2: 달
+int nowDragInPicker; // 0: Not Dragged, 1: Year, 2: Month
 
 boolean datePressed = false;
 
@@ -88,7 +90,6 @@ void drawDiary() {
   rect(0, 0, width, navigationBarY);
   rect(0, textFieldY, width, height - textFieldY);
   
-  // 공통 뒤로가기 버튼은 항상 그려줍니다.
   drawBackButton(DIARY_BACK_X, DIARY_BACK_Y, DIARY_BACK_W, DIARY_BACK_H);
   
   pushStyle();
@@ -98,11 +99,11 @@ void drawDiary() {
   text("Name : " + username, width * (100.0f/1280.0f), height * (30.0f/720.0f));
   popStyle();
   
-  // 일기장에 붙여진 스티커들을 그리기
+  // Draw Stickers Placed in Diary
   for (Sticker s : placedStickers) {
     s.display();
   }
-  // 스티커가 선택되었고, 이동 드래그 중이 아닐 때만 핸들을 그립니다.
+  // When Sticker is Selected, Draw Handle
   if (selectedSticker != null && !(isResizing == -1 && currentlyDraggedSticker != null)) {
     pushStyle();
     fill(255);
@@ -116,15 +117,15 @@ void drawDiary() {
     popStyle();
   }
 
-  // 스티커를 드래그하여 이동 중일 때 삭제 존 표시
-  if (currentlyDraggedSticker != null && isResizing == -1) { // 이동 중에만
+  // When Sticker Moving, Draw Delete Zone
+  if (currentlyDraggedSticker != null && isResizing == -1) {
     float deleteZoneSize = 64;
     float deleteZoneX = 0;
     float deleteZoneY = textFieldY - deleteZoneSize;
 
     pushStyle();
-    fill(255, 0, 0, 100); // 반투명한 붉은색
-    noStroke(); // 외곽선이 생기는 것을 방지합니다.
+    fill(255, 0, 0, 100);
+    noStroke();
     rectMode(CORNER);
     rect(deleteZoneX, deleteZoneY, deleteZoneSize, deleteZoneSize);
     imageMode(CENTER);
@@ -145,18 +146,15 @@ void drawDiary() {
   diaryColorPicker.render();
   finishButton.render();
 
-  // 감정 분석 로딩/결과 UI
+  // Anlaysis Button
   pushStyle();
   textAlign(LEFT, CENTER);
   textSize(16);
-
-  // 버튼 레이아웃과 일관성을 유지하기 위해 Y 좌표를 다시 계산합니다.
   float btnH = height * (60.0f/720.0f);
   float analyzeBtnY = navigationBarY + 20;
-  float sentimentTextY = analyzeBtnY + btnH + 4; // 분석 버튼 아래에 텍스트 위치
+  float sentimentTextY = analyzeBtnY + btnH + 4;
 
-  if (isAnalyzing) {
-    // 로딩 텍스트
+  if (isAnalyzing) {  // When Analayzing, Draw text
     fill(0);
     text("Analyzing sentiment...", width * (1100.0f/1280.0f), sentimentTextY);
     pushMatrix();
@@ -172,24 +170,23 @@ void drawDiary() {
     arc(0, 0, 19, 19, 0, PI + HALF_PI);
     popStyle();
     popMatrix();
-  }
-   else if (lastSentimentScore >= 0) {
+  } 
+   else if (lastSentimentScore >= 0) {  // When Finish Analayzing, Draw Sentiment Text
     fill(0);
     text("Sentiment: " + lastSentimentLabel + String.format(" (%.2f)", lastSentimentScore),
         width * (1100.0f/1280.0f), sentimentTextY);
   }
   popStyle();
 
-  // 날씨 아이콘
-  if (weatherIcon != null) {
+  // Weather Icon
+  if (weatherIcon != null) {  // Draw Weather Icon
     pushStyle();
     imageMode(CENTER);
     int iconCount = weatherIcon.length;
     float baseIconSize = width * (40.0f / 1280.0f);
     float rightMargin = width * (300.0f / 1280.0f);
-    float iconSpacing = width * (10.0f / 1280.0f); // 아이콘 사이의 간격
+    float iconSpacing = width * (10.0f / 1280.0f);
     for (int i = 0; i < iconCount; i++) {
-      // 아이콘의 고정된 중앙 위치 계산 (오른쪽부터 왼쪽으로)
       float x_center = width - rightMargin - (baseIconSize / 2) - (i * (baseIconSize + iconSpacing));
       float y_center = navigationBarY / 2;
 
@@ -198,18 +195,17 @@ void drawDiary() {
       
       if (todayWeather == i) {
         drawEmotIcon = weatherIcon[i];
-        // 선택된 아이콘에 펄스 효과 추가
-        float pulse = 1.0 + sin(frameCount * 0.1) * 0.05; // 1.0 ~ 1.05 사이로 크기 변화
+        float pulse = 1.0 + sin(frameCount * 0.1) * 0.05; // Pulse Effect
         effectiveIconSize = baseIconSize * pulse;
       } else {
         drawEmotIcon = weatherIcon[i].get();
         drawEmotIcon.filter(GRAY);
-        // 호버 감지 영역은 호버 시의 크기를 기준으로 합니다.
+        // Hober Effect
         if (mouseHober(x_center - (baseIconSize * 0.875f) / 2, y_center - (baseIconSize * 0.875f) / 2, baseIconSize * 0.875f, baseIconSize * 0.875f)) {
           effectiveIconSize = baseIconSize * 0.875f;
         }
-        else { // 평상시 30/40 크기
-          effectiveIconSize = baseIconSize * 0.75f; // 평상시 30/40 크기
+        else { 
+          effectiveIconSize = baseIconSize * 0.75f;
         }
       }
       PVector newSize = getScaledImageSize(drawEmotIcon, effectiveIconSize);
@@ -218,19 +214,17 @@ void drawDiary() {
     popStyle();
   }
 
-  // 표정 아이콘
+  // Emotion Icon
   if (emotIcon != null) {
     pushStyle();
-    imageMode(CENTER); // 이미지 중앙 정렬
+    imageMode(CENTER);
     int iconCount = emotIcon.length;
-    float iconSize = width * (40.0f / 1280.0f); // 아이콘 크기
-    float rightMargin = width * (20.0f / 1280.0f); // 오른쪽 끝에서의 여백
-    float iconSpacing = width * (10.0f / 1280.0f); // 아이콘 사이의 간격
-    for (int i = 0; i < iconCount; i++) {
+    float iconSize = width * (40.0f / 1280.0f);
+    float rightMargin = width * (20.0f / 1280.0f);
+    float iconSpacing = width * (10.0f / 1280.0f);
+    for (int i = 0; i < iconCount; i++) { // Draw Emotion Icon
       float currentIconSize = iconSize;
-      // 아이콘 x 좌표 계산 (오른쪽부터 왼쪽으로)
       float x = width - rightMargin - (currentIconSize / 2) - (i * (currentIconSize + iconSpacing)); 
-      // 아이콘 y 좌표 계산 (상단 바의 중앙)
       float y = navigationBarY / 2; 
       PImage drawEmotIcon;
       if (round(lastSentimentScore * 5) == i) {
@@ -241,28 +235,23 @@ void drawDiary() {
         drawEmotIcon.filter(GRAY);
         currentIconSize *= 0.75f;
       }
-      // image(drawEmotIcon, x, y, currentIconSize, currentIconSize);
       PVector newSize = getScaledImageSize(drawEmotIcon, currentIconSize);
       image(drawEmotIcon, x, y, newSize.x, newSize.y);
     }
     popStyle();
   }
 
-  if(diary_year != -1 && diary_month != -1 && diary_day != -1) {
+  if(diary_year != -1 && diary_month != -1 && diary_day != -1) {  // Draw Diary Date
     pushStyle();
     textSize(30);
     String dateString = "Date : " + diary_year + ". " + diary_month + ". " + diary_day;
-    float dateTextW = textWidth(dateString); // 날짜 텍스트 너비
+    float dateTextW = textWidth(dateString);
     float dateTextH = 30;
-    
-    // 날짜 텍스트의 중앙 좌표를 정의합니다.
     float dateTextCenterX = width/2 - width * (120.0f/1280.0f);
     float dateTextCenterY = height * (30.0f/720.0f);
-    
-    // 호버 감지 및 그리기를 위한 사각형의 좌상단 좌표를 계산합니다.
     float dateRectX = dateTextCenterX - dateTextW / 2;
     float dateRectY = dateTextCenterY - dateTextH / 2;
-
+    // When Mouse Hober on Date, Draw Rectangle
     if (isDatePickerVisible == 0 && !isStickerLibraryOverlayVisible && mouseHober(dateRectX, dateRectY, dateTextW, dateTextH)) {
       fill(150,100);
       noStroke();
@@ -274,41 +263,36 @@ void drawDiary() {
     popStyle();
   }
   
-  // 날짜 선택기(달력)가 활성화되어 있으면 그리기
+  // Draw Date Picker
   if (isDatePickerVisible != 0) {
     drawDatePicker();
     if (isDatePickerVisible == 2) {
       drawYearMonthPicker();
     }
   }
-
   if (isStickerLibraryOverlayVisible) {
     drawStickerLibraryOverlay();
   }
 }
-
+// Draw Sticker Library When Overlay is Visible
 void drawStickerLibraryOverlay() {
   pushStyle();
-  // 배경 어둡게
   fill(0, 150);
   rect(0, 0, width, height);
-
-  // 보관함 패널
+  // Library
   rectMode(CORNER);
-  float panelX = width * (100.0f/1280.0f); // 패널 X 좌표
+  float panelX = width * (100.0f/1280.0f);
   float panelY = height * (100.0f/720.0f);
   float panelW = width - 2 * panelX;
   float panelH = height - 2 * panelY;
   fill(220, 240, 220);
   rect(panelX, panelY, panelW, panelH, 10);
-
-  // 제목
-  fill(0); // 텍스트 색상
+  // Title
+  fill(0);
   textAlign(CENTER, CENTER);
   textSize(30);
   text("Sticker Library", panelX + panelW / 2, panelY + height*(40.0f/720.0f));
-
-  // 닫기 버튼
+  // Close Button
   textSize(24);
   fill(100);
   if (mouseHober(panelX + panelW - width*(50.0f/1280.0f), panelY + height*(10.0f/720.0f), width*(40.0f/1280.0f), height*(40.0f/720.0f))) {
@@ -321,11 +305,9 @@ void drawStickerLibraryOverlay() {
   float contentPaddingX = width * (30.0f/1280.0f);
   float contentPaddingY = height * (80.0f/720.0f);
   float scrollbarAreaWidth = width * (40.0f/1280.0f);
-  rect(panelX + contentPaddingX - 16, panelY + contentPaddingY - 20, panelW - contentPaddingX - scrollbarAreaWidth + 42, panelH - contentPaddingY + 8, 4); // 스크롤 영역 배경
+  rect(panelX + contentPaddingX - 16, panelY + contentPaddingY - 20, panelW - contentPaddingX - scrollbarAreaWidth + 42, panelH - contentPaddingY + 8, 4);
   popStyle();
-
-  // 스티커 목록 그리기
-
+  // Draw Sticker List
   pushStyle();
   float boxSize = width * (100.0f/1280.0f);
   float spacing = width * (120.0f/1280.0f);
@@ -334,7 +316,7 @@ void drawStickerLibraryOverlay() {
   int cols = floor((panelW - 100) / spacing);
   rectMode(CORNER);
   
-  // 스크롤 범위
+  // Mouse Scroll 
   if (stickerLibrary.size() > 0) {
     int numRows = (stickerLibrary.size() - 1) / cols + 1;
     float contentHeight = (numRows - 1) * spacing + boxSize;
@@ -346,18 +328,17 @@ void drawStickerLibraryOverlay() {
   
   clip(startX - boxSize/2, startY - boxSize/2 - 16, panelW - width*(100.0f/1280.0f), panelH - height*(100.0f/720.0f));
 
-  for (int i = 0; i < stickerLibrary.size(); i++) {
+  for (int i = 0; i < stickerLibrary.size(); i++) { // Draw Stickers
     Sticker s = stickerLibrary.get(i);
     int c = i % cols;
     int r = i / cols;
-
     float stickerX = startX + c * spacing;
-    float stickerY = startY + r * spacing - overlayScrollY; // 스크롤 위치 반영
+    float stickerY = startY + r * spacing - overlayScrollY;
     PVector newSize = getScaledImageSize(s.img, boxSize);
 
     imageMode(CENTER);
     image(s.img, stickerX, stickerY, newSize.x, newSize.y);
-
+    // Hober Effect
     if (mouseHober(stickerX - newSize.x / 2, stickerY - newSize.y / 2, newSize.x, newSize.y)) {
       stroke(0);
       strokeWeight(3);
@@ -367,8 +348,8 @@ void drawStickerLibraryOverlay() {
       rectMode(CORNER);
     }
   }
-  noClip(); // 클리핑 해제
-  // 스크롤바 그리기
+  noClip();
+  // Draw ScrollBar
   if (minOverlayScrollY > 0) {
     scrollbarW = width * (12.0f/1280.0f);
     float scrollbarMargin = width * (20.0f/1280.0f);
@@ -376,29 +357,27 @@ void drawStickerLibraryOverlay() {
     scrollbarY = panelY + height * (80.0f/720.0f);
     scrollbarH = panelH - height * (120.0f/720.0f);
 
-    // 스크롤바 트랙 그리기
+    // ScrollBar Track
     fill(200, 180);
     noStroke();
     rect(scrollbarX, scrollbarY, scrollbarW, scrollbarH, 6);
 
-    // 스크롤바 섬 그리기
+    // ScrollBar Thumb
     float viewHeight = panelH - (startY - panelY);
     int numRows = (stickerLibrary.size() - 1) / cols + 1;
     float contentHeight = (numRows - 1) * spacing + boxSize;
     thumbH = scrollbarH * (viewHeight / contentHeight);
     thumbH = max(thumbH, 25);
     float scrollableDist = scrollbarH - thumbH;
-    float scrollRatio = overlayScrollY / minOverlayScrollY; // 스크롤 비율
+    float scrollRatio = overlayScrollY / minOverlayScrollY;
     thumbY = scrollbarY + scrollableDist * scrollRatio;
   
-  // [Added] Draw small 'edit' chip when right-click context is visible
+  // Draw small 'edit' chip when right-click context is visible
   if (isStickerEditContextVisible) {
     float bw = width * (72.0f/1280.0f);
     float bh = height * (36.0f/720.0f);
-    // initial position near cursor
     float bx = editContextX;
     float by = editContextY;
-    // ensure within panel bounds
     if (bx + bw > panelX + panelW) bx = (panelX + panelW) - bw;
     if (by + bh > panelY + panelH) by = (panelY + panelH) - bh;
     if (bx < panelX) bx = panelX;
@@ -420,7 +399,7 @@ void drawStickerLibraryOverlay() {
     textSize(height*(16.0f/720.0f));
     text("edit", bx + bw / 2, by + bh / 2);
   }
-  // 마우스가 섬 위에 있거나 드래그 중이면 색상 변경
+  // When Mouse Hober on ScrollBar Thumb
     if (isDraggingScrollbar || mouseHober(scrollbarX, thumbY, scrollbarW, thumbH)) {
       fill(120);
     } else {
@@ -433,8 +412,8 @@ void drawStickerLibraryOverlay() {
 
 void updateTextUIVisibility() {
   boolean onDiary = (currentScreen == drawing_diary);
-  if (textArea != null) { // 텍스트 필드가 초기화되었는지 확인
-    // 오버레이(스티커, 설정, 달력)가 활성화되면 텍스트 필드를 비활성화합니다.
+  if (textArea != null) {
+    // When Overy Activate, DisActive Text Area
     boolean isOverlayActive = (isStickerLibraryOverlayVisible || isSettingsVisible) || (isDatePickerVisible != 0);
     titleArea.setVisible(onDiary);
     titleArea.setEnabled(onDiary && !isOverlayActive);
@@ -451,15 +430,15 @@ void updateTextUIVisibility() {
     }
   }
 }
+// Mouse Handle in Drawing Diary
 void handleDiaryMouse() {
-
+  // on Analyze Button
   if (analyzeButton != null) {
     analyzePressed = mouseHober(analyzeButton.position_x, analyzeButton.position_y,
                                 analyzeButton.width, analyzeButton.height);
   } else analyzePressed = false;
-  
+  // on Sticker Library Overlay
   if (isStickerLibraryOverlayVisible) {
-    // 오버레이 활성 시 스크롤바 드래그 확인
     if (minOverlayScrollY > 0 && mouseHober(scrollbarX, thumbY, scrollbarW, thumbH)) {
       isDraggingScrollbar = true;
       scrollbarDragStartY = mouseY;
@@ -467,32 +446,27 @@ void handleDiaryMouse() {
     }
     return;
   } 
-  
+  // on Date Picker
   if (isDatePickerVisible != 0) {
     handleDatePickerMouse();
     return;
   }
-  
-  if (isDatePickerVisible != 0) { // 달력/년도 선택기가 열려있으면 다른 마우스 이벤트 무시
-    return;
-  } 
-  // 스티커 위에서 마우스를 눌렀는지 확인
-  isResizing = -1; // 리사이징 상태 초기화
+  // If on Sticker,
+  isResizing = -1;
   selectedSticker = null;
   currentlyDraggedSticker = null;
-
+  // Get Sticker on which Mouse Hober
   for (int i = placedStickers.size() - 1; i >= 0; i--) {
     Sticker s = placedStickers.get(i);
     PVector displaySize = s.getDisplaySize();
-
-    // 먼저 조절 핸들을 클릭했는지 확인 (핸들이 스티커보다 위에 그려지므로)
+    // on Sticker Handle
     for (int j = 0; j < 4; j++) {
       float[] handle = s.getHandleRect(j, handleSize);
       if (mouseHober(handle[0], handle[1], handle[2], handle[3])) {
         isResizing = j;
         selectedSticker = s;
-        currentlyDraggedSticker = s; // 리사이징 중에도 드래그 대상으로 설정
-        // 크기 조절을 시작할 때 반대 모서리를 고정점으로 설정
+        currentlyDraggedSticker = s;
+        // Set Anchor Point 
         if (j == 0) { 
           resizeAnchor.set(s.x + displaySize.x/2, s.y + displaySize.y/2);
         } else if (j == 1) {
@@ -508,24 +482,24 @@ void handleDiaryMouse() {
     if (selectedSticker != null) {
       break;
     }
-    // 스티커 본체를 클릭했는지 확인
+    // on Sticker
     if (mouseHober(s.x - displaySize.x/2, s.y - displaySize.y/2, displaySize.x, displaySize.y)) {
       selectedSticker = s;
       currentlyDraggedSticker = s;
       offsetX = mouseX - s.x;
       offsetY = mouseY - s.y;
       isResizing = -1;
-      break; // 가장 위에 있는 스티커만 선택
+      break;
     }
   }
-
+  // on Sticker Store Button
   if (stickerStoreButton != null) {
     storagePressed = mouseHober(stickerStoreButton.position_x, stickerStoreButton.position_y,
       stickerStoreButton.width, stickerStoreButton.height);
   } else {
     storagePressed = false;
   }
-
+  // on Finish Button
   if (finishButton != null) {
     finishPressed = mouseHober(
       finishButton.position_x, finishButton.position_y,
@@ -534,21 +508,21 @@ void handleDiaryMouse() {
   } else {
     finishPressed = false;
   }
-
+  // on Date Picker OK Button
   if (yearmonthOK != null) {
     yearmonthOKPressed = mouseHober(yearmonthOK.position_x, yearmonthOK.position_y,
       yearmonthOK.width, yearmonthOK.height);
   } else {
     yearmonthOKPressed = false;
   }
-
+  // on Date Picker Back Button
   if (yearmonthCancle != null) {
     yearmonthCanclePressed = mouseHober(yearmonthCancle.position_x, yearmonthCancle.position_y,
       yearmonthCancle.width, yearmonthCancle.height);
   } else {
     yearmonthCanclePressed = false;
   }
-
+  // on Color Picker
   if (diaryColorPicker != null) {
     colorPickerPressed = mouseHober(diaryColorPicker.position_x, diaryColorPicker.position_y,
       diaryColorPicker.width, diaryColorPicker.height);
@@ -556,25 +530,25 @@ void handleDiaryMouse() {
     colorPickerPressed = false;
   }
   
-  // 날짜 텍스트 클릭 여부 확인
+  // on Date
   float[] dateRect = getDateTextRect();
   datePressed = mouseHober(dateRect[0], dateRect[1], dateRect[2], dateRect[3]);
 }
-  
+// Mouse Drag in Drawing Diary
 void handleDiaryDrag() {
-  if (isStickerLibraryOverlayVisible) {
-    // 스크롤바 드래그 처리
+  if (isStickerLibraryOverlayVisible) { // on Sticker Library Overlay
+    // on ScrollBar
     if (isDraggingScrollbar) {
       float dy = mouseY - scrollbarDragStartY;
       float scrollablePixelRange = scrollbarH - thumbH;
       if (scrollablePixelRange > 0) {
-        // 마우스 이동 거리에 비례하여 스크롤 양을 계산합니다.
         float scrollAmount = dy * (minOverlayScrollY / scrollablePixelRange);
         overlayScrollY = constrain(scrollbarDragStartScrollY + scrollAmount, 0, minOverlayScrollY);
       } 
     }
     return;
   }
+  // on Date Picker
   if (isDatePickerVisible != 0) {
     handleDatePickerDrag();
     return;
@@ -582,31 +556,26 @@ void handleDiaryDrag() {
   if (currentlyDraggedSticker == null) {
     return;
   }
-  // 스티커를 드래그(이동 또는 크기 조절)하면 수정된 것으로 간주
   isDiaryModified = true;
-
+  // on Sticker
   Sticker s = currentlyDraggedSticker;
-  if (isResizing == -1) { // 크기 조절 핸들이 아니면 스티커 이동
+  if (isResizing == -1) { // If Handle Not Clicked,
     PVector displaySize = s.getDisplaySize();
-    // 스티커의 위치를 마우스 위치로 업데이트
+    // Move Sticker
     s.x = constrain(mouseX - offsetX, 0, width);
     s.y = constrain(mouseY - offsetY, 0, textFieldY - displaySize.y/2);
-  } else { // 크기 조절 중
-  PVector anchor = resizeAnchor; // 고정점
-  // 크기 계산
+  } else { // If Resizing
+  PVector anchor = resizeAnchor;  // Get Anchor Point 
   float newDisplayW = abs(mouseX - anchor.x);
   float newDisplayH = abs(min(mouseY, textFieldY) - anchor.y);
-
   float imgRatio = (float)s.img.width / (float)s.img.height;
   float boxRatio = (newDisplayH == 0) ? 10000 : newDisplayW / newDisplayH;
-
-  if (boxRatio > imgRatio) { // 스티커 비율 유지
+   if (boxRatio > imgRatio) { // Fix Sticker Ratio
     s.size = (s.img.height >= s.img.width) ? newDisplayH : newDisplayH * imgRatio;
   } else { 
     s.size = (s.img.width >= s.img.height) ? newDisplayW : newDisplayW / imgRatio;
   }
-
-  // 최소 크기 제한
+  // Minimum Size
   s.size = max(s.size, 20);
   PVector newCalculatedDisplaySize = s.getDisplaySize();
 
@@ -627,9 +596,9 @@ void handleDiaryDrag() {
   }
 }
   
-// 마우스를 놓았을 때 호출
+// Mouse Release in Drawing Diary
 void handleDiaryRelease() {
-
+  // on Analyze Button
   if (analyzePressed && mouseHober(
         analyzeButton.position_x, analyzeButton.position_y,
         analyzeButton.width, analyzeButton.height)) {
@@ -637,7 +606,7 @@ void handleDiaryRelease() {
   }
   analyzePressed = false;
   
-  // 날씨 아이콘 클릭 처리 (오버레이가 없을 때만)
+  // on Weather Icon
   if (weatherIcon != null && !isStickerLibraryOverlayVisible && isDatePickerVisible == 0) {
     int iconCount = weatherIcon.length;
     float baseIconSize = width * (40.0f / 1280.0f);
@@ -647,87 +616,81 @@ void handleDiaryRelease() {
       float x_center = width - rightMargin - (baseIconSize / 2) - (i * (baseIconSize + iconSpacing));
       float y_center = navigationBarY / 2;
 
-      // 선택되지 않은 아이콘을 클릭했는지 확인
       if (todayWeather != i && mouseHober(x_center - (baseIconSize * 0.875f) / 2, y_center - (baseIconSize * 0.875f) / 2, baseIconSize * 0.875f, baseIconSize * 0.875f)) {
         todayWeather = i;
         isDiaryModified = true;
         initWeatherEffects();
-        return; // 한 번에 하나의 동작만 처리
+        return;
       }
     }
   }
-  
+  // on Sticker Library Overlay
   if (isStickerLibraryOverlayVisible) {
     if (isDraggingScrollbar) {
       isDraggingScrollbar = false;
       return;
     }
     
-    // 스크롤바 트랙 클릭
-    if (minOverlayScrollY > 0 && mouseHober(scrollbarX, scrollbarY, scrollbarW, scrollbarH) && !mouseHober(scrollbarX, thumbY, scrollbarW, thumbH)) { // 스크롤바 섬이 아닌 트랙 클릭
-      // 스크롤 이동
+    // on ScrollBar Track
+    if (minOverlayScrollY > 0 && mouseHober(scrollbarX, scrollbarY, scrollbarW, scrollbarH) && !mouseHober(scrollbarX, thumbY, scrollbarW, thumbH)) {
       float clickRatio = (mouseY - scrollbarY - thumbH / 2) / (scrollbarH - thumbH);
       clickRatio = constrain(clickRatio, 0, 1);
       overlayScrollY = clickRatio * minOverlayScrollY;
       return;
     }
-
-    // 패널 영역 계산
+    // on Sticker Library Overlay Panel
     float panelX = width * (100.0f/1280.0f);
     float panelY = height * (100.0f/720.0f);
     float panelW = width - 2 * panelX;
     float panelH = height - 2 * panelY;
 
-    // 패널 내부에서 클릭이 일어났는지 확인
-    if (mouseHober(panelX, panelY, panelW, panelH)) {
-      // 패널 내부 클릭 시, 세부 동작 처리
+    if (mouseHober(panelX, panelY, panelW, panelH)) { // on Panel
       handleStickerLibraryOverlayRelease();
-    } else {
-      // 패널 외부 클릭 시, 오버레이 닫기
+    } else {  // outside Panel, Close Overlay
       isStickerLibraryOverlayVisible = false;
-      isStickerEditContextVisible = false; // 컨텍스트 메뉴도 함께 닫기
+      isStickerEditContextVisible = false;
     }
     return;
   }
-
+  // on Date Picker
   if (isDatePickerVisible != 0) {
     handleDatePickerMouseRelease();
     return;
   }
 
-  // 스티커가 삭제 존 위에서 놓아졌는지 확인합니다.
-  if (currentlyDraggedSticker != null && isResizing == -1) { // 드래그 중인 스티커가 있고 크기 조절 중이 아닐 때
+  // If Sticker is on DeleteZone,
+  if (currentlyDraggedSticker != null && isResizing == -1) {  // When Sticker Drag
     float deleteZoneSize = 64;
     if (mouseHober(0, textFieldY - deleteZoneSize, deleteZoneSize, deleteZoneSize)) {
-      placedStickers.remove(currentlyDraggedSticker); // 스티커 삭제
-      isDiaryModified = true; // 스티커 삭제 시 수정됨
-      selectedSticker = null; // 선택된 스티커도 초기화
+      placedStickers.remove(currentlyDraggedSticker); // Delete Sticker
+      isDiaryModified = true;
+      selectedSticker = null;
     }
   }
-  currentlyDraggedSticker = null; // 스티커 놓기
-    isResizing = -1;
-
-  if (finishPressed && mouseHober(
+  // If not Clicked Sticker,
+  currentlyDraggedSticker = null; // Initialize Select
+  isResizing = -1;
+  // on Finish Button
+  if (finishPressed && mouseHober(  
       finishButton.position_x, finishButton.position_y,
       finishButton.width,      finishButton.height)) {
-         // 일기 보관함으로 이동하기 전에, 보관함의 달력을 현재 일기 날짜로 설정
+         // Set Librarys' Date to Diary's Date
          libraryCalendar.set(diary_year, diary_month - 1, 1);
          switchScreen(diary_library);
          saveDiary();
          loadDiaryDates();
        }
-
+  // on Sticker Store Button
   if (storagePressed && mouseHober(
       stickerStoreButton.position_x, stickerStoreButton.position_y,
       stickerStoreButton.width, stickerStoreButton.height)) {
     isStickerLibraryOverlayVisible = true; isStickerEditContextVisible = false;
   }
-  
+  // on Color Picker
   if (colorPickerPressed && mouseHober(
       diaryColorPicker.position_x, diaryColorPicker.position_y,
       diaryColorPicker.width, diaryColorPicker.height)) {
-    UiBooster booster = new UiBooster(); // UI 부스터 객체 생성
-    // 현재 네비게이션 바 색상을 기본값으로 설정 (RGB와 불투명 알파 255를 명시적으로 전달)
+    UiBooster booster = new UiBooster();
     java.awt.Color defaultColor = new java.awt.Color(
         round(red(diaryPaperColor)), round(green(diaryPaperColor)), round(blue(diaryPaperColor)), 255
     );
@@ -737,12 +700,12 @@ void handleDiaryRelease() {
         if (newColor != diaryPaperColor) {
           diaryPaperColor = newColor;
           diaryBackgroundColor = lerpColor(diaryPaperColor, color(255), 0.8);
-          isDiaryModified = true; // 색상 변경 시 수정됨
+          isDiaryModified = true;
         }
     }
   }
 
-  // 날짜 텍스트 클릭 시 달력 열기
+  // on Date
   float[] dateRect = getDateTextRect();
   if (datePressed && mouseHober(dateRect[0], dateRect[1], dateRect[2], dateRect[3])) { openDatePickerDialog(); }
   
@@ -752,27 +715,26 @@ void handleDiaryRelease() {
   datePressed = false;
 }
 
+// Mouse Release in Sticker Library Overlay 
 void handleStickerLibraryOverlayRelease() {
   
   float panelX = width * (100.0f/1280.0f);
   float panelY = height * (100.0f/720.0f);
   float panelW = width - 2 * panelX;
   float panelH = height - 2 * panelY;
-  // [Added] If 'edit' context button is visible, handle its click first
+  // If 'edit' Context Button is Visible, Handle Its Click First
   if (isStickerEditContextVisible && mouseButton == LEFT) {
     float bw = width * (72.0f/1280.0f);
     float bh = height * (36.0f/720.0f);
     float bx = editContextX;
     float by = editContextY;
-    // bounds correction same as drawing
     if (bx + bw > panelX + panelW) bx = (panelX + panelW) - bw;
     if (by + bh > panelY + panelH) by = (panelY + panelH) - bh;
     if (bx < panelX) bx = panelX;
     if (by < panelY) by = panelY;
-    if (mouseHober(bx, by, bw, bh)) {
-// Mark that we came here via DrawingDiary overlay -> MakingSticker edit
-returnToDiaryAfterEdit = true;
-overlayWasVisibleBeforeEdit = isStickerLibraryOverlayVisible;
+    if (mouseHober(bx, by, bw, bh)) { // Hober Effect
+      returnToDiaryAfterEdit = true;
+      overlayWasVisibleBeforeEdit = isStickerLibraryOverlayVisible;
 
       if (editContextStickerIndex >= 0 && editContextStickerIndex < stickerLibrary.size()) {
         stickerToEdit = stickerLibrary.get(editContextStickerIndex);
@@ -784,24 +746,23 @@ overlayWasVisibleBeforeEdit = isStickerLibraryOverlayVisible;
       isStickerEditContextVisible = false;
       switchScreen(making_sticker);
       return;
-    } else {
-      // clicked somewhere else -> just close the small button, keep overlay
+    } else { // If Click outside, 
       isStickerEditContextVisible = false;
-      // do not return; allow other clicks (e.g., close button) to be processed
     }
   }
 
-  // 닫기 버튼 클릭
-  if (mouseHober(panelX + panelW - width*(50.0f/1280.0f), panelY + height*(10.0f/720.0f), width*(40.0f/1280.0f), height*(40.0f/720.0f))) { // 닫기 버튼 영역
+  // on Close Button
+  if (mouseHober(panelX + panelW - width*(50.0f/1280.0f), panelY + height*(10.0f/720.0f), width*(40.0f/1280.0f), height*(40.0f/720.0f))) {
     isStickerLibraryOverlayVisible = false;
     return;
   }
 
-  // 스티커 클릭 시 일기장에 추가
+  // on Sticker Library Overlay Panel
+  
   float boxSize = width * (100.0f/1280.0f);
   float spacing = width * (120.0f/1280.0f);
-  int startX = (int)(panelX + 80);   // drawStickerLibraryOverlay와 동일한 값 사용
-  int startY = (int)(panelY + 130);  // drawStickerLibraryOverlay와 동일한 값 사용
+  int startX = (int)(panelX + 80); 
+  int startY = (int)(panelY + 130);
   int cols = floor((panelW - 100) / spacing);
   
   for (int i = 0; i < stickerLibrary.size(); i++) {
@@ -813,20 +774,18 @@ overlayWasVisibleBeforeEdit = isStickerLibraryOverlayVisible;
     float stickerY = startY + r * spacing - overlayScrollY;
     PVector newSize = getScaledImageSize(s.img, boxSize);
 
-    // 스티커가 보이는 영역(패널) 안에 있을 때만 클릭 처리
-    boolean isStickerVisible = (stickerY + newSize.y/2 > panelY + height*(80.0f/720.0f)) && (stickerY - newSize.y/2 < panelY + panelH); // 스티커가 패널 내부에 보이는지 확인
+    boolean isStickerVisible = (stickerY + newSize.y/2 > panelY + height*(80.0f/720.0f)) && (stickerY - newSize.y/2 < panelY + panelH); // Whether Sticker is Visible
 
-    
     if (isStickerVisible && mouseHober(stickerX - newSize.x / 2, stickerY - newSize.y / 2, newSize.x, newSize.y)) {
       if (mouseButton == RIGHT) {
-        // show small 'edit' button near cursor; keep overlay open
+        // Show Small 'edit' Button Near Cursor; Keep Overlay Open
         isStickerEditContextVisible = true;
         editContextStickerIndex = i;
         editContextX = mouseX + 8;
         editContextY = mouseY + 8;
         return;
       } else {
-        // LEFT click: place sticker into diary at clicked position (Y constrained above text area)
+        // LEFT Click: Place Sticker into Diary at Clicked Position
         PVector displaySize = getScaledImageSize(s.img, defaultStickerSize);
         float placeX = mouseX;
         float placeY = constrain(mouseY, 0 + displaySize.y/2, textFieldY - displaySize.y/2);
@@ -839,19 +798,19 @@ overlayWasVisibleBeforeEdit = isStickerLibraryOverlayVisible;
         return;
       }
     }
-
   }
 }
 
-
+/* Get Date Pickers Position and Size
+ * @retrun float[] Date Rect and Texts' Position
+ */
 float[] getDateTextRect() {
   pushStyle();
   textSize(30);
   String dateString = "Date : " + diary_year + ". " + diary_month + ". " + diary_day;
-  float dateTextW = textWidth(dateString); // 날짜 텍스트 너비
-  float dateTextH = 30; // 대략적인 높이
+  float dateTextW = textWidth(dateString);
+  float dateTextH = 30;
   
-  // drawDiary()와 동일한 로직으로 중앙 좌표를 계산합니다.
   float dateTextCenterX = width/2 - width * (120.0f/1280.0f);
   float dateTextCenterY = height * (30.0f/720.0f);
   
@@ -866,7 +825,6 @@ void openDatePickerDialog() {
   if (datePickerCalendar == null) {
     datePickerCalendar = (Calendar) calendar.clone();
   } else { 
-    // 열 때마다 현재 일기 날짜로 달력을 동기화
     datePickerCalendar.setTime(calendar.getTime());
   }
 
@@ -875,10 +833,10 @@ void openDatePickerDialog() {
   isDatePickerVisible = 1;
 }
 
-void closeDatePickerDialog() { // 달력 닫기
+void closeDatePickerDialog() {
   isDatePickerVisible --;
 }
-
+// Draw Date Picker
 void drawDatePicker() {
   pushStyle();
   fill(0, 150);
@@ -890,7 +848,7 @@ void drawDatePicker() {
   strokeWeight(1);
   rect(datePickerX, datePickerY, datePickerWidth, datePickerHeight, 8);
 
-  textAlign(CENTER, CENTER); // 텍스트 중앙 정렬
+  textAlign(CENTER, CENTER);
   fill(0);
   textSize(20);
   String monthString = monthToString(datePickerCalendar.get(Calendar.MONTH));
@@ -898,39 +856,38 @@ void drawDatePicker() {
 
   text(datePickerCalendar.get(Calendar.YEAR) + " " + monthString, datePickerX + datePickerWidth / 2, datePickerY + height*(30.0f/720.0f));
 
-  // 이전/다음 달 화살표
   textSize(24);
-  text("<", datePickerX + width*(30.0f/1280.0f), datePickerY + height*(30.0f/720.0f)); // 이전 달
-  text(">", datePickerX + datePickerWidth - width*(30.0f/1280.0f), datePickerY + height*(30.0f/720.0f)); // 다음 달
+  text("<", datePickerX + width*(30.0f/1280.0f), datePickerY + height*(30.0f/720.0f)); // Previous
+  text(">", datePickerX + datePickerWidth - width*(30.0f/1280.0f), datePickerY + height*(30.0f/720.0f)); // Next
 
-  // 요일 레이블
+  // Week Text
   String[] daysOfWeek = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
-  textSize(14); // 요일 텍스트 크기
+  textSize(14);
   float cellWidth = datePickerWidth / 7.0;
   for (int i = 0; i < 7; i++) {
-    fill(i == 0 ? color(200, 0, 0) : 0); // 일요일 
+    fill(i == 0 ? color(200, 0, 0) : 0); // Red Sunday
     text(daysOfWeek[i], datePickerX + cellWidth * i + cellWidth / 2, datePickerY + height*(70.0f/720.0f));
   }
 
-  // 날짜 그리드
+  // Date Grid
   Calendar tempCal = (Calendar) datePickerCalendar.clone();
   tempCal.set(Calendar.DAY_OF_MONTH, 1);
   int firstDayOfWeek = tempCal.get(Calendar.DAY_OF_WEEK);
   int maxDaysInMonth = tempCal.getActualMaximum(Calendar.DAY_OF_MONTH);
 
   int day = 1;
-  float cellHeight = (datePickerHeight - height*(100.0f/720.0f)) / 6.0; // 날짜 셀 높이
+  float cellHeight = (datePickerHeight - height*(100.0f/720.0f)) / 6.0;
   textSize(16);
-
+  // Each Day
   for (int row = 0; row < 6; row++) {
     for (int col = 0; col < 7; col++) {
-      if (row == 0 && col < firstDayOfWeek - 1) continue; // 1일 이전
-      if (day > maxDaysInMonth) break; // 마지막 날짜를 넘어가면 중단
+      if (row == 0 && col < firstDayOfWeek - 1) continue;
+      if (day > maxDaysInMonth) break;
 
       float x = datePickerX + col * cellWidth;
-      float y = datePickerY + height*(90.0f/720.0f) + row * cellHeight; // 날짜 셀 Y 좌표
+      float y = datePickerY + height*(90.0f/720.0f) + row * cellHeight;
       
-      // 현재 선택된 날짜 표시
+      // Selected Day
       if (datePickerCalendar.get(Calendar.YEAR) == diary_year &&
           datePickerCalendar.get(Calendar.MONTH) + 1 == diary_month &&
           day == diary_day) {
@@ -939,7 +896,7 @@ void drawDatePicker() {
         ellipse(x + cellWidth / 2, y + cellHeight / 2, cellWidth * 0.8, cellHeight * 0.8);
       } 
       if (isDatePickerVisible == 1) {
-        // 마우스 호버 효과
+        // Hober Effect
         if (mouseHober(x, y, cellWidth, cellHeight)) {
           noFill();
           stroke(0, 100);
@@ -969,12 +926,12 @@ void drawDatePicker() {
     rect(datePickerX + datePickerWidth / 2 - width*(58.0f/1280.0f), datePickerY+height*(8.0f/720.0f), width*(128.0f/1280.0f), height*(48.0f/720.0f), 12);
   }
 
-  // 닫기 버튼
+  // Close Button
   float backBtnW = 100;
   float backBtnH = 30;
   float backBtnX = datePickerX + (datePickerWidth - backBtnW) / 2;
   float backBtnY = datePickerY + datePickerHeight - backBtnH - 10;
-
+  // Hober Effect
   if (mouseHober(backBtnX, backBtnY, backBtnW, backBtnH)) {
       fill(220, 220, 220);
   } else {
@@ -988,6 +945,8 @@ void drawDatePicker() {
   text("Back", backBtnX + backBtnW / 2, backBtnY + backBtnH / 2);
   popStyle();
 }
+
+// Open and Initialize Year Month Picker
 void openYearMonthPicker() {
   Calendar base = (datePickerCalendar != null) ? datePickerCalendar : calendar;
   yearPicker  = base.get(Calendar.YEAR);
@@ -1007,8 +966,9 @@ void openYearMonthPicker() {
   yearmonthScrollY = height/2-yearmonthScrollH/2;
   initYearMonthButton(); 
 }
+// Initialize Buttons in Year Month Picker
 void initYearMonthButton() {
-  yearmonthOK = new rectButton(this, round(yearmonthScrollX-yearmonthButtonA+width*(240.0f/1280.0f)), round(yearmonthScrollY+yearmonthScrollH-height*(32.0f/720.0f)), round(width*(48.0f/1280.0f)), round(height*(24.0f/720.0f)), #FBDAB0); // 확인 버튼
+  yearmonthOK = new rectButton(this, round(yearmonthScrollX-yearmonthButtonA+width*(240.0f/1280.0f)), round(yearmonthScrollY+yearmonthScrollH-height*(32.0f/720.0f)), round(width*(48.0f/1280.0f)), round(height*(24.0f/720.0f)), #FBDAB0);
   yearmonthOK.rectButtonText("OK", 18);
   yearmonthOK.setShadow(false);
   yearmonthCancle = new rectButton(this, round(yearmonthScrollX+yearmonthButtonA+width*(240.0f/1280.0f)), round(yearmonthScrollY+yearmonthScrollH-height*(32.0f/720.0f)), round(width*(48.0f/1280.0f)), round(height*(24.0f/720.0f)), #D9D9D9);
@@ -1016,7 +976,7 @@ void initYearMonthButton() {
   yearmonthCancle.setShadow(false);
 }
 
-
+// Draw Year Month Picker
 void drawYearMonthPicker() {
   pushStyle();
   fill(0, 150);
@@ -1033,43 +993,33 @@ void drawYearMonthPicker() {
   rect(yearmonthScrollX+width*(64.0f/1280.0f),yearmonthY-height*(24.0f/720.0f),yearmonthScrollW-width*(64.0f/1280.0f),height*(48.0f/720.0f));
   fill(0);
   textAlign(CENTER,CENTER);
-  if (nowDragInPicker == 0) { // 드래그 중이 아닐 때
+  if (nowDragInPicker == 0) {
     text(yearPicker, yearPickerX, yearmonthY);  
-
     text(monthToString(monthToIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+width*(128.0f/1280.0f), yearmonthY);
-
     fill(125);
     text(monthToString(prevMonthIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+width*(128.0f/1280.0f), yearmonthY-height*(48.0f/720.0f));
     text(monthToString(nextMonthIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+width*(128.0f/1280.0f), yearmonthY+height*(48.0f/720.0f));
-
     if (yearPicker > 0)    { text(yearPicker-1, yearPickerX, yearmonthY-height*(48.0f/720.0f)); }
     if (yearPicker < 9999) { text(yearPicker+1, yearPickerX, yearmonthY+height*(48.0f/720.0f)); }
   }
   
-  else if (nowDragInPicker == 1) {
-
+  else if (nowDragInPicker == 1) {  // Drag Year
     text(yearPicker, yearPickerX, yearmonthY + set*height*(4.8f/720.0f));  
-
     text(monthToString(monthToIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+width*(128.0f/1280.0f), yearmonthY);
-
     fill(125);
     text(monthToString(prevMonthIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+width*(128.0f/1280.0f), yearmonthY-height*(48.0f/720.0f));
     text(monthToString(nextMonthIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+width*(128.0f/1280.0f), yearmonthY+height*(48.0f/720.0f));
-
     if (yearPicker > 0)    { text(yearPicker-1, yearPickerX, yearmonthY-height*(48.0f/720.0f) + set*height*(4.8f/720.0f)); }
     if (yearPicker < 9999) { text(yearPicker+1, yearPickerX, yearmonthY+height*(48.0f/720.0f) + set*height*(4.8f/720.0f)); }
 
   } 
-  else if (nowDragInPicker == 2) {
+  else if (nowDragInPicker == 2) {  // Drag Month
 
-    text(yearPicker, yearPickerX, yearmonthY);  // 선택 년도
-
+    text(yearPicker, yearPickerX, yearmonthY);
     text(monthToString(monthToIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+width*(128.0f/1280.0f), yearmonthY + set*height*(4.8f/720.0f));
-
     fill(125);
     text(monthToString(prevMonthIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+width*(128.0f/1280.0f), yearmonthY-height*(48.0f/720.0f) + set*height*(4.8f/720.0f));
     text(monthToString(nextMonthIdx0(monthPicker)), yearmonthScrollX+yearmonthScrollW/2+width*(128.0f/1280.0f), yearmonthY+height*(48.0f/720.0f) + set*height*(4.8f/720.0f));
-
     if (yearPicker > 0)    { text(yearPicker-1, yearPickerX, yearmonthY-height*(48.0f/720.0f)); }
     if (yearPicker < 9999) { text(yearPicker+1, yearPickerX, yearmonthY+height*(48.0f/720.0f)); }
     
@@ -1086,15 +1036,15 @@ void drawYearMonthPicker() {
 
 
 }
+
 void handleDatePickerMouse() {
-  if (isDatePickerVisible == 2) { // 년도 설정창이 열려있으면
+  if (isDatePickerVisible == 2) { // If Year Month Picker is Visible
     handleYearMonthMouse();
     return;
   }
-  // 달력 클릭 로직 (이전/다음 달, 날짜 선택 등)
 }
 
-void handleYearMonthMouse() {  // 년도 설정창 클릭
+void handleYearMonthMouse() {  // on Year Month Picker
   if (nowDragInPicker == 0) {
     if (mouseHober(yearPickerX-width*(64.0f/1280.0f),yearmonthScrollY,width*(192.0f/1280.0f),yearmonthScrollH)) {
       nowDragInPicker = 1;
@@ -1105,62 +1055,57 @@ void handleYearMonthMouse() {  // 년도 설정창 클릭
       return;
     }
   }
-  // 년도/월 선택 로직
 }
 
-void handleDatePickerDrag() {
-  if (isDatePickerVisible == 2) {
+void handleDatePickerDrag() { // Mouse Darg in Date Picker
+  if (isDatePickerVisible == 2) { // If Year Month Picker is Visible
     handleYearMonthDrag();
     return;
   }
 }
-void handleYearMonthDrag() {  // 년도 설정창 드래그
-  println(set);
+void handleYearMonthDrag() {  // Mouse Drag in Year Month Picker
   if (mouseY > pmouseY) set += 2;
   if (mouseY < pmouseY) set -= 2;
-
+  // Range of Year(0~9999) Month(1~12) 
   if (set >= 10) {
-    if (nowDragInPicker == 1) { // 년도
-      if (yearPicker > 0) yearPicker--; // 년도 감소
+    if (nowDragInPicker == 1) {
+      if (yearPicker > 0) yearPicker--;
     } else if (nowDragInPicker == 2) {
       monthPicker--;
-      if (monthPicker < 1) monthPicker = 12; // 월 감소 (1월 미만이면 12월로)
+      if (monthPicker < 1) monthPicker = 12;
     }
     set = 0;
   }
   if (set <= -10) {
-    if (nowDragInPicker == 1) { // 년도
+    if (nowDragInPicker == 1) {
       if (yearPicker < 9999) yearPicker++;
     } else if (nowDragInPicker == 2) {
       monthPicker++;
-      if (monthPicker > 12) monthPicker = 1; // 월 증가 (12월 초과면 1월로)
+      if (monthPicker > 12) monthPicker = 1;
     }
     set = 0;
   }
 }
+// Mouse Release in Date Picker
 void handleDatePickerMouseRelease() {
   float cellWidth = datePickerWidth / 7.0;
-  if ((isDatePickerVisible == 2)) {
-    
+  if ((isDatePickerVisible == 2)) { // If Year Month Picker is Visible
     if (yearmonthOK != null &&
         mouseHober(yearmonthOK.position_x, yearmonthOK.position_y, yearmonthOK.width, yearmonthOK.height)) {
       datePickerCalendar.set(yearPicker, monthPicker - 1, 1);
       closeDatePickerDialog();
       return;
-      
     }
-
     if (yearmonthCancle != null &&
       mouseHober(yearmonthCancle.position_x, yearmonthCancle.position_y, yearmonthCancle.width, yearmonthCancle.height)) {
       isDatePickerVisible = 1;
       return;
     }
-
     handleYearMonthMouseRelease();
     return;
   }
 
-  // 닫기 버튼 클릭
+  // on Close Button
   float backBtnW = 100;
   float backBtnH = 30;
   float backBtnX = datePickerX + (datePickerWidth - backBtnW) / 2;
@@ -1170,24 +1115,24 @@ void handleDatePickerMouseRelease() {
       return;
   }
 
-  // 이전 달 화살표
+  // on Previous Month
   float arrowArea = width*(60.0f/1280.0f);
   if (mouseHober(datePickerX, datePickerY, arrowArea, arrowArea)) {
     datePickerCalendar.add(Calendar.MONTH, -1);
     return;
   }
-  // 다음 달 화살표
+  // on Next Month
   if (mouseHober(datePickerX + datePickerWidth - arrowArea, datePickerY, arrowArea, arrowArea)) {
     datePickerCalendar.add(Calendar.MONTH, 1);
     return;
   }
-  // 년도/월 텍스트 클릭
+  // on Year/Month Text
   if (mouseHober(datePickerX + datePickerWidth / 2 - width*(60.0f/1280.0f), datePickerY, width*(128.0f/1280.0f), height*(64.0f/720.0f))) {
     openYearMonthPicker();
     return;
   }
 
-  // 날짜 클릭 확인
+  // on Each Day
   Calendar tempCal = (Calendar) datePickerCalendar.clone();
   tempCal.set(Calendar.DAY_OF_MONTH, 1);
   int firstDayOfWeek = tempCal.get(Calendar.DAY_OF_WEEK);
@@ -1199,16 +1144,13 @@ void handleDatePickerMouseRelease() {
     for (int col = 0; col < 7; col++) {
       if (row == 0 && col < firstDayOfWeek - 1) continue;
       if (day > maxDaysInMonth) break;
-
       float x = datePickerX + col * cellWidth;
       float y = datePickerY + height*(90.0f/720.0f) + row * cellHeight;
-
       if (mouseHober(x, y, cellWidth, cellHeight)) {
-        // 날짜 선택 및 적용
+        // Select Day
         int newYear = datePickerCalendar.get(Calendar.YEAR);
         int newMonth = datePickerCalendar.get(Calendar.MONTH) + 1;
         int newDay = day;
-
         if (newYear != diary_year || newMonth != diary_month || newDay != diary_day) {
           isDiaryModified = true;
         }
@@ -1216,7 +1158,7 @@ void handleDatePickerMouseRelease() {
         diary_month = newMonth;
         diary_day = newDay;
 
-        // 메인 calendar 업데이트
+        // Update Diary Calendar
         calendar.set(diary_year, diary_month - 1, diary_day);
         closeDatePickerDialog();
         return;
@@ -1224,8 +1166,7 @@ void handleDatePickerMouseRelease() {
       day++;
     }
   }
-  
-  // 달력 바깥 영역 클릭 시 닫기
+  // on Outside
   if ((!mouseHober(datePickerX, datePickerY, datePickerWidth, datePickerHeight))&&(isDatePickerVisible == 1)) {
     closeDatePickerDialog();
   }
@@ -1234,34 +1175,34 @@ if ((!mouseHober(yearmonthScrollX, yearmonthScrollY, yearmonthScrollW, yearmonth
     isDatePickerVisible = 1;
   }
 }
+// Mouse Wheel in Diary
 void handleDrawingDiaryMouseWheel(MouseEvent ev) {
-  // hide edit chip on scroll
+  // Dide edit Chip on Scroll
   isStickerEditContextVisible = false;
 
-  if (isStickerLibraryOverlayVisible) { // 스티커 보관함 오버레이가 열려있을 때
+  if (isStickerLibraryOverlayVisible) { // If Sticker Library Overlay is Visible
     if (mouseHober(width*(130.0f/1280.0f), height*(164.0f/720.0f), width - width*(270.0f/1280.0f), height - height*(280.0f/720.0f))) {
-      float scrollAmount = ev.getCount() * 10; // 스크롤 속도
+      float scrollAmount = ev.getCount() * 10;
       overlayScrollY = constrain(overlayScrollY + scrollAmount, 0, minOverlayScrollY);
     }
   }
 
 
-  if (isDatePickerVisible == 2) { // 년도/월 선택기가 열려있을 때
-    if (mouseHober(yearPickerX-width*(64.0f/1280.0f),yearmonthScrollY,width*(192.0f/1280.0f),yearmonthScrollH)) {
+  if (isDatePickerVisible == 2) { // Year Month Picker is Visible
+    if (mouseHober(yearPickerX-width*(64.0f/1280.0f),yearmonthScrollY,width*(192.0f/1280.0f),yearmonthScrollH)) { // Scroll Year
       yearPicker -= ev.getCount();
       yearPicker = constrain(yearPicker, 1, 9998);
     }
-    if (mouseHober(yearmonthScrollX+yearmonthScrollW/2+width*(64.0f/1280.0f),yearmonthScrollY,width*(192.0f/1280.0f),yearmonthScrollH)) { // 월 선택 영역
+    if (mouseHober(yearmonthScrollX+yearmonthScrollW/2+width*(64.0f/1280.0f),yearmonthScrollY,width*(192.0f/1280.0f),yearmonthScrollH)) { // Scroll Month
       monthPicker -= ev.getCount();
       monthPicker = clampMonth1to12(monthPicker);
     }
   }
 }
 
-
-
+// Mouse Release in Year Month Picker
 void handleYearMonthMouseRelease() {
-  if (nowDragInPicker != 0) { // 드래그 중이었다면
+  if (nowDragInPicker != 0) {
       nowDragInPicker = 0;
       set = 0;
       return;
@@ -1271,37 +1212,34 @@ void handleYearMonthMouseRelease() {
     return;
   }
 }
+
 void saveDiary() {
-  // 같은 날짜의 기존 일기 삭제
+  // If There Exist Same Day Diary, Delete it
   File diaryFolder = new File(dataPath("diaries"));
   String filePrefix = "diary_" + diary_year + "_" + diary_month + "_" + diary_day + "_";
-
   if (diaryFolder.exists() && diaryFolder.isDirectory()) {
     File[] files = diaryFolder.listFiles();
     if (files != null) {
       for (File file : files) {
         if (file.getName().startsWith(filePrefix) && file.getName().endsWith(".json")) {
-          println("Deleting old diary file: " + file.getName());
           if (!file.delete()) {
-            println("Warning: Failed to delete old diary file: " + file.getName());
           }
         }
       }
     }
   }
 
+  // Create JSONEObject Contain Information of Diary
   JSONObject diaryData = new JSONObject();
-
-  // 색상 저장
+  // Save Colors
   diaryData.setInt("paperColor", diaryPaperColor);
   diaryData.setInt("backgroundColor", diaryBackgroundColor);
-  
-  // Save weather
+  // Save Weather
   diaryData.setInt("weather", todayWeather);
-
+  // Save Texts
   diaryData.setString("title", titleArea.getText());
   diaryData.setString("content", textArea.getText());
-
+  // Save Stickers Datas
   JSONArray stickerArray = new JSONArray();
   for (Sticker s : placedStickers) {
     JSONObject stickerData = new JSONObject();
@@ -1312,13 +1250,11 @@ void saveDiary() {
     stickerArray.append(stickerData);
   }
   diaryData.setJSONArray("stickers", stickerArray);
-
+  // Create File (File Name : YYYY_MM_DD_(SentimentScore).json)
   String newFileName = "diary_" + diary_year + "_" + diary_month + "_" + diary_day + "_(" + (lastSentimentScore * 10) + ").json";
   saveJSONObject(diaryData, "data/diaries/" + newFileName);
-  println("Diary saved to data/diaries/" + newFileName);
 }
 
-// 일기 로드
 void loadDiary(int year, int month, int day) {
   File diaryFolder = new File(dataPath("diaries"));
   String filePrefix = "diary_" + year + "_" + month + "_" + day;
@@ -1337,46 +1273,40 @@ void loadDiary(int year, int month, int day) {
   }
   
   JSONObject diaryData = loadJSONObject(foundFilePath);
+
   if (diaryData == null) {
-    println("Failed to load or parse diary file: " + foundFilePath);
     return;
   }
-  
-  // 현재 일기 상태 초기화
+  // Get Loaded Diary Data and Set Current Diary
   placedStickers.clear();
-  // 스티커 선택/조작 상태 초기화
   selectedSticker = null;
   currentlyDraggedSticker = null;
   isResizing = -1;
   resizeAnchor.set(0, 0);
-
   titleArea.setText(diaryData.getString("title", ""));
   textArea.setText(diaryData.getString("content", ""));
   
-  // 일기 날짜 업데이트
+  // Update Calendar
   diary_year = year;
   diary_month = month;
   diary_day = day;
   calendar.set(diary_year, diary_month - 1, diary_day);
 
-  // 색상 로드 (이전 파일 호환을 위한 기본값 포함)
+  // Load Colors
   color defaultPaperColor = color(251, 218, 176); 
   color defaultBackgroundColor = lerpColor(defaultPaperColor, color(255), 0.8);
-
   diaryPaperColor = diaryData.getInt("paperColor", defaultPaperColor);
   diaryBackgroundColor = diaryData.getInt("backgroundColor", defaultBackgroundColor);
-
-  // Load weather, with a default if not present
-  todayWeather = diaryData.getInt("weather", 0); // Default to sunny (0) if not saved
+  // Load Weather
+  todayWeather = diaryData.getInt("weather", 0);
   
   // Load Emotion
-
-  lastSentimentScore = -1.0f;
+  lastSentimentScore = -1.0f; // Default
   lastSentimentLabel = "";
+  //Get Emotion Data form FileName
   if (foundFilePath != null && foundFilePath.contains("(") && foundFilePath.contains(")")) {
     int startIndex = foundFilePath.indexOf('(') + 1;
     int endIndex = foundFilePath.lastIndexOf(')');
-
 	if (startIndex > 0 && endIndex > startIndex) {
       try {
         String scoreStr = foundFilePath.substring(startIndex, endIndex);
@@ -1388,19 +1318,17 @@ void loadDiary(int year, int month, int day) {
     }
   }
   
-  // 스티커 로드
+  // Load Stickers
   JSONArray stickerArray = diaryData.getJSONArray("stickers");
   if (stickerArray != null) {
     for (int i = 0; i < stickerArray.size(); i++) {
       JSONObject stickerData = stickerArray.getJSONObject(i);
-      
       String imageName = stickerData.getString("imageName");
       float x = stickerData.getFloat("x");
       float y = stickerData.getFloat("y");
       float size = stickerData.getFloat("size");
-      
       PImage stickerImg = null;
-      for (Sticker libSticker : stickerLibrary) { // 스티커 라이브러리에서 이미지 찾기
+      for (Sticker libSticker : stickerLibrary) { // Get Sticker Image From Library
         if (libSticker.imageName.equals(imageName)) {
           stickerImg = libSticker.img;
           break;
@@ -1408,7 +1336,7 @@ void loadDiary(int year, int month, int day) {
       }
       
       if (stickerImg == null) {
-        println("Sticker image not found in library: " + imageName + ". Trying to load from file."); // 라이브러리에 없으면 파일에서 로드 시도
+        println("Sticker image not found in library: " + imageName + ". Trying to load from file."); // Sticker Image not Exist in Library, Try to Load in File
         stickerImg = loadImage(dataPath("sticker/" + imageName));
       }
       
@@ -1422,12 +1350,11 @@ void loadDiary(int year, int month, int day) {
   }
   
   initWeatherEffects();
-  isDiaryModified = false; // 일기 로드 후 수정 상태 초기화
-  println("Diary loaded for " + year + "-" + month + "-" + day);
+  isDiaryModified = false;
 }
 
 void resetDiary() {
-  // 텍스트 필드 초기화
+  // Reset Texts
   if (titleArea != null) {
     titleArea.setText("");
   }
@@ -1435,38 +1362,36 @@ void resetDiary() {
     textArea.setText("");
   }
   
-  // 날짜를 오늘 날짜로 초기화
-  calendar = Calendar.getInstance(); // 오늘 날짜로 새로고침
+  // Reset Date
+  calendar = Calendar.getInstance();
   diary_year = calendar.get(Calendar.YEAR);
   diary_month = calendar.get(Calendar.MONTH) + 1;
   diary_day = calendar.get(Calendar.DAY_OF_MONTH);
   
-  // 스티커 관련 모든 상태 초기화
+  // Reset Stickers
   if (placedStickers != null) {
     placedStickers.clear();
   }
   selectedSticker = null;
   currentlyDraggedSticker = null;
   isResizing = -1;
-  resizeAnchor.set(0, 0); // 스티커 리사이즈 기준점 초기화
+  resizeAnchor.set(0, 0);
 
-  // 감정 분석 상태 초기화
+  // Reset Sentiment
   lastSentimentScore = -1;
-  lastSentimentLabel = "";    // 표시용
+  lastSentimentLabel = "";
 
-  // 날씨를 현재 날씨로 다시 가져오기
+  // Reset Weather
   todayWeather = getWeather();
 
-  // 색상 초기화
+  // Reset Colors
   diaryPaperColor = color(251, 218, 176);
   diaryBackgroundColor = lerpColor(diaryPaperColor, color(255), 0.8);
   initWeatherEffects();
-  isDiaryModified = false; // 새 일기 시작 시 수정 상태 초기화
-  
-  
-  println("Diary has been reset for a new entry.");
-}
 
+  isDiaryModified = false;
+}
+// Get Sentiment Analysis Result from API
 void startDiarySentimentAnalysis() {
   if (isAnalyzing) return;
   isAnalyzing = true;
@@ -1478,14 +1403,11 @@ void startDiarySentimentAnalysis() {
       SentimentResult r = EA_analyzeText(text);         // ← EmotionAnalysisAPI.pde
       lastSentimentScore = r.score01;
       lastSentimentLabel = r.label;
-
-      String key = makeDateKey(diary_year, diary_month, diary_day); // 날짜 키 생성
+      String key = makeDateKey(diary_year, diary_month, diary_day);
       diarySentiments.put(key, lastSentimentScore);
-
-      isDiaryModified = true; // 감정 분석 결과가 나오면 수정된 것으로 간주
+      isDiaryModified = true;
 
       isAnalyzing = false;
-      println("[Sentiment] " + key + " -> " + r.label + " (" + nf(lastSentimentScore,1,2) + ")");
     }
   }).start();
 }

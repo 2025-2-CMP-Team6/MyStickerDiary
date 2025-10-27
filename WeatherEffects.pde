@@ -63,7 +63,7 @@ void drawWeatherEffect() {
 // Wheather Effects
 void drawSunnyEffect() {
   pushStyle();
-  float sunX = width - 80;
+  float sunX = 80;
   float sunY = 80;
   float sunRadius = 60;
   noStroke();
