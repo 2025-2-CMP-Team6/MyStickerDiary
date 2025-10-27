@@ -801,9 +801,10 @@ void handleStickerLibraryOverlayRelease() {
   }
 }
 
-/* Get Date Pickers Position and Size
- * @retrun float[] Date Rect and Texts' Position
- */
+/** 
+ * Get Date Pickers Position and Size
+ * @return float[] Date Rect and Texts' Position
+ **/
 float[] getDateTextRect() {
   pushStyle();
   textSize(30);

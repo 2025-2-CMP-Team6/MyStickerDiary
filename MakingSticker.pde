@@ -638,7 +638,8 @@ void performRedo() {
     stickerCanvas.endDraw();
   }
 }
-/* FloodFill Algorithm using in Paint Tool
+/**
+ * FloodFill Algorithm using in Paint Tool
  * @param x input x
  * @param y input y
  * @param color input color
@@ -710,7 +711,8 @@ void drawRainbowCircle(float x, float y, float diameter) {
   circle(x, y, diameter);
   popStyle();
 }
-/* Check Whether Canvas Blank or not
+/**
+ * Check Whether Canvas Blank or not
  * @param pg input PGraphics
  * @return boolean If Canvas Blank return true
  */

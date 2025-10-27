@@ -1,3 +1,5 @@
+// MyStickerDiary.pde
+
 import interfascia.*;
 import uibooster.*;
 import java.io.File;
@@ -22,19 +24,18 @@ final int name_screen = 6;
 int currentScreen = start_screen;
 int previousScreen = start_screen;
 
-// Flow flags: return to DrawingDiary after in-place edit
 boolean returnToDiaryAfterEdit = false;
 boolean overlayWasVisibleBeforeEdit = false;
-int diaryReturnScreen = menu_screen; // 일기장에서 돌아갈 화면 (메뉴 또는 일기 보관함)
+int diaryReturnScreen = menu_screen; // Screen to Return to from Diary
 
-int loadingStage = 0; // 0: 시작 전, 1: 백그라운드 로딩 중, 2: 메인 스레드 로딩 완료, 3: 모든 로딩 완료
-float loadingProgress = 0.0; // 로딩 진행률 (0.0 ~ 1.0)
-float displayLoadingProgress = 0.0; // 화면에 표시될 부드러운 진행률
-String loadingMessage = ""; // 현재 로딩 작업 메시지
-boolean readyToTransition = false; // 로딩 완료 후 화면 전환 준비 플래그
+int loadingStage = 0; // 0: Before Start, 1: Background Loading, 2: Main Thread Loading Complete, 3: All Loading Complete.
+float loadingProgress = 0.0;
+float displayLoadingProgress = 0.0;
+String loadingMessage = "";
+boolean readyToTransition = false;
 
-boolean isSettingsVisible = false; // 설정 화면 표시 여부
-boolean isMouseOverStartBtn = false; // 마우스가 버튼 위에 있는지 여부
+boolean isSettingsVisible = false;
+boolean isMouseOverStartBtn = false;
 ArrayList<Bubble> bubbles;
 PFont myFont;
 ArrayList<Sticker> stickerLibrary;
@@ -53,7 +54,7 @@ PImage[] weatherIcon;
 PImage undoIcon;
 PImage trashClosedIcon, trashOpenIcon;
 
-// 스티커 제작 도구 아이콘 및 커서
+// Sticker Creator Tool Icons and Cursors
 PImage saveImg;
 PImage backImg;
 PImage brushImg;
@@ -114,8 +115,7 @@ float BACK_X, BACK_Y;
 float DIARY_BACK_W, DIARY_BACK_H;
 float DIARY_BACK_X, DIARY_BACK_Y;
 
-boolean isBackButtonPressed = false; // 뒤로가기 버튼 눌림 상태 추적
-
+boolean isBackButtonPressed = false;
 void drawBackButton(float x, float y, float w, float h) {
   if (backImg != null) {
     pushStyle();
@@ -157,24 +157,18 @@ void textAreaUI() {
 }
 
 public void handleTextEvents(GEditableTextControl textcontrol, GEvent event) {
-  // 일기 작성 화면에서 텍스트가 변경되었을 때만 플래그 설정
   if (currentScreen == drawing_diary && (textcontrol == titleArea || textcontrol == textArea)) {
     if (event == GEvent.CHANGED) {
       isDiaryModified = true;
     }
   }
 }
-
+// When Switch Screen, Record the Next/Previous Screen.
 void switchScreen(int next) {
   int from = currentScreen;
-
-  // 일기 작성 화면으로 진입할 때, 어디서 왔는지 기록합니다.
-  // (메뉴 화면 또는 일기 보관함에서 온 경우에만 해당)
-  // 스티커 편집 등 다른 화면에서 일기 작성 화면으로 돌아올 때는 이 값을 바꾸지 않습니다.
   if (next == drawing_diary && (from == menu_screen || from == diary_library)) {
     diaryReturnScreen = from;
   }
-
   previousScreen = from;
 // Reset Sticker overlay state when entering DrawingDiary
 if (next == drawing_diary) {
@@ -192,8 +186,8 @@ if (next == drawing_diary) {
   totalDragDist = 0;
 
   if (from == making_sticker) {
-    stickerToEdit = null; // 스티커 편집 상태 초기화
-    resetCreator(); // 스티커 만들기 화면 전체 상태 초기화
+    stickerToEdit = null; // Reset Sticker Edit State.
+    resetCreator(); // Reset the Entire Sticker Creator Screen State.
   }
 
   menuTargetScrollX = menuScrollX;
@@ -203,17 +197,17 @@ if (next == drawing_diary) {
   cursor(ARROW);
 
   if (next == making_sticker) {
-    clearUndoStack(); // 되돌리기 및 다시 실행 스택 초기화
-    saveUndoState();  // 캔버스의 초기 상태(빈 화면 또는 편집할 스티커) 저장
-    isStickerModified = false; // 스티커 수정 상태 초기화
+    clearUndoStack(); // Initialize Undo and Redo Stacks.
+    saveUndoState();  // Save the Initial State of the Canvas (Blank or Sticker to Edit).
+    isStickerModified = false; // Reset Sticker Modified State.
   }
 
   currentScreen = next;
 
   updateTextUIVisibility();
 
-  // 화면이 전환될 때, 다음 화면이 메뉴 화면일 경우에만 nameEditButton을 보이도록
   if (nameEditButton != null) {
+    // When the Screen Changes, Make nameEditButton Visible Only if the Next Screen is the Menu.
     nameEditButton.setVisible(next == menu_screen);
   }
   if (next == diary_library) {
@@ -226,11 +220,10 @@ if (next == drawing_diary) {
 float worldMouseX() { return mouseX + menuScrollX; }
 float worldMouseY() { return mouseY; } 
 
+// Initialize Menu Button
 void initMenuButtons() {
-  // 버튼 사이의 간격(menuGutterX)을 일관되게 유지하고, 페이지 가장자리 여백(pagePaddingX)을 그 절반으로 설정
-  // 페이지가 넘어갈 때의 버튼 간격과 페이지 내의 버튼 간격이 동일
-  float menuGutterX = width * (120.0f / 1280.0f); // 버튼 사이의 주된 간격
-  float pagePaddingX = menuGutterX / 2.0f;       // 페이지 가장자리 여백
+  float menuGutterX = width * (120.0f / 1280.0f);
+  float pagePaddingX = menuGutterX / 2.0f;
 
   float btnW = (width - pagePaddingX * 2 - menuGutterX) / 2;
   float btnH = height * (360.0f / 720.0f);
@@ -251,21 +244,20 @@ void initMenuButtons() {
   dlButton = new rectButton(this, x2 + width, y, round(btnW), round(btnH), #F0B950);
   dlButton.rectButtonText("Diary\nLibrary", 50);
 
-  // 메뉴 버튼에만 FANCY 스타일 적용
+  // Apply Style Only to Menu Buttons.
   dsButton.setStyle(rectButton.ButtonStyle.FANCY);
   slButton.setStyle(rectButton.ButtonStyle.FANCY);
   ddButton.setStyle(rectButton.ButtonStyle.FANCY);
   dlButton.setStyle(rectButton.ButtonStyle.FANCY);
 
-  // 버튼에 이미지 할당
+  // Set Images to Buttons.
   dsButton.setImage(catImg);
   slButton.setImage(foxImg);
   ddButton.setImage(cloudImg);
   dlButton.setImage(owlImg);
 }
-
+// Initialize Diary Library UI.
 void ensureDiaryUI() {
-  // 버튼 레이아웃 변수
   float btnColumnX = width * (1100.0f/1280.0f);
   float btnW = width * (180.0f/1280.0f);
   float btnH = height * (60.0f/720.0f);
@@ -299,53 +291,51 @@ void ensureDiaryUI() {
     finishButton.setShadow(false);
   }
 }
-
-void setup() { // 앱 시작 시 최소한의 초기화만 수행
+// Perform Minimal Initialization on App Start.
+void setup() { 
     size(1200, 800);
     pixelDensity(1);
   
-    // 실행 창 이름 설정
+    // Set Window Title.
     surface.setTitle("MyStickerDiary");
-    // 실행 창 사이즈 사용자가 임의 조정하지 못하게 설정
+    // Prevent User from Resizing the Window.
     surface.setResizable(false);
-
-    // 앱 아이콘 설정
+    // Set App Icon.
     PImage icon = loadImage("images/icon.png");
     surface.setIcon(icon);
 
-    // 로딩 화면에 필요한 기본 폰트를 먼저 로드합니다.
+    // Load the Default Font Needed for the Loading Screen First.
     font = createFont("data/fonts/nanumHandWriting_babyLove.ttf", 24);
 
-    // 컬러 팔레트 초기화 (Bubble 생성보다 먼저)
+    // Initialize Color Palette.
     palleteColor = new color[]{
-      color(0, 0, 0),        // 1. 검정 (맨 위)
-      color(255, 0, 0),      // 2. 빨강
-      color(255, 165, 0),    // 3. 주황
-      color(255, 255, 0),    // 4. 노랑
-      color(0, 255, 0),      // 5. 초록
-      color(0, 0, 255),      // 6. 파랑
-      color(0, 255, 255),    // 7. 하늘색
-      color(255, 0, 255),    // 8. 자홍색
-      color(128, 128, 128),  // 9. 회색
-      color(211, 211, 211),  // 10. 밝은 회색
-      color(255, 255, 255),  // 11. 하양 (맨 아래)
-      color(255, 255, 255)   // 12. 컬러피커용 자리 (색상 무관)
+      color(0, 0, 0),        // 1. Black
+      color(255, 0, 0),      // 2. Red
+      color(255, 165, 0),    // 3. Orange
+      color(255, 255, 0),    // 4. Yellow
+      color(0, 255, 0),      // 5. Green
+      color(0, 0, 255),      // 6. Blue
+      color(0, 255, 255),    // 7. Sky Blue
+      color(255, 0, 255),    // 8. Magenta
+      color(128, 128, 128),  // 9. Gray
+      color(211, 211, 211),  // 10. Light Gray
+      color(255, 255, 255),  // 11. White
+      color(255, 255, 255)   // 12. Placeholder for Color Picker (Color is Irrelevant)
     };
 
-    // 배경 이펙트 버블 초기화
+    // Initialize Background Effect Bubbles.
     bubbles = new ArrayList<Bubble>();
-    for (int i = 0; i < 20; i++) { // 원 개수 줄임 (50 -> 20)
+    for (int i = 0; i < 20; i++) {
       bubbles.add(new Bubble());
     }
-
-    // 로딩 이미지를 가장 먼저 로드
+    // Load the Loading Image First.
     loadingImage = loadImage("data/images/running_friends.png");
-
     loadingStage = 1;
     thread("performHeavySetup");
 }
 
-void performHeavySetup() { // 시간이 오래 걸리는 작업들을 백그라운드 스레드에서 처리 (로딩 화면 표시용)
+// Process Time-Consuming Tasks in a Background Thread.
+void performHeavySetup() { 
     loadingMessage = "Initializing...";
     imageMode(CENTER);
     stickerLibrary = new ArrayList<Sticker>();
@@ -360,26 +350,28 @@ void performHeavySetup() { // 시간이 오래 걸리는 작업들을 백그라�
     BACK_X = width * (24.0f / 1280.0f);
     BACK_Y = height * (24.0f / 720.0f);
 
-    // 일기 쓰기 화면 전용 뒤로가기 버튼 값 설정
+    // Set Values for the Diary-Specific Back Button.
     DIARY_BACK_W = width * (48.0f / 1280.0f);
     DIARY_BACK_H = height * (48.0f / 720.0f);
     DIARY_BACK_X = width * (16.0f / 1280.0f);
     DIARY_BACK_Y = height * (8.0f / 720.0f);
 
+    // Load Setting
     loadingMessage = "Loading settings...";
     initializeSetting();
     loadingProgress = 0.1;
-
-    loadingMessage = "Loading sounds..."; // 사운드 로딩 메시지
+    
+    // Load Sounds.
+    loadingMessage = "Loading sounds...";
     loadSong();
-    clickSound = new SoundFile(this, "data/sounds/click.mp3"); // 효과음 로드
+    clickSound = new SoundFile(this, "data/sounds/click.mp3");
     loadingProgress = 0.15;
 
-    // 폰트 로드
+    // Load Fonts.
     loadingMessage = "Loading fonts...";
     loadingProgress = 0.20;
 
-    // 아이콘 이미지 로드
+    // Load Icon Images.
     loadingMessage = "Loading UI icons...";
     meow = loadImage("data/images/meow.png");
     emotIcon = new PImage[5];
@@ -400,7 +392,7 @@ void performHeavySetup() { // 시간이 오래 걸리는 작업들을 백그라�
     trashOpenIcon = loadImage("images/trash_open.png");
     loadingProgress = 0.30;
 
-    // 스티커 제작 도구 리소스 로딩
+    // Load Sticker Creator Tool Resources.
     loadingMessage = "Loading creator tools...";
     saveImg = loadImage("data/images/saveIcon.png");
     backImg = loadImage("data/images/backIcon.png");
@@ -438,14 +430,15 @@ void performHeavySetup() { // 시간이 오래 걸리는 작업들을 백그라�
     settings_goToMainButton.rectButtonText("Main", 24);
     loadingProgress = 1.0;
 
-    loadingStage = 2; // 백그라운드 로딩 완료
+    loadingStage = 2; // Loading Complete.
 }
 
-void finishSetupOnMainThread() { // 메인 스레드에서만 실행해야 하는 초기화
+// Initialization that Must Run on the Main Thread.
+void finishSetupOnMainThread() { 
     setupCreator();
     textAreaUI();
 
-    // G4P 컨트롤(GImageButton, GSlider 등)은 메인 스레드에서 생성해야 합니다.
+    // Create G4P Controls
     String[] nameButtonImages = {
       "images/name_edit_off.png", "images/name_edit_over.png", "images/name_edit_down.png"
     };
@@ -457,18 +450,18 @@ void finishSetupOnMainThread() { // 메인 스레드에서만 실행해야 하�
     float sliderW = width * (200.0f / 1280.0f);
     float sliderX = width / 2 - sliderW / 2;
 
-    // BGM 슬라이더
-    sdr = new GSlider(this, round(sliderX), round(height*(250.0f/720.0f)), round(sliderW), round(height*(60.0f/720.0f)), 15); // BGM 볼륨 슬라이더
+    // BGM Slider.
+    sdr = new GSlider(this, round(sliderX), round(height*(250.0f/720.0f)), round(sliderW), round(height*(60.0f/720.0f)), 15);
     sdr.setVisible(false);
     sdr.setValue(bgmVolume);
 
-    // 효과음 슬라이더
-    sfxSlider = new GSlider(this, round(sliderX), round(height*(330.0f/720.0f)), round(sliderW), round(height*(60.0f/720.0f)), 15); // 효과음 볼륨 슬라이더
+    // SFX Slider.
+    sfxSlider = new GSlider(this, round(sliderX), round(height*(330.0f/720.0f)), round(sliderW), round(height*(60.0f/720.0f)), 15);
     sfxSlider.setVisible(false);
     sfxSlider.setValue(sfxVolume);
 
-    // 드래그 속도 슬라이더
-    dragSpeedSlider = new GSlider(this, round(sliderX), round(height*(410.0f/720.0f)), round(sliderW), round(height*(60.0f/720.0f)), 15); // 메뉴 드래그 속도 슬라이더
+    // Drag Speed Slider.
+    dragSpeedSlider = new GSlider(this, round(sliderX), round(height*(410.0f/720.0f)), round(sliderW), round(height*(60.0f/720.0f)), 15);
     dragSpeedSlider.setLimits(1.0f, 0.5f, 2.0f);
     dragSpeedSlider.setValue(menuDragSpeed);
     dragSpeedSlider.setNbrTicks(4); // 0.5, 1.0, 1.5, 2.0
@@ -477,7 +470,7 @@ void finishSetupOnMainThread() { // 메인 스레드에서만 실행해야 하�
 
 }
 
-// G4P 컨트롤 이벤트를 처리하는 핸들러
+// Handler for G4P Control Events.
 void handleButtonEvents(GImageButton button, GEvent event) {
   if (button == nameEditButton && event == GEvent.CLICKED) {
     switchScreen(name_screen);
@@ -491,8 +484,7 @@ void loadSong() {
     println("Sound file failed to load.");
     return;
   }
-
-  song.loop(); // 배경음악 반복 재생
+  song.loop(); // Loop Background Music.
   song.amp(bgmVolume);
 }
 
@@ -524,14 +516,13 @@ void loadStickersFromFolder(String folderPath, float startProgress, float endPro
   }
 }
 
-// 설정 화면 그리기
+// Draw Settings Screen.
 void drawSettingsScreen() {
-  // 배경 흐리게
   fill(0, 180);
   noStroke();
   rect(0, 0, width, height);
   
-  // 설정 창 UI
+  // Settings Window UI.
   float panelW = width*(600.0f/1280.0f);
   float panelH = height*(500.0f/720.0f);
   rectMode(CENTER); 
@@ -540,43 +531,41 @@ void drawSettingsScreen() {
   rect(width/2, height/2, panelW, panelH, 15);
   rectMode(CORNER);
   
-  // 닫기(X) 버튼
+  // Close (X) Button.
   float closeBtnSize = 40;
   float closeBtnX = (width/2 + panelW/2) - closeBtnSize;
   float closeBtnY = (height/2 - panelH/2);
   pushStyle();
-  textSize(24); // 텍스트 크기
+  textSize(24);
   textAlign(CENTER, CENTER);
-  if (mouseHober(closeBtnX, closeBtnY, closeBtnSize, closeBtnSize)) {
-    fill(255, 0, 0); // Hover color
+  if (mouseHober(closeBtnX, closeBtnY, closeBtnSize, closeBtnSize)) { // Mouse Hobering
+    fill(255, 0, 0);
   } else {
     fill(100);
   }
   text("X", closeBtnX + closeBtnSize/2, closeBtnY + closeBtnSize/2);
   popStyle();
   
-  // 내부 내용
+  // Internal Content.
   fill(0);
-  textAlign(CENTER, CENTER); // 텍스트 중앙 정렬
+  textAlign(CENTER, CENTER);
   textSize(40);
   text("Settings", width/2, height/2 - 200);
 
-  // 슬라이더 레이블
+  // Slider Labels.
   textAlign(RIGHT, CENTER);
   textSize(20);
   text("BGM Volume", sdr.getX() - 10, sdr.getY() + sdr.getHeight()/2);
   text("SFX Volume", sfxSlider.getX() - 10, sfxSlider.getY() + sfxSlider.getHeight()/2);
   text("Drag Speed", dragSpeedSlider.getX() - 10, dragSpeedSlider.getY() + dragSpeedSlider.getHeight()/2);
 
-  // 슬라이더 값 표시
+  // Display Slider Values.
   textAlign(LEFT, CENTER);
   text(String.format("%d%%", round(sdr.getValueF() * 100)), sdr.getX() + sdr.getWidth() + 10, sdr.getY() + sdr.getHeight()/2);
   text(String.format("%d%%", round(sfxSlider.getValueF() * 100)), sfxSlider.getX() + sfxSlider.getWidth() + 10, sfxSlider.getY() + sfxSlider.getHeight()/2);
   text(String.format("%.1fx", dragSpeedSlider.getValueF()), dragSpeedSlider.getX() + dragSpeedSlider.getWidth() + 10, dragSpeedSlider.getY() + dragSpeedSlider.getHeight()/2);
-
-  // 메인으로 가기 버튼
-  settings_goToMainButton.render(); 
-  //아래에 계속해서 내부 내용 추가
+  // Go to Main Button.
+  settings_goToMainButton.render();
 }
 
 public void handleSliderEvents(GValueControl slider, GEvent event) { 
@@ -590,38 +579,34 @@ public void handleSliderEvents(GValueControl slider, GEvent event) {
   }
 }
 
-void drawLoadingScreen() {
-    // 목표 진행률(loadingProgress)을 향해 현재 표시되는 진행률(displayLoadingProgress)을 부드럽게 업데이트
+void drawLoadingScreen() { // Displayed Loading Progress Towards the Loading Progress.
     displayLoadingProgress = lerp(displayLoadingProgress, loadingProgress, 0.05);
 
-    background(#FFCA1A); // 배경색
+    background(#FFCA1A);
     drawBackgroundEffect();
     
-    // --- 레이아웃 변수 정의 ---
-    // 로딩 바를 기준으로 모든 UI 요소의 위치를 계산합니다.
+    // Calculate the Position of All UI Elements Based on the Loading Bar.
     float barW = width * 0.6;
     float barH = 30;
     float barX = width/2 - barW/2;
-    float barY = height/2 + 80; // 수직 레이아웃의 기준점
+    float barY = height/2 + 80;
 
     float imgSize = 360;
     float loadingTextSize = 50;
-    float messageTextSize = 22; // 메시지 텍스트 크기
+    float messageTextSize = 22;
 
-    // 각 요소의 Y 좌표를 barY를 기준으로 계산
-    float imgY = barY - (imgSize / 4); // 이미지가 로딩 바 위에 바로 앉도록 조정
-    float loadingTextY = imgY - (imgSize / 6);      // "Loading..." 텍스트를 이미지 바로 위에 붙임
-    float messageTextY = barY + barH + 2;       // 로딩 메시지를 로딩 바 바로 아래에 붙임
+    float imgY = barY - (imgSize / 4);
+    float loadingTextY = imgY - (imgSize / 6);
+    float messageTextY = barY + barH + 2;
 
-    // --- 그리기 시작 ---
-    // "Loading..." 텍스트
-    textAlign(CENTER, BOTTOM); // 텍스트의 하단(baseline)을 기준으로 위치를 잡습니다.
+    // --- Start Drawing ---
+    textAlign(CENTER, BOTTOM);
     fill(0);
     textFont(font);
     textSize(loadingTextSize);
     text("Loading...", width/2, loadingTextY);
     
-    // 로딩 이미지 그리기
+    // Draw Loading Image.
     if (loadingImage != null) {
       imageMode(CENTER);
       float travelWidth = barW - imgSize;
@@ -630,22 +615,22 @@ void drawLoadingScreen() {
       imageMode(CORNER);
     }
     
-    // 진행률 바
+    // Progress Bar.
     noStroke();
     fill(100, 80);
     rect(barX, barY, barW, barH, 15);
-    fill(#4CAF50); // 채워지는 바 (초록색)
+    fill(#4CAF50);
     if (displayLoadingProgress > 0) {
       rect(barX, barY, barW * displayLoadingProgress, barH, 15);
     }
 
-    // 진행 메시지
+    // Progress Message.
     fill(0);
     textAlign(CENTER, TOP);
     textSize(messageTextSize);
     text(loadingMessage, width/2, messageTextY);
 
-    // 퍼센트 텍스트
+    // Percentage Text.
     fill(0);
     textSize(18);
     textAlign(CENTER, CENTER);
@@ -653,7 +638,7 @@ void drawLoadingScreen() {
 }
 
 void draw() {
-
+  // Play BackGroundMusic
     if (!bgmStarted && song != null) {
       song.loop();
       song.amp(bgmVolume);
@@ -663,11 +648,9 @@ void draw() {
     if (loadingStage < 3) {
       drawLoadingScreen();
       if (readyToTransition) {
-        // 100%가 그려진 다음 프레임에 전환 실행
         finishSetupOnMainThread();
-        loadingStage = 3; // 모든 로딩 완료
+        loadingStage = 3;
       } else if (loadingStage == 2) {
-        // 백그라운드 로딩이 완료되었고, 화면 표시가 100%에 도달하기를 기다림
         if (displayLoadingProgress >= 0.99f) {
           displayLoadingProgress = 1.0f;
           readyToTransition = true;
@@ -675,12 +658,12 @@ void draw() {
       }
       return;
     }
-    // 디폴트 모드 세팅
+    // Default Mode Settings.
     imageMode(CORNER);
     rectMode(CORNER);
     ellipseMode(CENTER);
     textAlign(LEFT, BASELINE);
-    // 현재 상태(currentScreen)에 따라 적절한 함수를 호출
+    // Call the Appropriate Function Based on the Current State.
     switch (currentScreen) {
       case start_screen:
         drawStartScreen();
@@ -706,30 +689,26 @@ void draw() {
       default :
       break;
       }
-
       if (isSettingsVisible) {
         drawSettingsScreen();
       }
   }
 
 
-// 키보드 입력
+// Keyboard Input.
 void keyPressed() {
-  if (key == ESC) { // ESC 키를 누르면 설정화면 토글
+  if (key == ESC) { // Toggle Settings Screen on ESC Key Press.
     playClickSound();
     toggleSettingsScreen(!isSettingsVisible);
-    key = 0; // ESC 키가 프로그램 종료로 이어지지 않도록 처리
+    key = 0;
   }
 }
 
 
-
-// 여기에서 모든 pde 파일 마우스 클릭 이벤트를 switch로 받아서 상황별로 처리해주면 될듯?
-// 마우스 클릭
+// Mouse Click.
 void mousePressed() {
-  // 설정 화면이 보이는 상태에서는 설정 화면 내의 기능만 처리
   if (isSettingsVisible) {
-    // 패널 및 닫기 버튼 영역 정의
+    // If the Settings Screen is Visible, Only Process Functions Within it.]
     float panelW = width * (600.0f / 1280.0f);
     float panelH = height * (500.0f / 720.0f);
     float panelX = width / 2 - panelW / 2;
@@ -739,23 +718,23 @@ void mousePressed() {
     float closeBtnX = (width / 2 + panelW / 2) - closeBtnSize;
     float closeBtnY = (height / 2 - panelH / 2);
     
-    // 닫기 버튼 클릭 또는 패널 외부 클릭 확인
     if (mouseHober(closeBtnX, closeBtnY, closeBtnSize, closeBtnSize) || !mouseHober(panelX, panelY, panelW, panelH)) {
+        // Check for Click on Close Button or Outside the Panel.
         playClickSound();
         toggleSettingsScreen(false);
         return;
     }
     
-    // 'Main' 버튼 클릭 처리
     if (settings_goToMainButton.isMouseOverButton()) {
+      // Handle 'Main' Button Click.
       playClickSound();
       toggleSettingsScreen(false);
       switchScreen(start_screen);  
     }
-    return; // 설정 창 내부의 다른 곳을 클릭했으면 다른 이벤트가 발생하지 않도록 함
+    return;
   }
 
-  // 모든 화면에서 뒤로가기 버튼 공통 처리 (누름 감지)
+  // Common Handling for Back Button Press Across All Screens.
   float btnX, btnY, btnW, btnH;
   if (currentScreen == drawing_diary) {
     btnX = DIARY_BACK_X;
@@ -794,7 +773,7 @@ void mousePressed() {
     break;
   }
 }
-// 마우스 드래그
+// Mouse Drag.
 void mouseDragged() {
 
   if (isSettingsVisible) {
@@ -822,14 +801,14 @@ void mouseDragged() {
       break;
   }
 }
-// 마우스 놓을때
+// Mouse Release.
 void mouseReleased() {
-  if (isSettingsVisible) { // 설정 화면이 열려있으면 다른 이벤트 무시
+  if (isSettingsVisible) { // Ignore Other Events if Settings Screen is Open.
     return;
   }
 
-  // 모든 화면에서 뒤로가기 버튼 공통 처리 (놓음 감지)
   if (isBackButtonPressed) {
+    // Common Handling for Back Button Release Across All Screens.
     float btnX, btnY, btnW, btnH;
     if (currentScreen == drawing_diary) {
       btnX = DIARY_BACK_X;
@@ -842,7 +821,7 @@ void mouseReleased() {
       btnW = BACK_W;
       btnH = BACK_H;
     }
-    if (mouseHober(btnX, btnY, btnW, btnH)) { // 뒤로가기 버튼 위에서 마우스를 놓았을 때
+    if (mouseHober(btnX, btnY, btnW, btnH)) { // When Mouse is Released Over the Back Button.
       playClickSound();
 
       if (currentScreen == making_sticker) {
@@ -853,7 +832,7 @@ void mouseReleased() {
             saveSticker();
           }
         }
-        // 저장 여부와 관계없이 이전 화면으로 돌아갑니다.
+        // Return to the Previous Screen Regardless of Saving.
         switchScreen(previousScreen);
       } else if (currentScreen == drawing_diary) {
     if (isDiaryModified) {
@@ -861,21 +840,20 @@ void mouseReleased() {
       boolean confirmed = booster.showConfirmDialog("Do you want to save your diary?", "Save Diary");
       if (confirmed) {
         saveDiary();
-        // Optional: refresh diary data
         libraryCalendar.set(diary_year, diary_month - 1, 1);
         loadDiaryDates();
       }
     }
-    // 기록해둔 이전 화면(메뉴 또는 일기 보관함)으로 돌아갑니다.
+    // Return to the Previously Recorded Screen (Menu or Diary Library).
     switchScreen(diaryReturnScreen);
   } else if (currentScreen == diary_library) {
-        // 일기 보관함에서는 메뉴 화면으로 이동
+        // From the Diary Library, Go to the Menu Screen.
         switchScreen(menu_screen);
       } else if (currentScreen == sticker_library) {
-        // 스티커 보관함에서도 메뉴 화면으로 이동
+        // From the Sticker Library, Go to the Menu Screen.
         switchScreen(menu_screen);
       } else {
-        switchScreen(previousScreen); // 기본 뒤로가기 동작
+        switchScreen(previousScreen); // Default Back Action.
       }
     }
     isBackButtonPressed = false; // Reset the flag
@@ -916,13 +894,13 @@ void mouseWheel(MouseEvent ev) {
     case diary_library:
       handleDiaryLibraryMouseWheel(ev);
       break;
-    case menu_screen: // Add this case for menu scrolling
+    case menu_screen:
       handleMenuMouseWheel(ev);
       break;
   }
 }
 
-void initializeSetting() { // 사용자 설정 초기화
+void initializeSetting() { // Initialize User Settings.
   String filePath = "data/user_setting.json";  
   JSONObject settingData = loadJSONObject(filePath);
   if (settingData == null) {
@@ -935,21 +913,21 @@ void initializeSetting() { // 사용자 설정 초기화
     return;
   }
 
-  // 이름
+  // Name.
   username = settingData.getString("Name", "");
   isNameEntered = !username.isEmpty();
 
-  // 볼륨 및 드래그 속도
+  // Volume and Drag Speed.
   bgmVolume = settingData.getFloat("bgmVolume", 0.5f);
   sfxVolume = settingData.getFloat("sfxVolume", 0.8f);
   menuDragSpeed = settingData.getFloat("dragSpeed", 1.0f);
 }
 
 
-void dispose() {  // 프로그램 종료 시 실행
-  // 설정 저장
+void dispose() {  // Executes on Program Exit.
+  // Save Settings.
     JSONObject settingData = new JSONObject();
-    // 이름, 볼륨, 드래그 속도 저장
+    // Save Name, Volume, and Drag Speed.
     settingData.setString("Name", username);
     settingData.setFloat("bgmVolume", bgmVolume);
     settingData.setFloat("sfxVolume", sfxVolume);
@@ -966,19 +944,16 @@ void playClickSound() {
   }
 }
 
-// 설정 화면의 가시성을 토글하고 관련 UI 요소들의 상태를 업데이트
+// Toggle the Visibility of the Settings Screen.
 void toggleSettingsScreen(boolean show) {
   isSettingsVisible = show;
   sdr.setVisible(show);
   sfxSlider.setVisible(show);
   dragSpeedSlider.setVisible(show);
-  
-  // isSettingsVisible 상태가 변경되었으므로,
-  // 다이어리 텍스트 필드의 가시성을 다시 계산하여 업데이트합니다.
   updateTextUIVisibility();
 }
 
-// 배경 이펙트용 클래스
+// Class for Background Effects.
 class Bubble {
   PVector pos;
   float size;
@@ -986,18 +961,18 @@ class Bubble {
   color c;
 
   Bubble() {
-    // 화면 아래쪽에서 시작하도록 y 좌표 설정
+    // Set Y-coordinate to Start from the Bottom of the Screen.
     pos = new PVector(random(width), random(height, height + 200));
     size = random(20, 150);
     speed = random(0.5, 2.0);
-    // 팔레트에서 무작위 색상 선택
+    // Select a Random Color from the Palette.
     color baseColor = palleteColor[int(random(palleteColor.length))];
     c = color(red(baseColor), green(baseColor), blue(baseColor), random(50, 150));
   }
 
   void update() {
-    pos.y -= speed; // 위로 이동
-    // 화면 위로 완전히 사라지면 아래에서 다시 시작하도록 위치 재설정
+    pos.y -= speed; // Move Upwards.
+    // If Completely off the Top of the Screen, Reset Position to Start from the Bottom Again.
     if (pos.y < -size) {
       pos.y = height + size;
       pos.x = random(width);

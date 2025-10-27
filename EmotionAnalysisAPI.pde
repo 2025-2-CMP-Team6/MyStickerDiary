@@ -1,27 +1,23 @@
 // EmotionAnalysisAPI.pde
-// 중앙 감정 분석 모듈 (다른 pde 어디서든 호출)
 
-// === 의존성
 import java.net.*;
 import java.io.*;
 import java.util.HashMap;
 
-// === 설정
-String EA_HF_TOKEN = "";  // 비워두면 환경변수 HF_TOKEN에서 읽음
+// API Setting
+String EA_HF_TOKEN = "";  // When Blank, Get It from HF_TOKEN
 String EA_MODEL    = "clapAI/modernBERT-base-multilingual-sentiment";
 
-// === 공유 저장소: 날짜별 감정 점수 (0.0 ~ 1.0)
-//   key 형식: "YYYY-M-D" (예: 2025-10-16)
+// Hash Map
 HashMap<String, Float> diarySentiments = new HashMap<String, Float>();
 
-// 결과 컨테이너
+// Result Clss
 class SentimentResult {
   float score01;     // 0.0 ~ 1.0
   String label;      // "Very Negative" ~ "Very Positive"
-  String distText;   // 분포 요약 (디버그/표시용)
+  String distText;   
 }
 
-// 외부에서 쓰는 헬퍼들
 String makeDateKey(int y, int m, int d) {
   return y + "-" + m + "-" + d;
 }
@@ -34,10 +30,10 @@ String labelFromScore(float s) {
   return "Very Positive";
 }
 
-// 메인 분석 함수: 텍스트 -> (0~1 점수, 라벨, 분포텍스트)
+// Analyze Text
 SentimentResult EA_analyzeText(String text) {
   SentimentResult out = new SentimentResult();
-  out.score01 = 0.5f;  // 기본값(중립)
+  out.score01 = 0.5f;  // Default Value
   out.label = "Neutral";
   out.distText = "";
 
@@ -66,7 +62,7 @@ SentimentResult EA_analyzeText(String text) {
     String res = EA_readAll(is);
     conn.disconnect();
 
-    // 응답: [ [ {label,score}.. ] ] 또는 [ {label,score}.. ]
+    // Respinse Format: [ [ {label,score}.. ] ] or [ {label,score}.. ]
     JSONArray outer = JSONArray.parse(res);
     JSONArray arr = (outer.size() > 0 && outer.get(0) instanceof JSONArray)
                     ? outer.getJSONArray(0) : outer;
@@ -96,11 +92,10 @@ SentimentResult EA_analyzeText(String text) {
       else if (label.contains("5")) vpos = max(vpos, p);
     }
 
-    // 분포 텍스트
     dist.append(String.format("VN:%.2f  N:%.2f  NEU:%.2f  P:%.2f  VP:%.2f", vneg, neg, neu, pos, vpos));
     out.distText = dist.toString();
 
-    // 가중 평균 → 0~1
+    // Weighted → 0~1
     float weighted = vneg*0.00f + neg*0.25f + neu*0.50f + pos*0.75f + vpos*1.00f;
     float sum = vneg+neg+neu+pos+vpos;
     if (sum > 0.0001f) weighted /= sum;
@@ -114,7 +109,6 @@ SentimentResult EA_analyzeText(String text) {
   }
 }
 
-// 내부 util
 String EA_readAll(InputStream is) throws IOException {
   BufferedReader br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
   StringBuilder sb = new StringBuilder();

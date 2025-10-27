@@ -1,9 +1,20 @@
+// Utils.pde
+
+// Checks if the Mouse is Hovering Over a Rectangular Area.
 boolean mouseHober(float x, float y, float w, float h) {
     return ((mouseY > y && mouseY < y+h) && (mouseX > x && mouseX < x+w));
 }
+
+// Overload to Check if a Specific Point (sx, sy) is Inside a Rectangular Area.
 boolean mouseHober(float sx, float sy, int x, int y, int w, int h) {
   return (sx > x && sx < x + w && sy > y && sy < y + h);
 }
+
+/**
+ * Converts a Month Index to its Abbreviated String Representation.
+ * @param cal The month index (0-11).
+ * @return The abbreviated month name (e.g., "Jan", "Feb"). Returns an empty string if invalid.
+ */
 String monthToString(int cal) {
   String[] monthStringList = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
   if (cal >= 0 && cal < 12) {
@@ -11,19 +22,34 @@ String monthToString(int cal) {
   }
   return "";
 }
+
+// Clamps a Month Value to the Valid Range of 1-12.
 int clampMonth1to12(int m) {
   return max(1, min(12, m));
 }
+
+// Converts a 1-Based Month (1-12) to a 0-Based Index (0-11).
 int monthToIdx0(int month1to12) {
   return clampMonth1to12(month1to12) - 1;
 }
+
+// Gets the 0-Based Index for the Previous Month.
 int prevMonthIdx0(int month1to12) {
   return (monthToIdx0(month1to12) + 11) % 12;
 }
+
+// Gets the 0-Based Index for the Next Month.
 int nextMonthIdx0(int month1to12) {
   return (monthToIdx0(month1to12) + 1) % 12;
 }
-// 이미지의 원본 비율을 유지하면서 주어진 사각형 박스에 맞게 크기를 조절한 PVector(너비, 높이)를 반환
+
+/**
+ * Calculates Scaled Image Dimensions to Fit a Rectangular Box While Maintaining Aspect Ratio.
+ * @param img The PImage to scale.
+ * @param boxW The width of the target box.
+ * @param boxH The height of the target box.
+ * @return A PVector containing the new calculated (width, height).
+ */
 static PVector getScaledImageSize(PImage img, float boxW, float boxH) {
   if (img == null || img.width <= 0 || img.height <= 0) {
     return new PVector(0, 0);
@@ -31,19 +57,27 @@ static PVector getScaledImageSize(PImage img, float boxW, float boxH) {
   float imgRatio = (float)img.width / img.height;
   float boxRatio = boxW / boxH;
   float newW, newH;
-  if (boxRatio > imgRatio) { // 박스가 이미지보다 넓은 경우, 높이를 기준으로 맞춤
+  if (boxRatio > imgRatio) { // If Box is Wider, Fit to Height
     newH = boxH;
     newW = newH * imgRatio;
-  } else { // 박스가 이미지보다 높거나 비율이 같은 경우, 너비를 기준으로 맞춤
+  } else { // If Box is Taller or Same Ratio, Fit to Width
     newW = boxW;
     newH = newW / imgRatio;
   }
   return new PVector(newW, newH);
 }
-// 이미지의 원본 비율을 유지하면서 주어진 정사각형 박스에 맞게 크기를 조절한 PVector(너비, 높이)를 반환
+
+/**
+ * Overloaded Function to Calculate Scaled Image Size for a Square Box.
+ * @param img The PImage to scale.
+ * @param boxSize The side length of the square target box.
+ * @return A PVector containing the new calculated (width, height).
+ */
 static PVector getScaledImageSize(PImage img, float boxSize) {
   return getScaledImageSize(img, boxSize, boxSize);
 }
+
+
 public static class rectButton {
 
   public enum ButtonStyle {
@@ -64,7 +98,7 @@ public static class rectButton {
   boolean isButtonPressing = false;
   PImage buttonImage = null;
   boolean useShadow = true;
-  private ButtonStyle style = ButtonStyle.SIMPLE; // 기본 스타일은 SIMPLE
+  private ButtonStyle style = ButtonStyle.SIMPLE; // Default Style
   
   private boolean armed = false;
   private boolean pressedInside = false;
@@ -129,30 +163,30 @@ public static class rectButton {
   
   public void render(int mx, int my) {
     isHovering = !armed && hit(mx, my);
-    // 부드러운 보간
+    // Smooth Interpolation for Press Animation
     float target = (armed && pressedInside) ? 1.0f : 0.0f; 
-    // 선형 보간 사용
     pressAnim = parent.lerp(pressAnim, target, 0.20f);
     pressAnim = parent.constrain(pressAnim, 0, 1);
-    // 시각 파라미터
+    
+    // Visual Parameters
     int baseShadow = 16;
-    int minShadowOffset = 2;       // 완전 눌려도 최소한 남길 그림자 거리
-    float cornerRadius = 15.0f;    // 버튼 모서리 둥글기 
+    int minShadowOffset = 2;       // Minimum Shadow Distance.
+    float cornerRadius = 15.0f;    // Button Corner Roundness.
     int maxFaceOffset   = baseShadow - minShadowOffset;
-    // 면이 내려갈 거리(완전 눌려도 baseShadow에 딱 닿지 않게)
+    // Face Move Down Distance.
     float faceOffset   = parent.lerp(0, maxFaceOffset, pressAnim);
-    // 그림자는 반대로 짧아지되, 최소 오프셋은 유지
+    // Shadow Shortens, Maintains Minimum Offset.
     float shadowOffset = baseShadow - faceOffset; // 항상 >= minShadowOffset
-    // 그림자 투명도도 살짝 줄여주기(깜빡임 대신 자연스러운 약화)
+    // Reduce Shadow Transparency on Press.
     int shadowAlpha = (int) parent.lerp(110, 40, pressAnim);
-    // 버튼 면 색도 살짝 어둡게
+    // Darken Button Face Color on Press.
     color baseColor = isHovering ? parent.lerpColor(cl, parent.color(255), 0.2) : cl;
     color faceColor = parent.lerpColor(baseColor, parent.color(0), 0.12f * pressAnim);
     
     parent.pushStyle();
     parent.rectMode(CORNER);
     parent.noStroke();
-    // 그림자: 항상 그리되, 오프셋/알파만 눌림에 따라 변화
+    // Shadow: Offset/Alpha Changes on Press.
     if (useShadow) {
       parent.fill(0, shadowAlpha);
       if (style == ButtonStyle.FANCY) {
@@ -162,14 +196,14 @@ public static class rectButton {
       }
     }
     if (style == ButtonStyle.FANCY) {
-      // --- FANCY 스타일: 2분할 색상, 둥근 모서리, 이미지 ---
+      // FANCY Style: 2-Part Color, Rounded Corners, Image.
       parent.pushMatrix();
       parent.translate(position_x + faceOffset, position_y + faceOffset);
       color brightenedColor = parent.lerpColor(faceColor, parent.color(255), 0.15f);
-      color topColor = parent.lerpColor(brightenedColor, parent.color(parent.brightness(brightenedColor)), 0.3f); // 채도를 30% 낮춤
+      color topColor = parent.lerpColor(brightenedColor, parent.color(parent.brightness(brightenedColor)), 0.3f); // Reduce Saturation by 30%.
       color bottomColor = faceColor;
       parent.noStroke();
-      // 상단부 (위쪽 모서리만 둥글게)
+      // Top Part with Rounded Top Corners.
       parent.fill(topColor);
       parent.beginShape();
       parent.vertex(0, height / 2);
@@ -179,7 +213,7 @@ public static class rectButton {
       parent.quadraticVertex(width, 0, width, cornerRadius);
       parent.vertex(width, height / 2);
       parent.endShape(CLOSE);
-      // 하단부 (아래쪽 모서리만 둥글게)
+      // Bottom Part with Rounded Bottom Corners.
       parent.fill(bottomColor);
       parent.beginShape();
       parent.vertex(0, height / 2);
@@ -191,13 +225,13 @@ public static class rectButton {
       parent.endShape(CLOSE);
       parent.popMatrix();
       
-      // 텍스트 (왼쪽 위)
+      // Text (Top Left).
       float textPadding = width * 0.08f;
       parent.fill(0);
       parent.textAlign(LEFT, TOP);
       parent.textSize(labelSize);
       parent.text(textLabel, position_x + faceOffset + textPadding, position_y + faceOffset + textPadding);
-      // 이미지 (오른쪽 아래)
+      // Image (Bottom Right).
       if (buttonImage != null) {
           parent.imageMode(CENTER);
           float imgPadding = width * 0.08f;
@@ -208,7 +242,7 @@ public static class rectButton {
           parent.image(buttonImage, imgX, imgY, newImgSize.x, newImgSize.y);
       }
     } else {
-      // --- SIMPLE 스타일: 단색, 중앙 텍스트 ---
+      // SIMPLE Style: Solid Color, Centered Text.
       parent.fill(faceColor);
       parent.rect(position_x + faceOffset, position_y + faceOffset, width, height);
       parent.fill(0);
@@ -217,7 +251,7 @@ public static class rectButton {
       parent.text(textLabel, position_x + width/2 + faceOffset, position_y + height/2 + faceOffset);
     }
     parent.popStyle();
-    // 우측/하단 좌표 갱신(외부 참조 호환)
+    // Update Right/Bottom Coordinates.
     position_x_r = position_x + width;
     position_y_r = position_y + height;
   }
@@ -229,34 +263,44 @@ public static class rectButton {
             my > position_y && my < position_y + height);
   }
 }
+
+/**
+ * Calculates the Midpoint Between Two Points.
+ * @param x1 The x-coordinate of the first point.
+ * @param y1 The y-coordinate of the first point.
+ * @param x2 The x-coordinate of the second point.
+ * @param y2 The y-coordinate of the second point.
+ * @return A PVector representing the midpoint.
+ */
 PVector midpoint(float x1, float y1, float x2, float y2) {
   return new PVector((x1 + x2) / 2, (y1 + y2) / 2);
 }
+
 int getWeather() {
   int weather = 0;
-  // 0: 맑음, 1: 바람, 2: 흐림, 3: 비, 4: 눈, 5: 폭풍
+  // 0: Sunny, 1: Windy, 2: Cloudy, 3: Rain, 4: Snow, 5: Storm.
   String des = setupWeather();
   switch(des) {
     case "clear sky":
     case "few clouds":
-      weather = 0; // 맑음
+      weather = 0; // Sunny
       case "scattered clouds":
       case "broken clouds":
       case "overcast clouds":
-        weather = 2; // 흐림
+        weather = 2; // Cloudy
         break;
       case "shower rain":
       case "rain":
       case "light rain":
       case "moderate rain":
-        weather = 3; // 비
+        weather = 3; // Rain
         break;
       case "thunderstorm":
-        weather = 5; // 폭풍
+        weather = 5; // Storm
         break;
       case "snow":
       case "light snow":
-        weather = 4; // 눈
+        weather = 4; // Snow
         break;
     }
     return weather;
