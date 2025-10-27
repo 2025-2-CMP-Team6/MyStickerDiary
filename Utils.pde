@@ -176,7 +176,7 @@ public static class rectButton {
     // Face Move Down Distance.
     float faceOffset   = parent.lerp(0, maxFaceOffset, pressAnim);
     // Shadow Shortens, Maintains Minimum Offset.
-    float shadowOffset = baseShadow - faceOffset; // 항상 >= minShadowOffset
+    float shadowOffset = baseShadow - faceOffset;
     // Reduce Shadow Transparency on Press.
     int shadowAlpha = (int) parent.lerp(110, 40, pressAnim);
     // Darken Button Face Color on Press.
