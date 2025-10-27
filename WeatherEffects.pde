@@ -1,90 +1,80 @@
 // WeatherEffects.pde
-// 날씨에 따른 배경 효과를 관리하는 파일입니다.
 
-// === 전역 변수 ===
 ArrayList<RainDrop> rainDrops;
 ArrayList<Snowflake> snowflakes;
 ArrayList<Cloud> clouds;
-int lightningFrame = -1; // 폭풍 효과용
+int lightningFrame = -1;
 
-// === 초기화 함수 ===
+// Initialze Weather Effects
 void initWeatherEffects() {
-  // 리스트가 없으면 새로 생성
+  // If there no ArrayList, Create new Ones
   if (rainDrops == null) rainDrops = new ArrayList<RainDrop>();
   if (snowflakes == null) snowflakes = new ArrayList<Snowflake>();
   if (clouds == null) clouds = new ArrayList<Cloud>();
 
-  // 기존 파티클 모두 제거
+  // Clear All Particles
   rainDrops.clear();
   snowflakes.clear();
   clouds.clear();
   lightningFrame = -1;
 
-  // 현재 날씨(todayWeather)에 따라 파티클 생성
-  // 0: 맑음, 1: 바람, 2: 흐림, 3: 비, 4: 눈, 5: 폭풍
+  // Making Weather Efect
   switch(todayWeather) {
-    case 1: // 바람
-    case 2: // 흐림
+    case 1: // Windy
+    case 2: // Coludy
       for (int i = 0; i < 15; i++) {
         clouds.add(new Cloud(todayWeather == 1)); // isWindy
       }
       break;
-    case 3: // 비
+    case 3: // Rainy
       for (int i = 0; i < 150; i++) {
         rainDrops.add(new RainDrop(false)); // isStorm
       }
       break;
-    case 4: // 눈
+    case 4: // Snowy
       for (int i = 0; i < 100; i++) {
         snowflakes.add(new Snowflake());
       }
       break;
-    case 5: // 폭풍
-      for (int i = 0; i < 250; i++) { // 더 많은 비
+    case 5: // Stromy
+      for (int i = 0; i < 250; i++) { // more Rain
         rainDrops.add(new RainDrop(true)); // isStorm
       }
-      for (int i = 0; i < 5; i++) { // 폭풍 구름
+      for (int i = 0; i < 5; i++) { // Black Cloud
         clouds.add(new Cloud(true));
       }
       break;
   }
 }
-
-// === 메인 그리기 함수 ===
+//========== Draw Function ===========
 void drawWeatherEffect() {
-  // 현재 날씨에 맞는 효과 그리기 함수 호출
   switch(todayWeather) {
     case 0: drawSunnyEffect(); break;
-    case 1: // 바람
-    case 2: // 흐림
+    case 1: // Windy
+    case 2: // Coludy
       drawCloudyEffect();
       break;
-    case 3: drawRainyEffect(); break;
-    case 4: drawSnowyEffect(); break;
-    case 5: drawStormyEffect(); break;
+    case 3: drawRainyEffect(); break; // Rainy
+    case 4: drawSnowyEffect(); break; // Snowy
+    case 5: drawStormyEffect(); break; // Stromy
   }
 }
 
-// === 날씨별 효과 그리기 함수들 ===
-
+// Wheather Effects
 void drawSunnyEffect() {
   pushStyle();
   float sunX = width - 80;
   float sunY = 80;
   float sunRadius = 60;
-
-  // 해 주변의 빛 번짐 효과
   noStroke();
   for (int i = 20; i > 0; i--) {
     fill(255, 255, 0, 150 / i);
     ellipse(sunX, sunY, sunRadius * i * 0.2, sunRadius * i * 0.2);
   }
-
-  // 해 본체
+  // Sun
   fill(255, 255, 150);
   ellipse(sunX, sunY, sunRadius * 2, sunRadius * 2);
-
-  // 회전하는 햇살
+  // Parhelion   
   stroke(255, 255, 0, 100);
   strokeWeight(3);
   pushMatrix();
@@ -122,25 +112,24 @@ void drawSnowyEffect() {
 }
 
 void drawStormyEffect() {
-  // 폭풍일 때 배경을 어둡게
+  // Dark Background
   fill(0, 50);
   rect(0, 0, width, height);
 
   drawCloudyEffect();
   drawRainyEffect();
-
-  // 번개 효과
+  // Lightning
   if (lightningFrame > 0 && frameCount == lightningFrame) {
     fill(255, 255, 200, 200);
     rect(0, 0, width, height);
-    lightningFrame = -1; // 번쩍인 후 리셋
+    lightningFrame = -1;
   }
-  if (lightningFrame == -1 && random(1) < 0.01) { // 매 프레임 1% 확률로 번개
-    lightningFrame = frameCount + 1; // 다음 프레임에 번쩍이도록 설정
+  if (lightningFrame == -1 && random(1) < 0.01) { // 1% by Frame
+    lightningFrame = frameCount + 1;
   }
 }
 
-// === 파티클 클래스들 ===
+// ======= Particle Class =======
 
 class Cloud {
   PVector pos;
