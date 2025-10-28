@@ -1,5 +1,5 @@
 // WeatherDataAPI.pde
-// Owner: 
+// Owner: 김동현
 
 JSONObject locationData;
 JSONObject weatherData;

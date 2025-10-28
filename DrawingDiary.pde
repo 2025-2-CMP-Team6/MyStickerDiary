@@ -1,5 +1,8 @@
-// DrawingDiary.pde
-// Owner:
+/*
+ * DrawingDiary.pde
+ * Owner: 신이철
+ * SubOwner: 김동현
+ */
 
 rectButton analyzeButton;
 boolean analyzePressed = false;

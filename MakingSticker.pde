@@ -1,5 +1,8 @@
-// MakingSticker.pde
-// Owner: 
+/*
+ * MakingSticker.pde
+ * Owner: 김동현
+ * SubOwner: 신이철
+ */
 
 // Sticker Canvas Setting
 PGraphics stickerCanvas;

@@ -1,5 +1,5 @@
 // EmotionAnalysisAPI.pde
-// Owner:
+// Owner: 신이철
 
 import java.net.*;
 import java.io.*;

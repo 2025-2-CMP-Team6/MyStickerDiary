@@ -1,5 +1,7 @@
-// StickerLibrary.pde
-// Owner: 
+/* StickerLibrary.pde
+ * Owner: 김동현
+ * SubOwner: 신이철
+ */
 
 float libraryScrollY = 0;
 float minLibraryScrollY = 0;

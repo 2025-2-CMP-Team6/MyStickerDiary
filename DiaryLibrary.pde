@@ -1,5 +1,8 @@
-// DiaryLibrary.pde
-// Owner:
+/*
+ * DiaryLibrary.pde
+ * Owner: 최은영
+ * SubOwner: 신이철
+ */
 
 import java.util.HashSet;
 

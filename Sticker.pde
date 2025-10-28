@@ -1,5 +1,5 @@
 // Sticker.pde
-// Owner:
+// Owner: 김동현
 
 class Sticker { // Sticker Class
   float x, y;

@@ -1,5 +1,8 @@
-// MenuScreen.pde
-// Owner: 
+/*
+ * MenuScreen.pde
+ * Owner: 최은영
+ * SubOwner: 신이철
+ */
 
 GUIController c;
 IFButton b1;

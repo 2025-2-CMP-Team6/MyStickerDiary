@@ -1,5 +1,8 @@
-// Utils.pde
-// Owner:
+/* Utils.pde
+ * Owner: 신이철
+ * SubOwner: 김동현, 최은영
+ */
+
 
 // Checks if the Mouse is Hovering Over a Rectangular Area.
 boolean mouseHober(float x, float y, float w, float h) {

@@ -1,5 +1,7 @@
-// StartScreen.pde
-// Owner: 
+/* StartScreen.pde
+ * Owner: 신이철
+ * SubOwner: 최은영
+ */
 
 // Check if Mouse is Pressed
 boolean isStartButtonPressed = false;

@@ -1,5 +1,8 @@
-// MyStickerDiary.pde
-// Owner:
+/* 
+ * MyStickerDiary.pde
+ * Owner: 신이철
+ * SubOwner: 김동현
+  */
 
 import interfascia.*;
 import uibooster.*;

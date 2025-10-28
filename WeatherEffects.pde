@@ -1,5 +1,5 @@
 // WeatherEffects.pde
-// Owner:
+// Owner: 김동현
 
 ArrayList<RainDrop> rainDrops;
 ArrayList<Snowflake> snowflakes;
@@ -22,7 +22,7 @@ void initWeatherEffects() {
   // Making Weather Efect
   switch(todayWeather) {
     case 1: // Windy
-    case 2: // Coludy
+    case 2: // Cloudy
       for (int i = 0; i < 15; i++) {
         clouds.add(new Cloud(todayWeather == 1)); // isWindy
       }
@@ -52,12 +52,12 @@ void drawWeatherEffect() {
   switch(todayWeather) {
     case 0: drawSunnyEffect(); break;
     case 1: // Windy
-    case 2: // Coludy
+    case 2: // Cloudy
       drawCloudyEffect();
       break;
     case 3: drawRainyEffect(); break; // Rainy
     case 4: drawSnowyEffect(); break; // Snowy
-    case 5: drawStormyEffect(); break; // Stromy
+    case 5: drawStormyEffect(); break; // Stormy
   }
 }
 

@@ -1,5 +1,8 @@
-// NameScreen.pde
-// Owner:
+/*
+ * NameScreen.pde
+ * Owner: 최은영
+ * SubOwner: 신이철
+ */
 
 UiBooster booster;
 boolean isNameEntered = false;
