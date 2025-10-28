@@ -1,4 +1,5 @@
 // MyStickerDiary.pde
+// Owner:
 
 import interfascia.*;
 import uibooster.*;

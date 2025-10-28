@@ -1,4 +1,5 @@
 // Sticker.pde
+// Owner:
 
 class Sticker { // Sticker Class
   float x, y;

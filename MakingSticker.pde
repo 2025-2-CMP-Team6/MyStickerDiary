@@ -1,4 +1,5 @@
 // MakingSticker.pde
+// Owner: 
 
 // Sticker Canvas Setting
 PGraphics stickerCanvas;
@@ -712,7 +713,7 @@ void drawRainbowCircle(float x, float y, float diameter) {
   popStyle();
 }
 /**
- * Check Whether Canvas Blank or not
+* Check Whether Canvas Blank or not
  * @param pg input PGraphics
  * @return boolean If Canvas Blank return true
  */

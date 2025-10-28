@@ -1,4 +1,5 @@
 // DiaryLibrary.pde
+// Owner:
 
 import java.util.HashSet;
 

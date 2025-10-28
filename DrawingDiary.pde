@@ -1,4 +1,5 @@
 // DrawingDiary.pde
+// Owner:
 
 rectButton analyzeButton;
 boolean analyzePressed = false;

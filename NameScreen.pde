@@ -1,4 +1,5 @@
 // NameScreen.pde
+// Owner:
 
 UiBooster booster;
 boolean isNameEntered = false;

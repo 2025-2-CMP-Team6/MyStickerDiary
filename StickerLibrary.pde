@@ -1,4 +1,5 @@
 // StickerLibrary.pde
+// Owner: 
 
 float libraryScrollY = 0;
 float minLibraryScrollY = 0;

@@ -1,4 +1,5 @@
 // WeatherEffects.pde
+// Owner:
 
 ArrayList<RainDrop> rainDrops;
 ArrayList<Snowflake> snowflakes;

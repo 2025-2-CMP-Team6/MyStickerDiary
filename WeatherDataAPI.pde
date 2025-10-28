@@ -1,4 +1,5 @@
 // WeatherDataAPI.pde
+// Owner: 
 
 JSONObject locationData;
 JSONObject weatherData;
