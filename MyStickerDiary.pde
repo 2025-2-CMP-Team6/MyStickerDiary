@@ -398,7 +398,7 @@ void performHeavySetup() {
 
     // Load Sticker Creator Tool Resources.
     loadingMessage = "Loading creator tools...";
-    saveImg = loadImage("data/images/saveIcon.png");
+    saveImg = loadImage("data/images/SaveIcon.png");
     backImg = loadImage("data/images/backIcon.png");
     brushImg = loadImage("data/images/brush.png");
     paintImg = loadImage("data/images/paint.png");
