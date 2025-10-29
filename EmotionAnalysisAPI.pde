@@ -6,7 +6,7 @@ import java.io.*;
 import java.util.HashMap;
 
 // API Setting
-String EA_HF_TOKEN = "";  // When Blank, Get It from HF_TOKEN
+String EA_HF_TOKEN = "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";  // When Blank, Get It from HF_TOKEN
 String EA_MODEL    = "clapAI/modernBERT-base-multilingual-sentiment";
 
 // Hash Map
