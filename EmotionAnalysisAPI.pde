@@ -6,7 +6,9 @@ import java.io.*;
 import java.util.HashMap;
 
 // API Setting
-String EA_HF_TOKEN = "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";  // When Blank, Get It from HF_TOKEN
+String EA_HF_TOKEN = "";  // When Blank, Get It from HF_TOKEN
+                          // If the API key is on GitHub, it will be locked.
+                          // It is recommended to run this file as a locally sent file.
 String EA_MODEL    = "clapAI/modernBERT-base-multilingual-sentiment";
 
 // Hash Map
