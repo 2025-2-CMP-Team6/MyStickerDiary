@@ -75,6 +75,10 @@ public void drawClickAnywhere() {
 }
 
 public void handleStartRelease() {
+  if (username == null || username.trim().isEmpty()) {
+    switchScreen(name_screen);
+  } else {
     switchScreen(menu_screen);
-    if(ddButton == null) initMenuButtons();
+    if (ddButton == null) initMenuButtons();
+  }
 }

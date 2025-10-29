@@ -202,12 +202,6 @@ boolean hitScreen(rectButton b, float sx, float sy) {
           sy > b.position_y && sy < b.position_y + b.height);
 }
 
-void nameForced() { // Check User Name When First Start Program
-  if (username == null) {
-    switchScreen(name_screen);
-  }
-}
-
 public void handleMenuMouseWheel(MouseEvent ev) { // Mouse Wheel in Menu Screen
     if (isMenuDragging) return;
 

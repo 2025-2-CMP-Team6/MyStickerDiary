@@ -909,7 +909,7 @@ void initializeSetting() { // Initialize User Settings.
   JSONObject settingData = loadJSONObject(filePath);
   if (settingData == null) {
     println("user_setting.json not found. Using default settings.");
-    username = "";
+    username = null;
     isNameEntered = false;
     bgmVolume = 0.5f;
     sfxVolume = 0.8f;
